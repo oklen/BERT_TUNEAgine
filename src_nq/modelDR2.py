@@ -15,8 +15,8 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         roberta_config = RobertaConfig.from_json_file("./configs/roberta-mnli.config")
-        roberta_config.hidden_dropout_prob = 0.11
-        roberta_config.attention_probs_dropout_prob = 0.1
+#        roberta_config.hidden_dropout_prob = 0.11
+#        roberta_config.attention_probs_dropout_prob = 0.1
 
         self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config=roberta_config)
         #self.bert = RobertaModel.from_pretrained("roberta-base")
