@@ -640,6 +640,7 @@ def main():
         model.zero_grad()
 
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
+            logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
                 #logging.info("Reading data from {}.".format(data_path))
                 model.train()
@@ -673,7 +674,6 @@ def main():
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     
                     if (step + 1) % args.gradient_accumulation_steps == 0:
-
                         scheduler.step()
                         optimizer.step()
                         optimizer.zero_grad()
@@ -690,38 +690,40 @@ def main():
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
-                
-                
-                model.ACC = model.ALL = 0
-                train_dataset = NqDataset(args, "test.json", is_training=True)
-                train_features = train_dataset.features
-                #logging.info("Data Load Done!")
-                if args.local_rank == -1:
-                    train_sampler = RandomSampler(train_features)
-                else:
-                    train_sampler = DistributedSampler(train_features)
-                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
-                train_features = train_dataset.features
-                logging.info("Data ready {} ".format(len(train_features)))
-                gobal_step = 0
-                tr_loss = 0
-                with torch.no_grad():
-                    for step, batch in enumerate(train_dataloader):
-                        gobal_step+=1
-                        loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                     (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-                        tr_loss+=loss.item()
-                logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
+                        
+            model.zero_grad()
+            model.ACC = model.ALL = 0
+            train_dataset = NqDataset(args, "test.json", is_training=True)
+            train_features = train_dataset.features
+            #logging.info("Data Load Done!")
+            if args.local_rank == -1:
+                train_sampler = RandomSampler(train_features)
+            else:
+                train_sampler = DistributedSampler(train_features)
+            train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                          collate_fn=batcher(device, is_training=True), num_workers=0)
+            train_features = train_dataset.features
+            logging.info("Data ready {} ".format(len(train_features)))
+            gobal_step = 0
+            tr_loss = 0
+            logging.info("***** Running evalating *****")
+            with torch.no_grad():
+                for step, batch in enumerate(train_dataloader):
+                    gobal_step+=1
+                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
+                    tr_loss+=loss.item()
+            logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
+            model.zero_grad()
 
-                if model.ACC/model.ALL*100>last_acc:
-                    logging.info("Save Model")
-                    last_acc = model.ACC/model.ALL*100
-                    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+            if model.ACC/model.ALL*100>last_acc:
+                logging.info("Save Model")
+                last_acc = model.ACC/model.ALL*100
+                model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 
-                    # If we save using the predefined names, we can load using `from_pretrained`
-                    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-                    torch.save(model_to_save.state_dict(), output_model_file)
+                # If we save using the predefined names, we can load using `from_pretrained`
+                output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+                torch.save(model_to_save.state_dict(), output_model_file)
                     
                 
 
