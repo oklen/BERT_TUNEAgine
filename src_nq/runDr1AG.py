@@ -548,8 +548,7 @@ def main():
         pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
         model.load_state_dict(torch.load(pretrained_model_file))
     
-    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-    model.load_state_dict(torch.load(output_model_file))
+
     
     if args.fp16:
         model.half()
@@ -569,6 +568,10 @@ def main():
     num_train_optimization_steps = None
     #train_dataset = None
     #train_features = None
+    
+    #Load saved parameter here
+    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+    model.load_state_dict(torch.load(output_model_file))
     
     if args.do_train:
         num_train_features = 0
@@ -628,7 +631,9 @@ def main():
         
 
     global_step = 0
-    last_acc = 83.2843137254902
+    last_acc = 84.3704066634003
+    
+    
     if args.do_train:
         logger.info("***** Running training *****")
         logger.info("  Num split examples = %d", num_train_features)
@@ -696,25 +701,27 @@ def main():
             train_dataset = NqDataset(args, "test.json", is_training=True)
             train_features = train_dataset.features
             #logging.info("Data Load Done!")
-            if args.local_rank == -1:
-                train_sampler = RandomSampler(train_features)
-            else:
-                train_sampler = DistributedSampler(train_features)
+            
+            train_sampler = RandomSampler(train_features)
+
             train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                           collate_fn=batcher(device, is_training=True), num_workers=0)
+            
             train_features = train_dataset.features
             logging.info("Data ready {} ".format(len(train_features)))
-            gobal_step = 0
-            tr_loss = 0
+            tgobal_step = 0
+            ttr_loss = 0
+            optimizer.zero_grad()
             logging.info("***** Running evalating *****")
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
-                    gobal_step+=1
+                    tgobal_step+=1
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-                    tr_loss+=loss.item()
-            logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
+                    ttr_loss+=loss.item()
+            logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
+            optimizer.zero_grad()
 
             if model.ACC/model.ALL*100>last_acc:
                 logging.info("Save Model")
