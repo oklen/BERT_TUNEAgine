@@ -713,9 +713,9 @@ def main():
                         tr_loss+=loss.item()
                         
                         #print("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
-                print("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
+                logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
                 if model.ACC/model.ALL*100>last_acc:
-                    print("Save Model")
+                    logging.info("Save Model")
                     last_acc = model.ACC/model.ALL*100
                     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 
