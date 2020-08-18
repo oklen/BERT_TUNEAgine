@@ -705,6 +705,7 @@ def main():
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
                 gobal_step = 0
+                tr_loss = 0
                 with torch.no_grad():
                     for step, batch in enumerate(train_dataloader):
                         gobal_step+=1
