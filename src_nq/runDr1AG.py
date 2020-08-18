@@ -712,9 +712,8 @@ def main():
                         loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                      (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
                         tr_loss+=loss.item()
-                        
-                        #print("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
                 logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,tr_loss/gobal_step))
+
                 if model.ACC/model.ALL*100>last_acc:
                     logging.info("Save Model")
                     last_acc = model.ACC/model.ALL*100
