@@ -570,8 +570,8 @@ def main():
     #train_features = None
     
     #Load saved parameter here
-    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-    model.load_state_dict(torch.load(output_model_file))
+#    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+#    model.load_state_dict(torch.load(output_model_file))
     
     if args.do_train:
         num_train_features = 0
@@ -632,34 +632,6 @@ def main():
 
     global_step = 0
     last_acc = 84.3704066634003
-    
-    model.zero_grad()
-    model.ACC = model.ALL = 0
-    train_dataset = NqDataset(args, "test.json", is_training=True)
-    train_features = train_dataset.features
-    #logging.info("Data Load Done!")
-    
-    train_sampler = RandomSampler(train_features)
-
-    train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                  collate_fn=batcher(device, is_training=True), num_workers=0)
-    
-    train_features = train_dataset.features
-    logging.info("Data ready {} ".format(len(train_features)))
-    tgobal_step = 0
-    ttr_loss = 0
-    optimizer.zero_grad()
-    logging.info("***** Running evalating *****")
-    with torch.no_grad():
-        for step, batch in enumerate(train_dataloader):
-            tgobal_step+=1
-            loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                         (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-            ttr_loss+=loss.item()
-    logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
-    model.zero_grad()
-    optimizer.zero_grad()
-    exit(0)
     
     if args.do_train:
         logger.info("***** Running training *****")
