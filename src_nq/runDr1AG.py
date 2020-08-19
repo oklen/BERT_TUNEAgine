@@ -695,6 +695,7 @@ def main():
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
                         
+            model.eval()
             model.zero_grad()
             model.ACC = model.ALL = 0
             train_dataset = NqDataset(args, "test.json", is_training=True)
