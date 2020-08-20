@@ -414,8 +414,8 @@ class Encoder(nn.Module):
         self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
         self.conv3 = RGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
-        self.conv2 = DNAConv(config.hidden_size,16,16,0.1)
-#        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
+#        self.conv2 = DNAConv(config.hidden_size,16,16,0.1)
+        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
         self.norm = nn.LayerNorm([512,config.hidden_size],1e-05)
         
         

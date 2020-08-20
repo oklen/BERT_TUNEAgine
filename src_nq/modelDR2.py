@@ -14,11 +14,7 @@ class NqModel(nn.Module):
         #albert_base_configuration = AlbertConfig(vocab_size=30000,hidden_size=768,num_attention_heads=12,intermediate_size=3072,
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
-        roberta_config = RobertaConfig.from_json_file("./configs/roberta-mnli.config")
-#        roberta_config.hidden_dropout_prob = 0.11
-#        roberta_config.attention_probs_dropout_prob = 0.1
-
-        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config=roberta_config)
+        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli")
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
@@ -34,13 +30,13 @@ class NqModel(nn.Module):
         #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
-        self.tok_dense = nn.Linear(my_config.hidden_size, my_config.hidden_size)
+        self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
 #        self.doc_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
-        self.tok_outputs = nn.Linear(my_config.hidden_size, 1) # tune to avoid fell into bad places
+        self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
 #        self.answer_type_outputs = nn.Linear(self.config.hidden_size, 2)
@@ -98,7 +94,7 @@ class NqModel(nn.Module):
             #tok_logits = tok_logits.view(tok_logits.size(0),self.my_config.max_token_len)
             #tok_logits = self.tok_to_label(tok_logits)
     #        print(graph_output.shape,self.config.hidden_size)
-            x = graph_output[:,0]
+            x = torch.cat(graph_output[:,0],sequence_output[:,0])
             x = self.dropout(x)
             tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             for index,lab in enumerate(label):
