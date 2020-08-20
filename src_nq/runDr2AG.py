@@ -321,8 +321,8 @@ def main():
     #train_dataset = None
     #train_features = None
     
-    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-    model.load_state_dict(torch.load(output_model_file))
+#    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+#    model.load_state_dict(torch.load(output_model_file))
     
     if args.do_train:
         num_train_features = 0
