@@ -482,7 +482,7 @@ class Encoder(nn.Module):
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
-        print(x_all.shape)
+        print(x.shape)
 #        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
 
         
@@ -541,7 +541,7 @@ class Encoder(nn.Module):
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
-        return torch.mean(x[index],-2)
+        return torch.mean(x,-2)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
