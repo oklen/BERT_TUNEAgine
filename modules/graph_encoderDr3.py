@@ -474,7 +474,7 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        print(hidden_states.shape)
+#        print(hidden_states.shape)
 
         x_all = hidden_states.view(-1,1,self.hidden_size)
         print(x_all.shape)
@@ -483,7 +483,7 @@ class Encoder(nn.Module):
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
-        print(x.shape)
+#        print(x.shape)
 #        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
 
         
@@ -540,8 +540,8 @@ class Encoder(nn.Module):
         sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
-        index = torch.unique(edges_tgt[sum_edge])
-        x[index] = 0
+#        index = torch.unique(edges_tgt[sum_edge])
+#        x[index] = 0
         x = self.average_pooling(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
         x = x.view(hidden_states.shape)
         
