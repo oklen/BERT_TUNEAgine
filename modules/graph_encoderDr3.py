@@ -535,7 +535,7 @@ class Encoder(nn.Module):
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
         index = torch.unique(edges_src[up_edge])
         x2 = x
-        x2.masked_fill_(index,0)
+        x2[index] = 0
         x -= x2
         x.view(hidden_states.shape)
         
