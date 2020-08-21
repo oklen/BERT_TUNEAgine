@@ -455,7 +455,7 @@ class Encoder(nn.Module):
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
         
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt(mid_edge))
+        self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
         
         
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
