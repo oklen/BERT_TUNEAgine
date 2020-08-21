@@ -287,10 +287,10 @@ def main():
     #print(my_config)
     if args.do_train:
         pretrained_config_file = os.path.join(args.model_dir, CONFIG_NAME)
-        bert_config = BertConfig(pretrained_config_file)
+#        bert_config = BertConfig(pretrained_config_file)
         pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
 
-        model = NqModel(bert_config=bert_config, my_config=my_config)
+        model = NqModel( my_config=my_config)
         #model_dict = model.state_dict()
         #pretrained_model_dict = torch.load(pretrained_model_file, map_location=lambda storage, loc: storage)
         #pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict.keys()}
@@ -298,8 +298,8 @@ def main():
         #model.load_state_dict(model_dict)
     else:
         pretrained_config_file = os.path.join(args.model_dir, CONFIG_NAME)
-        bert_config = BertConfig(pretrained_config_file)
-        model = NqModel(bert_config=bert_config, my_config=my_config)
+#        bert_config = BertConfig(pretrained_config_file)
+        model = NqModel( my_config=my_config)
         pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
         model.load_state_dict(torch.load(pretrained_model_file))
 
