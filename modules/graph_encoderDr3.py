@@ -475,6 +475,7 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         print(hidden_states.shape)
+
         x_all = hidden_states.view(-1,1,self.hidden_size)
         print(x_all.shape)
         for conv in self.conv2:
@@ -537,7 +538,7 @@ class Encoder(nn.Module):
         x2 = x
         x2[index] = 0
         x -= x2
-        x.view(hidden_states.shape)
+        x = x.view(hidden_states.shape)
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
