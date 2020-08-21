@@ -474,7 +474,7 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        
+        print(hidden_states.shape)
         x_all = hidden_states.view(-1,1,self.hidden_size)
         print(x_all.shape)
         for conv in self.conv2:
