@@ -534,18 +534,23 @@ class Encoder(nn.Module):
         x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
         
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
-        index = torch.unique(edges_src[up_edge])
-        x2 = x
-        x2[index] = 0
-        x -= x2
+        
+        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        
+        index = torch.unique(edges_tgt[sum_edge])
+        x[index] = 0
+        self.average_pooling(x,edges_src[sum_edge],edges_tgt[sum_edge])
         x = x.view(hidden_states.shape)
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
-        print(x.shape)
-        print(torch.mean(x,-2).shape)
+#        print(x.shape)
+#        print(torch.mean(x,-2).shape)
 
-        return torch.mean(x,-2)
+        return x
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
