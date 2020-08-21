@@ -477,7 +477,7 @@ class Encoder(nn.Module):
 #        print(hidden_states.shape)
 
         x_all = hidden_states.view(-1,1,self.hidden_size)
-        print(x_all.shape)
+#        print(x_all.shape)
         for conv in self.conv2:
             x = torch.tanh(conv(x_all,ex_edge))
             x = x.view(-1,1,self.hidden_size)
