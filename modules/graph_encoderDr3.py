@@ -439,7 +439,7 @@ class Encoder(nn.Module):
         # print(edges_src)
         # print(edges_tgt)
         indices = n_edges.nonzero().view(-1)
-        graph_hidden[indices] += sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
+        graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
 
         return graph_hidden.view(batch_size, n_nodes, hidden_size)
     
@@ -455,7 +455,7 @@ class Encoder(nn.Module):
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
         
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
+        x = self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
         
         
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
@@ -542,7 +542,7 @@ class Encoder(nn.Module):
         
         index = torch.unique(edges_tgt[sum_edge])
         x[index] = 0
-        self.average_pooling(x,edges_src[sum_edge],edges_tgt[sum_edge])
+        x = self.average_pooling(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
         x = x.view(hidden_states.shape)
         
 #        print(torch.mean(x[index],-2).shape)
