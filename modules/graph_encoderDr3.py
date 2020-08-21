@@ -489,10 +489,11 @@ class Encoder(nn.Module):
 #        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        
-        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        up_edge = None
+#        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
         up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
@@ -530,9 +531,10 @@ class Encoder(nn.Module):
 #        x = self.conv(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[])
         x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
-
+        index = torch.unique(edges_src[up_edge])
+        
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
-        return [self.norm(x.view(hidden_states.size()))]
+        return torch.mean(x[index],-2)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
