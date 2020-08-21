@@ -473,7 +473,7 @@ class Encoder(nn.Module):
         
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        ex_edge = [edges_src[ex_edge],edges_tgt[ex_edge]]
+        ex_edge = torch.stack(edges_src[ex_edge],edges_tgt[ex_edge])
         
         x_all = hidden_states.view(-1,1,self.hidden_size)
         
