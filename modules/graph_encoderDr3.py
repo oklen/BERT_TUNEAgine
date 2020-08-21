@@ -528,7 +528,7 @@ class Encoder(nn.Module):
         
 #        hidden_states = self.layer[0](hidden_states, st_mask, up_edgeA)
 #        x = self.conv(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[])
-        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]))
+        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
 
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
