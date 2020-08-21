@@ -418,7 +418,7 @@ class Encoder(nn.Module):
         for i in range(5):
             self.conv2.append(
                     DNAConv(config.hidden_size,32,16,0.1))
-        self.hidden_size = config.hidden_size,
+        self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
