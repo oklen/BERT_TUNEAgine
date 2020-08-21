@@ -541,6 +541,8 @@ class Encoder(nn.Module):
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
+        print(x.shape)
+        print(torch.mean(x,-2).shape)
         return torch.mean(x,-2)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
