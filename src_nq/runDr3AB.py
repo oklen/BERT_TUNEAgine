@@ -382,7 +382,7 @@ def main():
         
 
     global_step = 0
-    last_acc = 84.3704066634003
+    last_acc = 63.0
     
     if args.do_train:
         logger.info("***** Running training *****")
@@ -414,7 +414,7 @@ def main():
                 for step, batch in enumerate(train_dataloader):
     
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:

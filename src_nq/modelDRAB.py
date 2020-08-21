@@ -52,6 +52,8 @@ class NqModel(nn.Module):
 
         self.ACC = 0
         self.ALL = 0
+        
+        self.ErrId = []
 
         #self.apply(self.init_bert_weights)
 
@@ -112,6 +114,7 @@ class NqModel(nn.Module):
             self.ALL+=1
             if torch.argmax(score) == res_labels:
                 self.ACC+=1
+
 #        print(self.ALL,self.ACC)
 #        print("ACC:{}".format(self.ACC/self.ALL))
 #        print(tok_logits.shape,res_labels.shape)
