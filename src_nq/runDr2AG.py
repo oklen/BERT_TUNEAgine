@@ -181,7 +181,7 @@ def main():
                              "be truncated to this length.")
     parser.add_argument("--do_train", action='store_true', help="Whether to run training.")
     parser.add_argument("--do_predict", action='store_true', help="Whether to run eval on the dev set.")
-    parser.add_argument("--report_steps", default=100, type=int, help="report steps when training.")
+    parser.add_argument("--report_steps", default=50, type=int, help="report steps when training.")
     parser.add_argument("--train_batch_size", default=4, type=int, help="Total batch size for training.")
     parser.add_argument("--predict_batch_size", default=8, type=int, help="Total batch size for predictions.")
     parser.add_argument("--learning_rate", default=2e-5, type=float, help="The initial learning rate for Adam.")
