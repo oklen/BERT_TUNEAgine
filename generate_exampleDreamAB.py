@@ -47,7 +47,7 @@ else:
 
 
 from spacy.lang.en import English
-from modules.graph_encoderDr3 import NodePosition, Graph, EdgeType, get_edge_position
+from modules.graph_encoderAB import NodePosition, Graph, EdgeType, get_edge_position
 
 
 nlp = English()
@@ -270,7 +270,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 
 
             input_ids = tokenizer.convert_tokens_to_ids(mtokens)
-            segment_ids = [0]*tok_is_question_begin + [0]*(len(input_ids)-tok_is_question_begin)
+            segment_ids = [0]*tok_is_question_begin + [1]*(len(input_ids)-tok_is_question_begin)
             input_mask = [1]*len(input_ids)
             while len(input_ids) < args.max_seq_length:
                 input_ids.append(0)
@@ -476,7 +476,7 @@ def main():
     args = parser.parse_args()
 
     #tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
-    tokenizer = AutoTokenizer.from_pretrained("roberta-large-mnli")
+    tokenizer = AutoTokenizer.from_pretrained("albert-base-v2")
     print("Vocab SIze!",tokenizer.vocab_size)
     
 
