@@ -35,7 +35,7 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 from glob import glob
-from pytorch_pretrained_bert.modeling import BertForQuestionAnswering, BertConfig
+
 
 
 
