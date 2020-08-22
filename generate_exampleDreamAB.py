@@ -355,8 +355,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 #                    graph.add_edge(anode,bnode,EdgeType.A_TO_B)
 #                    graph.add_edge(anode,bnode,EdgeType.B_TO_A)
                 if NEXT_B != 100000:
-                    graph.add.edge(anode,NEXT_B,EdgeType.A_TO_NB)
-                    graph.add.edge(NEXT_B,anode,EdgeType.B_TO_BA)
+                    graph.add_edge(anode,NEXT_B,EdgeType.A_TO_NB)
+                    graph.add_edge(NEXT_B,anode,EdgeType.B_TO_BA)
                 if BEFORE_B != -1:
                     graph.add_edge(anode,BEFORE_B,EdgeType.A_TO_BB)
                     graph.add_edge(BEFORE_B,anode,EdgeType.B_TO_NA)
