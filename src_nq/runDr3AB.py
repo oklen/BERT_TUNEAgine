@@ -296,12 +296,12 @@ def main():
         #pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict.keys()}
         #model_dict.update(pretrained_model_dict)
         #model.load_state_dict(model_dict)
-    else:
-        pretrained_config_file = os.path.join(args.model_dir, CONFIG_NAME)
-#        bert_config = BertConfig(pretrained_config_file)
-        model = NqModel( my_config=my_config)
-        pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
-        model.load_state_dict(torch.load(pretrained_model_file))
+#    else:
+#        pretrained_config_file = os.path.join(args.model_dir, CONFIG_NAME)
+##        bert_config = BertConfig(pretrained_config_file)
+#        model = NqModel( my_config=my_config)
+#        pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
+#        model.load_state_dict(torch.load(pretrained_model_file))
 
     if args.fp16:
         model.half()
