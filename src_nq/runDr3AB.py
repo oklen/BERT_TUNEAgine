@@ -120,7 +120,7 @@ def batcher(device, is_training=False):
             edges_poss.append(edges_pos)
             labels.append(label)
             
-        unique_idss = torch.tensor(unique_idss,dtype=torch.long)
+#        unique_idss = torch.tensor(unique_idss,dtype=torch.long)
         input_idss = torch.tensor(input_idss,dtype=torch.long)
         input_masks = torch.tensor(input_masks,dtype=torch.long)
         segment_idss = torch.tensor(segment_idss,dtype=torch.long)

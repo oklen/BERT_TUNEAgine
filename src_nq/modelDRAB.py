@@ -14,7 +14,7 @@ class NqModel(nn.Module):
         #albert_base_configuration = AlbertConfig(vocab_size=30000,hidden_size=768,num_attention_heads=12,intermediate_size=3072,
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
-        self.bert =  RobertaModel.from_pretrained("albert-base-v2")
+        self.bert =  AlbertModel.from_pretrained("albert-base-v2")
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
