@@ -423,6 +423,7 @@ class Encoder(nn.Module):
         for i in range(5):
             self.conv2.append(
                     DNAConv(config.hidden_size,32,2,0.1))
+            
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
@@ -478,6 +479,10 @@ class Encoder(nn.Module):
         
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#####################################################
+        ex_edge += edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+####################################################
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
 #        print(hidden_states.shape)
 
@@ -488,6 +493,7 @@ class Encoder(nn.Module):
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
+        
 #        print(x.shape)
 #        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
 
