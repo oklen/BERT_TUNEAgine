@@ -37,6 +37,11 @@ class EdgeType(enum.IntEnum):
     A_TO_CLS = 18
     B_TO_CLS = 19
     
+    A_TO_NB = 20
+    A_TO_BB = 21
+    
+    B_TO_NA = 22
+    B_TO_BA = 23
     
     
 

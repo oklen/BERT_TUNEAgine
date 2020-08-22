@@ -32,11 +32,16 @@ class EdgeType(enum.IntEnum):
     CHOICE_TO_A = 16
 
     CHOICE_TO_B = 17
-
+    
     
     A_TO_CLS = 18
     B_TO_CLS = 19
     
+    A_TO_NB = 20
+    A_TO_BB = 21
+    
+    B_TO_NA = 22
+    B_TO_BA = 23
     
     
 
@@ -499,6 +504,10 @@ class Encoder(nn.Module):
         up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
+        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
 #    
 #        up_edge2 = edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
 #        down_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
