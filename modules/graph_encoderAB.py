@@ -455,22 +455,22 @@ class Encoder(nn.Module):
     
     
         def average_poolingOver(cls, graph_hidden, edges_src, edges_tgt):
-        batch_size, n_nodes, hidden_size = graph_hidden.size()
-        graph_hidden = graph_hidden.view(batch_size * n_nodes, hidden_size)
-        src_tensor = graph_hidden[edges_src]
-
-        indices = edges_tgt.view(-1, 1).expand(-1, hidden_size)
-        sum_hidden = graph_hidden.clone().fill_(0)
-        sum_hidden.scatter_add_(dim=0, index=indices, src=src_tensor)
-
-        n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
-        n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
-        # print(edges_src)
-        # print(edges_tgt)
-        indices = n_edges.nonzero().view(-1)
-        graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
-
-        return graph_hidden.view(batch_size, n_nodes, hidden_size)
+            batch_size, n_nodes, hidden_size = graph_hidden.size()
+            graph_hidden = graph_hidden.view(batch_size * n_nodes, hidden_size)
+            src_tensor = graph_hidden[edges_src]
+    
+            indices = edges_tgt.view(-1, 1).expand(-1, hidden_size)
+            sum_hidden = graph_hidden.clone().fill_(0)
+            sum_hidden.scatter_add_(dim=0, index=indices, src=src_tensor)
+    
+            n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
+            n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
+            # print(edges_src)
+            # print(edges_tgt)
+            indices = n_edges.nonzero().view(-1)
+            graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
+    
+            return graph_hidden.view(batch_size, n_nodes, hidden_size)
     
     
     
