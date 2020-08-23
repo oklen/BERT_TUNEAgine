@@ -418,7 +418,7 @@ class Encoder(nn.Module):
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
         self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
-        self.conv3 = RGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
+        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         self.conv2 = torch.nn.ModuleList()
         self.conv22 = torch.nn.ModuleList()
         
