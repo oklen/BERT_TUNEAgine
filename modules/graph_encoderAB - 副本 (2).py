@@ -449,7 +449,7 @@ class Encoder(nn.Module):
         # print(edges_src)
         # print(edges_tgt)
         indices = n_edges.nonzero().view(-1)
-        graph_hidden[indices] += sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
+        graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
 
         return graph_hidden.view(batch_size, n_nodes, hidden_size)
     
