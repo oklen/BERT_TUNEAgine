@@ -507,8 +507,8 @@ class Encoder(nn.Module):
 #        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
 #        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
 #        
-#        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
-#        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
+        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
 
         x_all = hidden_states.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
