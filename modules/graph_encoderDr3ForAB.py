@@ -414,9 +414,9 @@ class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
 #        self.initializer = Initializer(config)
-        layer = EncoderLayer(config)
+#        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
-        self.layer = nn.ModuleList([layer])
+#        self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
         self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         self.conv2 = torch.nn.ModuleList()
