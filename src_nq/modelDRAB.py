@@ -86,7 +86,7 @@ class NqModel(nn.Module):
             #exit(0)
             #print("ALBERT DONE!")
     #        print("BEFORE GRAPH:",sequence_output.shape)
-            graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+#            graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
             
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
@@ -103,7 +103,7 @@ class NqModel(nn.Module):
     #        print(graph_output.shape,self.config.hidden_size)
 #            print(graph_output[:,0])
 #            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
-            x = graph_output[:,0]
+            x = sequence_output[:,0]
             x = self.dropout(x)
 #            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x)))).squeeze(-1))
