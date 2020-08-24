@@ -418,16 +418,21 @@ class Encoder(nn.Module):
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
         self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
-        self.conv3 = RGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
+        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(5):
+        self.conv22 = torch.nn.ModuleList()
+        
+        for i in range(3):
             self.conv2.append(
-                    DNAConv(config.hidden_size,32,2,0.1))
+                    DNAConv(config.hidden_size,32,4,0.1))
+            self.conv22.append(
+                    DNAConv(config.hidden_size,32,4,0.1))
+            
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
-        self.norm = nn.LayerNorm([512,config.hidden_size],1e-05)
+#        self.norm = nn.LayerNorm([512,config.hidden_size],1e-05)
         
     @classmethod
     def average_pooling(cls, graph_hidden, edges_src, edges_tgt):
