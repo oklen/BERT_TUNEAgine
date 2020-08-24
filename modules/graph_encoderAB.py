@@ -582,10 +582,10 @@ class Encoder(nn.Module):
         
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
         
-#        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
-#        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-#        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
-#        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
 #        index = torch.unique(edges_tgt[sum_edge])
 #        x[index] = 0
