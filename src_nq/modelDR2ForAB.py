@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertMode
 #  albert-large-v2
 
 class NqModel(nn.Module):
-    def __init__(self, bert_config, my_config):
+    def __init__(self, my_config):
         super(NqModel, self).__init__()
         #albert_base_configuration = AlbertConfig(vocab_size=30000,hidden_size=768,num_attention_heads=12,intermediate_size=3072,
         #                                        attention_probs_dropout_prob=0)
