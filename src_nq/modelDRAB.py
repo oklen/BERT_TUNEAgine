@@ -37,6 +37,7 @@ class NqModel(nn.Module):
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
         self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
+        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
 #        self.answer_type_outputs = nn.Linear(self.config.hidden_size, 2)
@@ -83,9 +84,9 @@ class NqModel(nn.Module):
             #exit(0)
             #print("ALBERT DONE!")
     #        print("BEFORE GRAPH:",sequence_output.shape)
-            graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+#            graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
             
-            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+#            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
 #            q_pos = edges_src[q_pos]
@@ -99,7 +100,8 @@ class NqModel(nn.Module):
             #tok_logits = self.tok_to_label(tok_logits)
     #        print(graph_output.shape,self.config.hidden_size)
 #            print(graph_output[:,0])
-            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
+#            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
+            x = sequence_output[:,0]
             x = self.dropout(x)
             tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             for index,lab in enumerate(label):
