@@ -3,18 +3,18 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderDr3 import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderDr3ForAB import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
 
 class NqModel(nn.Module):
-    def __init__(self, my_config):
+    def __init__(self, bert_config, my_config):
         super(NqModel, self).__init__()
         #albert_base_configuration = AlbertConfig(vocab_size=30000,hidden_size=768,num_attention_heads=12,intermediate_size=3072,
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
-        self.bert =  AlbertModel.from_pretrained("albert-base-v2")
+        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli")
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
@@ -46,19 +46,16 @@ class NqModel(nn.Module):
 
         #self.encoder = Encoder(my_config)
         self.encoder = Encoder(my_config)
-        self.encoder2 = Encoder(my_config)
-        
+#        self.encoder2 = Encoder(my_config)
         self.my_config = my_config
 #        self.my_mask = 
 
         self.ACC = 0
         self.ALL = 0
-        
-        self.ErrId = []
 
         #self.apply(self.init_bert_weights)
 
-    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,unique_idss):
+    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels):
 
 #model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask, batch.st_index,
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),
@@ -84,8 +81,7 @@ class NqModel(nn.Module):
             #print("ALBERT DONE!")
     #        print("BEFORE GRAPH:",sequence_output.shape)
             graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
-            
-            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+#            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)[0]
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
 #            q_pos = edges_src[q_pos]
@@ -116,7 +112,6 @@ class NqModel(nn.Module):
             self.ALL+=1
             if torch.argmax(score) == res_labels:
                 self.ACC+=1
-
 #        print(self.ALL,self.ACC)
 #        print("ACC:{}".format(self.ACC/self.ALL))
 #        print(tok_logits.shape,res_labels.shape)
