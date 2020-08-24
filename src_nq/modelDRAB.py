@@ -31,6 +31,8 @@ class NqModel(nn.Module):
 
         #print(my_config,bert_config)
         self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
+        
+        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
 #        self.doc_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
         
