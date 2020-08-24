@@ -334,9 +334,16 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 
             for tok_index in range(tok_is_question_begin,tok_is_question_end):
                 graph.add_edge(tok_index,tok_is_question_begin,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
+                for tindex in range(1,tok_is_sentence_end[-1]):
+                    graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
+                    graph.add_edge(tindex,tok_index,EdgeType.QA_TO_C)
+                    
             for tok_index in range(tok_is_choice_begin,tok_is_choice_end):
                 graph.add_edge(tok_index,tok_is_choice_begin,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
-                
+                for tindex in range(1,tok_is_sentence_end[-1]):
+                    graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
+                    graph.add_edge(tindex,tok_index,EdgeType.QA_TO_C)
+            
             graph.add_edge(tok_is_question_begin,0,EdgeType.QUESTION_TO_CLS)
             graph.add_edge(tok_is_choice_begin,0,EdgeType.CHOICE_TO_CLS)
             

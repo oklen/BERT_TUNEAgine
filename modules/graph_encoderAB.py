@@ -43,6 +43,9 @@ class EdgeType(enum.IntEnum):
     B_TO_NA = 22
     B_TO_BA = 23
     
+    C_TO_QA = 24
+    QA_TO_C = 25
+    
     
 
 
@@ -485,29 +488,27 @@ class Encoder(nn.Module):
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
         
-        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        x = self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
+
         
         
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
         
-        ex_edge1  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+        ex_edge1  = edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
-        ex_edge2 = edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-        
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
-        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-#        print(hidden_states.shape)
+        ex_edge2 = edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()
+#        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+#        
+#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#        
+#        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
+#        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
 
         x_all = hidden_states.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
@@ -517,6 +518,11 @@ class Encoder(nn.Module):
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
+        
+        
+        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        x = self.average_pooling(x.view(hidden_states.shape),edges_src[mid_edge],edges_tgt[mid_edge])
+        
 #        print(x.shape)
 #        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
 
@@ -524,19 +530,19 @@ class Encoder(nn.Module):
 #        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        
-        up_edge = None
+#        up_edge = None
 #        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
-        up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        
-        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+#        up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
 #    
 #        up_edge2 = edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
 #        down_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
@@ -550,19 +556,19 @@ class Encoder(nn.Module):
         
         #Use Up edge
         
-        up_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-        
-        up_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-        
-        up_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        up_edge += edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
-        up_edge += edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         
 
 #        up_edgeA = (edges_src[up_edge], edges_tgt[up_edge], edges_type[up_edge], edges_pos[up_edge])
@@ -572,14 +578,14 @@ class Encoder(nn.Module):
 #        hidden_states = self.layer[0](hidden_states, st_mask, up_edgeA)
 #        x = self.conv(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[])
         
-        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
+#        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
         
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
         
-        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
-        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
-        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+#        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+#        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+#        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+#        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
 #        index = torch.unique(edges_tgt[sum_edge])
 #        x[index] = 0
