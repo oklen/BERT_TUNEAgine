@@ -427,9 +427,9 @@ class Encoder(nn.Module):
         
         for i in range(1):
             self.conv2.append(
-                    DNAConv(config.hidden_size,24,2,0.1))
+                    DNAConv(config.hidden_size,24,2,0.2))
             self.conv22.append(
-                    DNAConv(config.hidden_size,24,2,0.1))
+                    DNAConv(config.hidden_size,24,2,0.2))
             
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
@@ -521,6 +521,9 @@ class Encoder(nn.Module):
         
         
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        
         x = self.average_pooling(x.view(hidden_states.shape),edges_src[mid_edge],edges_tgt[mid_edge])
         
 #        print(x.shape)
@@ -584,20 +587,24 @@ class Encoder(nn.Module):
         
         sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
-        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+
         
-#        index = torch.unique(edges_tgt[sum_edge])
-#        x[index] = 0
         x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
-        x = x.view(hidden_states.shape)
+        
+        x1 = x.view(hidden_states.shape)[:,0]
+        sum_edge = edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
+        x2 = x.view(hidden_states.shape)[:,0]
+        
+#        x = x.view(hidden_states.shape)
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
 
-        return x
+        return torch.cat([x1,x2],-1)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
