@@ -106,7 +106,7 @@ class NqModel(nn.Module):
             x = sequence_output[:,0]
             x = self.dropout(x)
 #            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense2(x)))).squeeze(-1))
+            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x)))).squeeze(-1))
 
             for index,lab in enumerate(label):
                 if lab == 1:
