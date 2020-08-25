@@ -451,7 +451,9 @@ class DGraphAttention(nn.Module):
 
 
         tgt_query_tensor = query_layer[edges_tgt]
-
+        
+        print(src_key_tensor.shape)
+        print(tgt_query_tensor.shape)
         # (n_edges, n_heads)
         attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size))
 
