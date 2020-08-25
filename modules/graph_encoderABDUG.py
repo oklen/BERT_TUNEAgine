@@ -466,7 +466,7 @@ class DGraphAttention(nn.Module):
         # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
 #        print(attention_scores.shape)
 #        print(value_layer[edges_src].shape)
-        value_layer[edges_tgt] = torch.matmul(value_layer[edges_tgt],attention_scores)
+        value_layer[edges_src] = torch.matmul(value_layer[edges_src],attention_scores)
 #        value_layer[edges_tgt] *= attention_scores
         hidden_states = value_layer.view(hidden_states.shape)
 #        output = hidden_states.data.new(
