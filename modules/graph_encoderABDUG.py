@@ -448,8 +448,8 @@ class DGraphAttention(nn.Module):
 
         tgt_query_tensor = query_layer[edges_tgt]
         
-        print(src_key_tensor.shape)
-        print(tgt_query_tensor.shape)
+#        print(src_key_tensor.shape)
+#        print(tgt_query_tensor.shape)
         
 #        exit(0)
         # (n_edges, n_heads)
@@ -597,8 +597,8 @@ class Encoder(nn.Module):
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
-        hidden_states1 = torch.mean(1,hidden_states1)
-        hidden_states2 = torch.mean(1,hidden_states2)
+        hidden_states1 = torch.mean(hidden_states1,1)
+        hidden_states2 = torch.mean(hidden_states2,1)
         return torch.cat([hidden_states1,hidden_states2],-1)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
