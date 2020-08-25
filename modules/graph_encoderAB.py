@@ -579,8 +579,10 @@ class Encoder(nn.Module):
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
             
-        x_all = x_all[:,1:,:]
+#        x_all = x_all[:,1:,:]
 #        print(x_all.shape)
+            
+        return torch.cat([torch.mean(x_all[:,-1,:],1),torch.mean(x_all[:,-2,:],1)],-1)
         x = x_all.mean(1)
         
 #        print(x.shape)
