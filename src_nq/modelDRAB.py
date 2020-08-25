@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderAB import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
