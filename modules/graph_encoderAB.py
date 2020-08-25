@@ -619,13 +619,14 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         for conv1,conv2 in zip(self.conv2,self.conv22):
             x = torch.tanh(conv1(x_all,ex_edge1))
-            x += torch.tanh(conv2(x_all,ex_edge2))
-            x /= 2
+            x_all = torch.cat([x_all, x.view(-1,1,self.hidden_size)], dim=1)
+            
+            x = torch.tanh(conv1(x_all,ex_edge2))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
         
-        
+        print(x.shape)
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
