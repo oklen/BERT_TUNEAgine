@@ -624,10 +624,10 @@ class Encoder(nn.Module):
             x = torch.tanh(conv1(x_all,ex_edge2))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
-        print(x_all.shape)
-        x = x_all[:, -1]
+#        print(x_all.shape)
+        x = x_all.mean(-1)
         
-        print(x.shape)
+#        print(x.shape)
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
