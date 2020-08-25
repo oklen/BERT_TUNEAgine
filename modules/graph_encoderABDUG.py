@@ -443,7 +443,8 @@ class DGraphAttention(nn.Module):
         
         edges_src = torch.unique(edges_src)
         edges_tgt = torch.unique(edges_tgt)
-        
+        print(edges_src.shape)
+        print(edges_tgt.shape)
         # (n_edges, n_heads, head_size)
         src_key_tensor = key_layer[edges_src]
 
