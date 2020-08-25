@@ -592,6 +592,9 @@ class Encoder(nn.Module):
         x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
         
         x1 = x.view(hidden_states.shape)[:,0]
+        
+        x1 *= len(torch.unique(edges_tgt[sum_edge]))
+        
         sum_edge = edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
