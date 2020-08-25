@@ -455,7 +455,7 @@ class DGraphAttention(nn.Module):
         
 #        exit(0)
         # (n_edges, n_heads)
-        attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size))
+        attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size),0)
 
 #        sum_attention_scores = hidden_states.data.new(batch_size * seq_len, self.num_attention_heads).fill_(0)
 #        indices = edges_tgt.view(-1, 1).expand(-1, self.num_attention_heads)
