@@ -413,108 +413,62 @@ class EncoderLayer(nn.Module):  #Only Use Multi of this
         return layer_output
 
 
+
 class DGraphAttention(nn.Module):
-    def __init__(self, config, max_seq_len, max_relative_position):
-        super(GraphAttention, self).__init__()
+    def __init__(self, config):
+        super(IntegrationLayer, self).__init__()
         if config.hidden_size % config.num_attention_heads != 0:
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
                 "heads (%d)" % (config.hidden_size, config.num_attention_heads))
-            
         self.num_attention_heads = config.num_attention_heads
         self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
         self.query = nn.Linear(config.hidden_size, self.all_head_size)
         self.key = nn.Linear(config.hidden_size, self.all_head_size)
         self.value = nn.Linear(config.hidden_size, self.all_head_size)
-        self.max_seq_len = max_seq_len
-        self.max_relative_position = max_relative_position
-        self.use_relative_embeddings = config.use_relative_embeddings
+        self.num_edge_types = config.num_edge_types
 
-        self.relative_key_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
-
-        self.relative_value_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
-
-        self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
-
-        self.indices = []
-        for i in range(self.max_seq_len):
-            self.indices.append([])
-            for j in range(self.max_seq_len):
-                position = min(max(0, j - i + max_relative_position), max_relative_position * 2)
-                self.indices[-1].append(position)
-
-        self.indices = nn.Parameter(torch.LongTensor(self.indices), requires_grad=False)
-
-    def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(*new_x_shape)
-        return x.permute(0, 2, 1, 3)
-
-    def forward(self, hidden_states, VK,Q,st_mask):
-        batch_size = hidden_states.size(0)
-
-        attention_mask = st_mask.unsqueeze(1).unsqueeze(2)
-
-        attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
-        attention_mask = (1.0 - attention_mask) * -10000.0
-
-        mixed_query_layer = self.query(hidden_states[Q])
-        mixed_key_layer = self.key(hidden_states[VK])
-        mixed_value_layer = self.value(hidden_states[VK])
-
-        # (batch_size, num_attention_heads, seq_len, attention_head_size)
-        query_layer = self.transpose_for_scores(mixed_query_layer)
-        key_layer = self.transpose_for_scores(mixed_key_layer)
-        value_layer = self.transpose_for_scores(mixed_value_layer)
-
-        # Take the dot product between "query" and "key" to get the raw attention scores.
-        # (batch_size, num_attention_heads, seq_len, seq_len)
-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+    def forward(self, hidden_states, edges):
+        edges_src, edges_tgt, edges_type, edges_pos = edges
+        batch_size, seq_len = hidden_states.size(0), hidden_states.size(1)
+        query_layer = self.query(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
+                                                     self.attention_head_size)
+        key_layer = self.key(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
+                                                 self.attention_head_size)
+        value_layer = self.value(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
+                                                     self.attention_head_size)
+        # print(hidden_states)
+        # (n_edges, n_heads, head_size)
+        src_key_tensor = key_layer[edges_src]
 
 
-        # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
-        relative_attention_scores = torch.matmul(query_layer, self.relative_key_embeddings.weight.transpose(-1, -2))
+        tgt_query_tensor = query_layer[edges_tgt]
 
-        # fill the attention score matrix
-        batch_indices = self.indices.unsqueeze(0).unsqueeze(1).expand(batch_size, self.num_attention_heads, -1, -1)
-        attention_scores = attention_scores + torch.gather(input=relative_attention_scores, dim=3,
-                                                           index=batch_indices)
+        # (n_edges, n_heads)
+        attention_scores = torch.softmax((tgt_query_tensor * src_key_tensor).sum(-1) / math.sqrt(self.attention_head_size))
 
-            # new_scores_shape = (batch_size * self.num_attention_heads, self.max_seq_len, -1)
-            # print(temp_tensor)
-            # print("query", query_layer)
-            # print("key_embeddings", self.relative_key_embeddings)
-            # print("relative_scores", relative_attention_scores)
-            # attention_scores = attention_scores.view(*new_scores_shape)  # + temp_tensor
-            # print("attention_scores", attention_scores)
-            # attention_scores = attention_scores.view(batch_size, self.num_attention_heads, -1, self.max_seq_len)
-            # TODO is masking necessary?
+        sum_attention_scores = hidden_states.data.new(batch_size * seq_len, self.num_attention_heads).fill_(0)
+        indices = edges_tgt.view(-1, 1).expand(-1, self.num_attention_heads)
+        sum_attention_scores.scatter_add_(dim=0, index=indices, src=attention_scores)
 
-        # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
-        attention_scores = attention_scores + attention_mask
+        # print("before", attention_scores)
+        attention_scores = attention_scores / sum_attention_scores[edges_tgt]
+        # print("after", attention_scores)
 
-        # Normalize the attention scores to probabilities.
-        attention_probs = nn.Softmax(dim=-1)(attention_scores)
-        # This is actually dropping out entire tokens to attend to, which might
-        # seem a bit unusual, but is taken from the original Transformer paper.
-        attention_probs = self.dropout(attention_probs)
+        # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
+        
+        value_layer[edges_src] *= attention_scores.unsqueeze(-1)
+        hidden_states = value_layer.view(hidden_states.shape)
+#        output = hidden_states.data.new(
+#            batch_size * seq_len, self.num_attention_heads, self.attention_head_size).fill_(0)
+#        indices = edges_tgt.view(-1, 1, 1).expand(-1, self.num_attention_heads, self.attention_head_size)
+#        output.scatter_add_(dim=0, index=indices, src=src_value_tensor)
+#        output = output.view(batch_size, seq_len, -1)
 
-        # (batch_size, num_attention_heads, seq_len, head_size)
-        context_layer = torch.matmul(attention_probs, value_layer)
+        # print(hidden_states.shape, output.shape)
+        return hidden_states
 
-        if self.use_relative_embeddings:
-            # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
-            relative_attention_probs = torch.zeros_like(relative_attention_scores)
-            relative_attention_probs.scatter_add_(dim=3, index=batch_indices, src=attention_probs)
-            relative_values = torch.matmul(relative_attention_probs, self.relative_value_embeddings.weight)
-            context_layer = context_layer + relative_values
-        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
-        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
-        context_layer = context_layer.view(*new_context_layer_shape)
-
-        return context_layer
 
 
 
@@ -624,6 +578,8 @@ class Encoder(nn.Module):
             x = torch.tanh(conv1(x_all,ex_edge2))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
+            
+        x_all = x_all[:,1:,:]
 #        print(x_all.shape)
         x = x_all.mean(1)
         
