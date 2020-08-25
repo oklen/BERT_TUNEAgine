@@ -581,7 +581,8 @@ class Encoder(nn.Module):
             
 #        x_all = x_all[:,1:,:]
 #        print(x_all.shape)
-            
+        print(x_all.shape)
+        exit(0)
         return torch.cat([torch.mean(x_all[:,-1,:],0),torch.mean(x_all[:,-2,:],0)],-1)
         x = x_all.mean(1)
         
