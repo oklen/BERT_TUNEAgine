@@ -672,7 +672,7 @@ class Encoder(nn.Module):
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
-
+        
         return torch.cat([x1,x2],-1)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
