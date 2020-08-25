@@ -443,13 +443,8 @@ class DGraphAttention(nn.Module):
         
         edges_src = torch.unique(edges_src)
         edges_tgt = torch.unique(edges_tgt)
-        print(edges_src.shape)
-        print(edges_tgt.shape)
-        print(edges_tgt)
-        print(edges_src)
-        # (n_edges, n_heads, head_size)
-        src_key_tensor = key_layer[edges_src]
 
+        src_key_tensor = key_layer[edges_src]
 
         tgt_query_tensor = query_layer[edges_tgt]
         
@@ -469,9 +464,10 @@ class DGraphAttention(nn.Module):
         # print("after", attention_scores)
 
         # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
-        print(attention_scores.shape)
-        print(value_layer[edges_src].shape)
-        value_layer[edges_src] *= attention_scores.view(-1,self.hidden_size)
+#        print(attention_scores.shape)
+#        print(value_layer[edges_src].shape)
+        value_layer[edges_tgt] = torch.matmal(value_layer[edges_tgt],attention_scores)
+#        value_layer[edges_tgt] *= attention_scores
         hidden_states = value_layer.view(hidden_states.shape)
 #        output = hidden_states.data.new(
 #            batch_size * seq_len, self.num_attention_heads, self.attention_head_size).fill_(0)
