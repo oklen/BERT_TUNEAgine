@@ -414,7 +414,7 @@ class EncoderLayer(nn.Module):  #Only Use Multi of this
 
 
 class DGraphAttention(nn.Module):
-    def __init__(self, config, max_seq_len):
+    def __init__(self, config, max_seq_len, max_relative_position):
         super(GraphAttention, self).__init__()
         if config.hidden_size % config.num_attention_heads != 0:
             raise ValueError(
@@ -428,9 +428,24 @@ class DGraphAttention(nn.Module):
         self.key = nn.Linear(config.hidden_size, self.all_head_size)
         self.value = nn.Linear(config.hidden_size, self.all_head_size)
         self.max_seq_len = max_seq_len
+        self.max_relative_position = max_relative_position
+        self.use_relative_embeddings = config.use_relative_embeddings
+
+        self.relative_key_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
+
+        self.relative_value_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
 
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
-        
+
+        self.indices = []
+        for i in range(self.max_seq_len):
+            self.indices.append([])
+            for j in range(self.max_seq_len):
+                position = min(max(0, j - i + max_relative_position), max_relative_position * 2)
+                self.indices[-1].append(position)
+
+        self.indices = nn.Parameter(torch.LongTensor(self.indices), requires_grad=False)
+
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
         x = x.view(*new_x_shape)
@@ -439,10 +454,10 @@ class DGraphAttention(nn.Module):
     def forward(self, hidden_states, VK,Q,st_mask):
         batch_size = hidden_states.size(0)
 
-#        attention_mask = st_mask.unsqueeze(1).unsqueeze(2)
-#
-#        attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
-#        attention_mask = (1.0 - attention_mask) * -10000.0
+        attention_mask = st_mask.unsqueeze(1).unsqueeze(2)
+
+        attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
+        attention_mask = (1.0 - attention_mask) * -10000.0
 
         mixed_query_layer = self.query(hidden_states[Q])
         mixed_key_layer = self.key(hidden_states[VK])
@@ -458,6 +473,15 @@ class DGraphAttention(nn.Module):
         attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
 
+
+        # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
+        relative_attention_scores = torch.matmul(query_layer, self.relative_key_embeddings.weight.transpose(-1, -2))
+
+        # fill the attention score matrix
+        batch_indices = self.indices.unsqueeze(0).unsqueeze(1).expand(batch_size, self.num_attention_heads, -1, -1)
+        attention_scores = attention_scores + torch.gather(input=relative_attention_scores, dim=3,
+                                                           index=batch_indices)
+
             # new_scores_shape = (batch_size * self.num_attention_heads, self.max_seq_len, -1)
             # print(temp_tensor)
             # print("query", query_layer)
@@ -469,7 +493,7 @@ class DGraphAttention(nn.Module):
             # TODO is masking necessary?
 
         # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
-#        attention_scores = attention_scores + attention_mask
+        attention_scores = attention_scores + attention_mask
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.Softmax(dim=-1)(attention_scores)
@@ -479,7 +503,13 @@ class DGraphAttention(nn.Module):
 
         # (batch_size, num_attention_heads, seq_len, head_size)
         context_layer = torch.matmul(attention_probs, value_layer)
-        
+
+        if self.use_relative_embeddings:
+            # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
+            relative_attention_probs = torch.zeros_like(relative_attention_scores)
+            relative_attention_probs.scatter_add_(dim=3, index=batch_indices, src=attention_probs)
+            relative_values = torch.matmul(relative_attention_probs, self.relative_value_embeddings.weight)
+            context_layer = context_layer + relative_values
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
         context_layer = context_layer.view(*new_context_layer_shape)
@@ -496,10 +526,21 @@ class Encoder(nn.Module):
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
 #        self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
-#        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)            
+#        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
+        self.conv2 = torch.nn.ModuleList()
+        self.conv22 = torch.nn.ModuleList()
+        
+        for i in range(1):
+            self.conv2.append(
+                    DNAConv(config.hidden_size,24,2,0.2))
+            self.conv22.append(
+                    DNAConv(config.hidden_size,24,2,0.2))
+            
         self.hidden_size = config.hidden_size
-        self.DAT1 = DGraphAttention(config,512)
-        self.DAT2 = DGraphAttention(config,512)
+#        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
+        
+#        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
+        self.norm = nn.LayerNorm([512,config.hidden_size],1e-05)
         
     @classmethod
     def average_pooling(cls, graph_hidden, edges_src, edges_tgt):
@@ -545,7 +586,110 @@ class Encoder(nn.Module):
 #        hidden_states = self.initializer(hidden_states, st_mask, edges)
         
         edges_src, edges_tgt, edges_type, edges_pos = edges
-        Context = torch.unique(edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist())
+#       QA_TO_CLS = 4
+#       SENTENCE_TO_CLS = 5
+#       SENTENCE_TO_NEXT = 6
+#       SENTENCE_TO_BEFORE = 7
+            
+#        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
+        
+
+        
+        
+#        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        
+        
+        ex_edge1  = edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+#        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+
+        
+        ex_edge2 = edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()
+#        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+#        
+#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#        
+        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
+        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+
+        x_all = hidden_states.view(-1,1,self.hidden_size)
+#        print(x_all.shape)
+        for conv1,conv2 in zip(self.conv2,self.conv22):
+            x = torch.tanh(conv1(x_all,ex_edge1))
+            x += torch.tanh(conv2(x_all,ex_edge2))
+            x /= 2
+            x = x.view(-1,1,self.hidden_size)
+            x_all = torch.cat([x_all, x], dim=1)
+        x = x_all[:, -1]
+        
+        
+        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        
+        x = self.average_pooling(x.view(hidden_states.shape),edges_src[mid_edge],edges_tgt[mid_edge])
+        
+#        print(x.shape)
+#        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
+
+        
+#        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+#        
+#        up_edge = None
+#        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        
+#        up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+#    
+#        up_edge2 = edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
+#        down_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        
+#        edge_indce = torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]])
+        
+#        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
+        
+        #Use Up edge
+        
+#        up_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#        
+#        up_edge += edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
+#        up_edge += edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        
+
+#        up_edgeA = (edges_src[up_edge], edges_tgt[up_edge], edges_type[up_edge], edges_pos[up_edge])
+        
+#        x = hidden_states.view(hidden_states.size(0)*hidden_states.size(1),hidden_states.size(2))
+        
+#        hidden_states = self.layer[0](hidden_states, st_mask, up_edgeA)
+#        x = self.conv(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[])
+        
+#        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
+        
+#        x = self.conv3(x,edge_indce,edges_type[mid_edge])
         
         sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
