@@ -431,16 +431,14 @@ class DGraphAttention(nn.Module):
         self.key = nn.Linear(config.hidden_size, self.all_head_size)
         self.value = nn.Linear(config.hidden_size, self.all_head_size)
         self.num_edge_types = config.num_edge_types
+        self.hidden_size = config.hidden_size
 
     def forward(self, hidden_states, edges_src,edges_tgt):
 
         batch_size, seq_len = hidden_states.size(0), hidden_states.size(1)
-        query_layer = self.query(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
-        key_layer = self.key(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                 self.attention_head_size)
-        value_layer = self.value(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
+        query_layer = self.query(hidden_states).view(batch_size * seq_len,self.hidden_size)
+        key_layer = self.key(hidden_states).view(batch_size * seq_len,self.hidden_size)
+        value_layer = self.value(hidden_states).view(batch_size * seq_len,self.hidden_size)
         # print(hidden_states)
         
         edges_src = torch.unique(edges_src)
@@ -454,7 +452,8 @@ class DGraphAttention(nn.Module):
         
         print(src_key_tensor.shape)
         print(tgt_query_tensor.shape)
-        exit(0)
+        
+#        exit(0)
         # (n_edges, n_heads)
         attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size))
 
