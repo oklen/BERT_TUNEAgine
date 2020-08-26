@@ -619,10 +619,11 @@ class CollaborativeAttention(nn.Module):
 
         if self.use_layer_norm:
             context_layer = self.layer_norm(from_sequence + context_layer)
-        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
-        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
-        hidden_states2[tpos] = context_layer
-        return hidden_states2.view(hidden_states.shape)
+            
+#        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
+#        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
+#        hidden_states2[tpos] = context_layer
+        return context_layer.view(hidden_states.shape)
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, -1)
@@ -725,7 +726,7 @@ class Encoder(nn.Module):
         
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+        q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
         hidden_states1 = self.qtoc(hidden_states,q1,q2)
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
@@ -768,8 +769,8 @@ class Encoder(nn.Module):
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
-        hidden_states1 = torch.mean(hidden_states1,1)
-        hidden_states2 = torch.mean(hidden_states2,1)
+        hidden_states1 = torch.sum(hidden_states1,1)/len(q2)
+        hidden_states2 = torch.sum(hidden_states2,1)/len(q1)
         return torch.cat([hidden_states1,hidden_states2],-1)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
