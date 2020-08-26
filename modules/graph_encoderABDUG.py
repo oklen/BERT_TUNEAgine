@@ -548,12 +548,12 @@ class CollaborativeAttention(nn.Module):
     def forward(
         self,
         hidden_states,
+        fpos,
+        tpos,
         attention_mask=None,
         head_mask=None,
         encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        fpos,
-        tpos
+        encoder_attention_mask=None
     ):
         from_sequence = hidden_states[fpos//512][fpos%12]
         to_sequence = hidden_states[tpos//512][tpos%12]
