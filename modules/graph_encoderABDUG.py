@@ -603,8 +603,8 @@ class CollaborativeAttention(nn.Module):
         attention_scores += broadcast_content_bias
 
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
-        print(attention_scores.shape)
-        print(attention_mask.shape)
+#        print(attention_scores.shape)
+#        print(attention_mask.shape)
 
         if attention_mask is not None:
             attention_scores = attention_scores + attention_mask
