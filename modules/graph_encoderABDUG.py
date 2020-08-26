@@ -579,11 +579,11 @@ class CollaborativeAttention(nn.Module):
         # broadcast the shared key for all the heads
         # (batch, 1, to_seq, dim)
         mixed_key = key_layer[..., None, :, :]
+        attention_mask = torch.ones_like(hidden_states)*-100000
         attention_mask = attention_mask.view(-1,hidden_states.size(2))
         attention_mask[fpos] = 0
         attention_mask[tpos] = 0
-        attention_mask = attention_mask.view(hidden_states.shape)
-        attention_mask = torch.ones_like(hidden_states)[:,:,0]*-100000
+        attention_mask = attention_mask.view(hidden_states.shape)[:,:,0]
         attention_mask = attention_mask.unsqueeze(-1)
         
 
