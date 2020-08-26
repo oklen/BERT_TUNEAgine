@@ -579,6 +579,10 @@ class CollaborativeAttention(nn.Module):
         # broadcast the shared key for all the heads
         # (batch, 1, to_seq, dim)
         mixed_key = key_layer[..., None, :, :]
+        attention_mask = torch.ones_like(hidden_states)[:,:,0]*-100000
+        attention_mask = attention_mask.unsqueeze(-1)
+        attention_mask[fpos] = 0
+        attention_mask[tpos] = 0
         
 #        print(mixed_query.shape)
 #        print(mixed_key.shape)
@@ -593,6 +597,7 @@ class CollaborativeAttention(nn.Module):
         attention_scores += broadcast_content_bias
 
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+        
         if attention_mask is not None:
             attention_scores = attention_scores + attention_mask
 
