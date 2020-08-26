@@ -618,7 +618,7 @@ class CollaborativeAttention(nn.Module):
         context_layer = self.dense(context_layer)
 
         if self.use_layer_norm:
-            context_layer = self.layer_norm(from_sequence + context_layer)
+            context_layer = self.layer_norm(hidden_states + context_layer)
             
 #        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
 #        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))

@@ -425,7 +425,7 @@ class Encoder(nn.Module):
                     DNAConv(config.hidden_size,32,2,0.1))
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
-        
+        self.sa = GraphAttention(config,512,16)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
         self.norm = nn.LayerNorm([512,config.hidden_size],1e-05)
         
@@ -458,7 +458,7 @@ class Encoder(nn.Module):
 #       SENTENCE_TO_BEFORE = 7
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
-        
+        hidden_states = self.sa(hidden_states,st_mask)
         mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         x = self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
         
