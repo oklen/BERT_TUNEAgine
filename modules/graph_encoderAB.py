@@ -43,9 +43,6 @@ class EdgeType(enum.IntEnum):
     B_TO_NA = 22
     B_TO_BA = 23
     
-    C_TO_QA = 24
-    QA_TO_C = 25
-    
     
 
 
@@ -413,83 +410,19 @@ class EncoderLayer(nn.Module):  #Only Use Multi of this
         return layer_output
 
 
-
-class DGraphAttention(nn.Module):
-    def __init__(self, config):
-        super(IntegrationLayer, self).__init__()
-        if config.hidden_size % config.num_attention_heads != 0:
-            raise ValueError(
-                "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads))
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
-        self.all_head_size = self.num_attention_heads * self.attention_head_size
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
-        self.num_edge_types = config.num_edge_types
-
-    def forward(self, hidden_states, edges):
-        edges_src, edges_tgt, edges_type, edges_pos = edges
-        batch_size, seq_len = hidden_states.size(0), hidden_states.size(1)
-        query_layer = self.query(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
-        key_layer = self.key(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                 self.attention_head_size)
-        value_layer = self.value(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
-        # print(hidden_states)
-        # (n_edges, n_heads, head_size)
-        src_key_tensor = key_layer[edges_src]
-
-
-        tgt_query_tensor = query_layer[edges_tgt]
-
-        # (n_edges, n_heads)
-        attention_scores = torch.softmax((tgt_query_tensor * src_key_tensor).sum(-1) / math.sqrt(self.attention_head_size))
-
-        sum_attention_scores = hidden_states.data.new(batch_size * seq_len, self.num_attention_heads).fill_(0)
-        indices = edges_tgt.view(-1, 1).expand(-1, self.num_attention_heads)
-        sum_attention_scores.scatter_add_(dim=0, index=indices, src=attention_scores)
-
-        # print("before", attention_scores)
-        attention_scores = attention_scores / sum_attention_scores[edges_tgt]
-        # print("after", attention_scores)
-
-        # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
-        
-        value_layer[edges_src] *= attention_scores.unsqueeze(-1)
-        hidden_states = value_layer.view(hidden_states.shape)
-#        output = hidden_states.data.new(
-#            batch_size * seq_len, self.num_attention_heads, self.attention_head_size).fill_(0)
-#        indices = edges_tgt.view(-1, 1, 1).expand(-1, self.num_attention_heads, self.attention_head_size)
-#        output.scatter_add_(dim=0, index=indices, src=src_value_tensor)
-#        output = output.view(batch_size, seq_len, -1)
-
-        # print(hidden_states.shape, output.shape)
-        return hidden_states
-
-
-
-
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
 #        self.initializer = Initializer(config)
-#        layer = EncoderLayer(config)
+        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
-#        self.layer = nn.ModuleList([layer])
+        self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
-#        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
+        self.conv3 = RGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         self.conv2 = torch.nn.ModuleList()
-        self.conv22 = torch.nn.ModuleList()
-        
-        for i in range(1):
+        for i in range(5):
             self.conv2.append(
-                    DNAConv(config.hidden_size,24,2,0.2))
-            self.conv22.append(
-                    DNAConv(config.hidden_size,24,2,0.2))
-            
+                    DNAConv(config.hidden_size,32,2,0.1))
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
@@ -511,30 +444,9 @@ class Encoder(nn.Module):
         # print(edges_src)
         # print(edges_tgt)
         indices = n_edges.nonzero().view(-1)
-        graph_hidden[indices] += sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
-
-        return graph_hidden.view(batch_size, n_nodes, hidden_size)
-    
-    
-    def average_poolingOver(cls, graph_hidden, edges_src, edges_tgt):
-        batch_size, n_nodes, hidden_size = graph_hidden.size()
-        graph_hidden = graph_hidden.view(batch_size * n_nodes, hidden_size)
-        src_tensor = graph_hidden[edges_src]
-
-        indices = edges_tgt.view(-1, 1).expand(-1, hidden_size)
-        sum_hidden = graph_hidden.clone().fill_(0)
-        sum_hidden.scatter_add_(dim=0, index=indices, src=src_tensor)
-
-        n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
-        n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
-        # print(edges_src)
-        # print(edges_tgt)
-        indices = n_edges.nonzero().view(-1)
         graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
 
         return graph_hidden.view(batch_size, n_nodes, hidden_size)
-    
-    
     
     def forward(self, hidden_states, st_mask, edges, output_all_encoded_layers=True):
 #        hidden_states = self.initializer(hidden_states, st_mask, edges)
@@ -547,51 +459,35 @@ class Encoder(nn.Module):
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
         
-
+        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        x = self.average_pooling(hidden_states,edges_src[mid_edge],edges_tgt[mid_edge])
         
         
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
         
-        ex_edge1  = edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()
-#        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-#        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-#        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+        ex_edge  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
-        ex_edge2 = edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()
-#        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-#        
-#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-#        
-        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
-        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+        ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+        
+        ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+#        print(hidden_states.shape)
 
         x_all = hidden_states.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
-        for conv1,conv2 in zip(self.conv2,self.conv22):
-            x = torch.tanh(conv1(x_all,ex_edge1))
-            x_all = torch.cat([x_all, x.view(-1,1,self.hidden_size)], dim=1)
-            
-            x = torch.tanh(conv1(x_all,ex_edge2))
+        for conv in self.conv2:
+            x = torch.tanh(conv(x_all,ex_edge))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
-            
-#        x_all = x_all[:,1:,:]
-#        print(x_all.shape)
- 
-        return torch.cat([torch.mean(x_all[:,-1,:].view(hidden_states.shape),1),torch.mean(x_all[:,-2,:].view(hidden_states.shape),1)],-1)
-        x = x_all.mean(1)
-        
-#        print(x.shape)
-        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-        
-        x = self.average_pooling(x.view(hidden_states.shape),edges_src[mid_edge],edges_tgt[mid_edge])
-        
+        x = x_all[:, -1]
 #        print(x.shape)
 #        hidden_states = self.conv2(hidden_states.view(hidden_states.size(0),hidden_states.size(1),1,hidden_states.size(2)),torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]))
 
@@ -599,19 +495,19 @@ class Encoder(nn.Module):
 #        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
 #        
-#        up_edge = None
+        up_edge = None
 #        up_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
 #        up_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
-#        up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-#        
-#        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        up_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        
+        up_edge += edges_type.eq(EdgeType.B_TO_NA).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.B_TO_BA).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
 #    
 #        up_edge2 = edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
 #        down_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
@@ -625,19 +521,16 @@ class Encoder(nn.Module):
         
         #Use Up edge
         
-#        up_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-#        
-#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-#        
-#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-#        
-#        up_edge += edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist()
-#        up_edge += edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+        
+        up_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+        
+        up_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        up_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
 
 #        up_edgeA = (edges_src[up_edge], edges_tgt[up_edge], edges_type[up_edge], edges_pos[up_edge])
@@ -647,35 +540,26 @@ class Encoder(nn.Module):
 #        hidden_states = self.layer[0](hidden_states, st_mask, up_edgeA)
 #        x = self.conv(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[])
         
-#        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
+        x = self.conv3(x,torch.stack([edges_src[up_edge],edges_tgt[up_edge]]),edges_type[up_edge])
         
 #        x = self.conv3(x,edge_indce,edges_type[mid_edge])
         
         sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-
-        
-        x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
-        
-        x1 = x.view(hidden_states.shape)[:,0]
-        
-#        x1 *= len(torch.unique(edges_tgt[sum_edge]))
-        
-        sum_edge = edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
+        sum_edge += edges_type.eq(EdgeType.A_TO_CLS).nonzero().view(-1).tolist()
         sum_edge += edges_type.eq(EdgeType.B_TO_CLS).nonzero().view(-1).tolist()
         
-        x = self.average_poolingOver(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
-        
-        x2 = x.view(hidden_states.shape)[:,0]
-        
-#        x = x.view(hidden_states.shape)
+#        index = torch.unique(edges_tgt[sum_edge])
+#        x[index] = 0
+        x = self.average_pooling(x.view(hidden_states.shape),edges_src[sum_edge],edges_tgt[sum_edge])
+        x = x.view(hidden_states.shape)
         
 #        print(torch.mean(x[index],-2).shape)
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
-        
-        return torch.cat([x1,x2],-1)
+
+        return x
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 

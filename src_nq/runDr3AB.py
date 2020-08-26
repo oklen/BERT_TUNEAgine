@@ -48,7 +48,7 @@ from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import AdamW,WarmupLinearSchedule
 
 
-WEIGHTS_NAME = "pytorch_model2.bin"
+WEIGHTS_NAME = "pytorch_modelO.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)
