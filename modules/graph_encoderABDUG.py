@@ -572,7 +572,9 @@ class CollaborativeAttention(nn.Module):
         # broadcast the shared key for all the heads
         # (batch, 1, to_seq, dim)
         mixed_key = key_layer[..., None, :, :]
-
+        
+        print(mixed_query.shape)
+        print(mixed_key.shape)
         # (batch, head, from_seq, to_seq)
         attention_scores = torch.matmul(mixed_query, mixed_key.transpose(-1, -2))
 
