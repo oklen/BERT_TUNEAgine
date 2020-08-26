@@ -555,13 +555,19 @@ class CollaborativeAttention(nn.Module):
         encoder_hidden_states=None,
         encoder_attention_mask=None
     ):
-        from_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
-        from_sequence[fpos] += hidden_states.view(-1,hidden_states.size(2))[fpos]
-        from_sequence = from_sequence.view(hidden_states.shape)
+#        hs2 = hidden_states.view(-1,hidden_states.size(2))
+#        from_sequence = torch.cat([],)
+#        from_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
+#        from_sequence[fpos] += hidden_states.view(-1,hidden_states.size(2))[fpos]
+#        from_sequence = from_sequence.view(hidden_states.shape)
+#        from_sequence = hidden_states.view(-1,hidden_states.size(2))[(fpos//512).eq[0]]
+        from_sequence = hidden_states[:,fpos]
         
-        to_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
-        to_sequence[tpos] += hidden_states.view(-1,hidden_states.size(2))[tpos]
-        to_sequence = to_sequence.view(hidden_states.shape)
+#        to_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
+#        to_sequence[tpos] += hidden_states.view(-1,hidden_states.size(2))[tpos]
+#        to_sequence = to_sequence.view(hidden_states.shape)
+        
+        to_sequence = hidden_states[:,tpos]
 
 #        to_sequence = hidden_states[tpos//512][tpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
         
@@ -579,12 +585,12 @@ class CollaborativeAttention(nn.Module):
         # broadcast the shared key for all the heads
         # (batch, 1, to_seq, dim)
         mixed_key = key_layer[..., None, :, :]
-        attention_mask = torch.ones_like(hidden_states)*-100000
-        attention_mask = attention_mask.view(-1,hidden_states.size(2))
-        attention_mask[fpos] = 0
-        attention_mask[tpos] = 0
-        attention_mask = attention_mask.view(hidden_states.shape)[:,:,0]
-        attention_mask = attention_mask.unsqueeze(-2).unsqueeze(-1)
+#        attention_mask = torch.ones_like(hidden_states)*-100000
+#        attention_mask = attention_mask.view(-1,hidden_states.size(2))
+#        attention_mask[fpos] = 0
+#        attention_mask[tpos] = 0
+#        attention_mask = attention_mask.view(hidden_states.shape)[:,:,0]
+#        attention_mask = attention_mask.unsqueeze(-2).unsqueeze(-1)
         
 
         
@@ -630,9 +636,10 @@ class CollaborativeAttention(nn.Module):
         context_layer = context_layer.view(*new_context_layer_shape)
 
         context_layer = self.dense(context_layer)
-
+        
+        hidden_states[:,fpos] += context_layer
         if self.use_layer_norm:
-            context_layer = self.layer_norm(hidden_states + context_layer)
+            context_layer = self.layer_norm(hidden_states)
             
 #        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
 #        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
@@ -742,13 +749,23 @@ class Encoder(nn.Module):
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
-        hidden_states1 = self.qtoc(hidden_states,q1,q2)
+        hidden_states10 = torch.mean(self.qtoc(hidden_states[0],q1[(q1//512).eq(0)],q2[(q2//512).eq(0)]),-1)
+        hidden_states11 = torch.mean(self.qtoc(hidden_states[1],q1[(q1//512).eq(1)],q2[(q2//512).eq(1)]),-1)
+        hidden_states12 = torch.mean(self.qtoc(hidden_states[2],q1[(q1//512).eq(2)],q2[(q2//512).eq(2)]),-1)
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
-        hidden_states2 = self.ctoq(hidden_states,q2,q1)
+        hidden_states20 = torch.mean(self.ctoq(hidden_states[0],q2[(q2//512).eq(0)],q1[(q1//512).eq(0)]),-1)
+        hidden_states21 = torch.mean(self.ctoq(hidden_states[1],q2[(q2//512).eq(1)],q1[(q1//512).eq(1)]),-1)
+        hidden_states22 = torch.mean(self.ctoq(hidden_states[2],q2[(q2//512).eq(2)],q1[(q1//512).eq(2)]),-1)
+        
+        hidden_states0 = torch.cat([hidden_states10],[hidden_states20])
+        hidden_states1 = torch.cat([hidden_states11],[hidden_states21])
+        hidden_states2 = torch.cat([hidden_states12],[hidden_states22])
+        
+        print(hidden_states0.shape)
         
 #        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
 #        
@@ -783,9 +800,8 @@ class Encoder(nn.Module):
 #        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
 #        print(x.shape)
 #        print(torch.mean(x,-2).shape)
-        hidden_states1 = torch.sum(hidden_states1,1)/len(q2)
-        hidden_states2 = torch.sum(hidden_states2,1)/len(q1)
-        return torch.cat([hidden_states1,hidden_states2],-1)
+
+        return torch.stack([hidden_states0,hidden_states1,hidden_states2])
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
