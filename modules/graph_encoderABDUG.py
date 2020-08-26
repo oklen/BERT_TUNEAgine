@@ -561,6 +561,7 @@ class CollaborativeAttention(nn.Module):
 #        from_sequence[fpos] += hidden_states.view(-1,hidden_states.size(2))[fpos]
 #        from_sequence = from_sequence.view(hidden_states.shape)
 #        from_sequence = hidden_states.view(-1,hidden_states.size(2))[(fpos//512).eq[0]]
+        hidden_states = hidden_states.unsqueeze(0)
         from_sequence = hidden_states[:,fpos]
         
 #        to_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
@@ -637,14 +638,14 @@ class CollaborativeAttention(nn.Module):
 
         context_layer = self.dense(context_layer)
         
-        hidden_states[:,fpos] += context_layer
+        hidden_states = hidden_states[0][fpos] + context_layer[0]
         if self.use_layer_norm:
             context_layer = self.layer_norm(hidden_states)
             
 #        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
 #        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
 #        hidden_states2[tpos] = context_layer
-        return context_layer.view(hidden_states.shape)
+        return context_layer
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, -1)
