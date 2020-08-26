@@ -555,8 +555,15 @@ class CollaborativeAttention(nn.Module):
         encoder_hidden_states=None,
         encoder_attention_mask=None
     ):
-        from_sequence = hidden_states[fpos//512][fpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
-        to_sequence = hidden_states[tpos//512][tpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
+        from_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
+        from_sequence[fpos] += hidden_states[fpos]
+        from_sequence = from_sequence.view(hidden_states.shape)
+        
+        to_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
+        to_sequence[tpos] += hidden_states[tpos]
+        to_sequence = to_sequence.view(hidden_states.shape)
+
+#        to_sequence = hidden_states[tpos//512][tpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
         
         if encoder_hidden_states is not None:
             to_sequence = encoder_hidden_states
@@ -612,8 +619,10 @@ class CollaborativeAttention(nn.Module):
 
         if self.use_layer_norm:
             context_layer = self.layer_norm(from_sequence + context_layer)
-        hidden_states[tpos//512][tpos%12] = context_layer
-        return hidden_states
+        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
+        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
+        hidden_states2[tpos] = context_layer
+        return hidden_states2.view(hidden_states.shape)
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, -1)
