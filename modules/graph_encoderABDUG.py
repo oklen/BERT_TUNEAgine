@@ -762,9 +762,9 @@ class Encoder(nn.Module):
         hidden_states21 = torch.mean(self.ctoq(hidden_states[1],q2[(q2//512).eq(1)],q1[(q1//512).eq(1)]),-1)
         hidden_states22 = torch.mean(self.ctoq(hidden_states[2],q2[(q2//512).eq(2)],q1[(q1//512).eq(2)]),-1)
         
-        hidden_states0 = torch.cat([hidden_states10],[hidden_states20])
-        hidden_states1 = torch.cat([hidden_states11],[hidden_states21])
-        hidden_states2 = torch.cat([hidden_states12],[hidden_states22])
+        hidden_states0 = torch.cat([hidden_states10,hidden_states20])
+        hidden_states1 = torch.cat([hidden_states11,hidden_states21])
+        hidden_states2 = torch.cat([hidden_states12,hidden_states22])
         
         print(hidden_states0.shape)
         
