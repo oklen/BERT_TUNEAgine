@@ -650,8 +650,8 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = CollaborativeAttention(config)
-        self.qtoc = CollaborativeAttention(config)
+        self.ctoq = DGraphAttention(config)
+        self.qtoc = DGraphAttention(config)
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
@@ -711,17 +711,17 @@ class Encoder(nn.Module):
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()        
         
-
-        q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+        ex_edge1  = edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()
         
-        hidden_states1 = self.qtoc(hidden_states,q1,q2)
+        hidden_states1 = self.qtoc(hidden_states,edges_src[ex_edge1],edges_tgt[ex_edge1])
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
-        hidden_states2 = self.ctoq(hidden_states,q2,q1)
+        ex_edge2 = edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()
+        
+        hidden_states2 = self.qtoc(hidden_states,edges_src[ex_edge2],edges_tgt[ex_edge2])
         
 #        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
 #        
