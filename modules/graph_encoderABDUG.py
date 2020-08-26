@@ -584,7 +584,7 @@ class CollaborativeAttention(nn.Module):
         attention_mask[fpos] = 0
         attention_mask[tpos] = 0
         attention_mask = attention_mask.view(hidden_states.shape)[:,:,0]
-        attention_mask = attention_mask.unsqueeze(-1)
+        attention_mask = attention_mask.unsqueeze(-2).unsqueeze(-1)
         
 
         
@@ -605,7 +605,7 @@ class CollaborativeAttention(nn.Module):
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
         print(attention_scores.shape)
         print(attention_mask.shape)
-        exit(0)
+
         if attention_mask is not None:
             attention_scores = attention_scores + attention_mask
 
