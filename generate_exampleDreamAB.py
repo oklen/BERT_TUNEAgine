@@ -237,7 +237,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             tok_is_question_begin = len(tokens)
 
             tok_is_question_end = len(tokens)  + len(tokenizer.tokenize(example.question))
-            tok_is_choice_begin = tok_is_question_end+1
+            tok_is_choice_begin = tok_is_question_end
             
             mtokens = tokens+toPut
             
@@ -247,7 +247,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 label = 1
             else: label = 0
 
-            tok_is_choice_end = len(mtokens) - 1     
+            tok_is_choice_end = len(mtokens) - 1
             
             #Delete From begin to fit max_seq_length
 #            while len(tokens) > args.max_seq_length:
@@ -334,13 +334,13 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 
             for tok_index in range(tok_is_question_begin,tok_is_question_end):
                 graph.add_edge(tok_index,tok_is_question_begin,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
-                for tindex in range(1,tok_is_question_begin-1):
+                for tindex in range(tok_is_question_begin-1):
                     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
                     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
                     
             for tok_index in range(tok_is_choice_begin,tok_is_choice_end):
                 graph.add_edge(tok_index,tok_is_choice_begin,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
-                for tindex in range(1,tok_is_question_begin-1):
+                for tindex in range(tok_is_question_begin-1):
                     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
                     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
             
