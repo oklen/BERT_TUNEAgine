@@ -562,13 +562,13 @@ class CollaborativeAttention(nn.Module):
 #        from_sequence = from_sequence.view(hidden_states.shape)
 #        from_sequence = hidden_states.view(-1,hidden_states.size(2))[(fpos//512).eq[0]]
         hidden_states = hidden_states.unsqueeze(0)
-        from_sequence = hidden_states[:,fpos]
+        from_sequence = hidden_states[:,fpos%512]
         
 #        to_sequence = torch.zeros_like(hidden_states).view(-1,hidden_states.size(2))
 #        to_sequence[tpos] += hidden_states.view(-1,hidden_states.size(2))[tpos]
 #        to_sequence = to_sequence.view(hidden_states.shape)
         
-        to_sequence = hidden_states[:,tpos]
+        to_sequence = hidden_states[:,tpos%512]
 
 #        to_sequence = hidden_states[tpos//512][tpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
         
