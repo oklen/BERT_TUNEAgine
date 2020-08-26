@@ -597,7 +597,9 @@ class CollaborativeAttention(nn.Module):
         attention_scores += broadcast_content_bias
 
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
-        
+        print(attention_scores.shape)
+        print(attention_mask.shape)
+        exit(0)
         if attention_mask is not None:
             attention_scores = attention_scores + attention_mask
 
@@ -609,6 +611,7 @@ class CollaborativeAttention(nn.Module):
         attention_probs = self.dropout(attention_probs)
 
         # Mask heads if we want to
+        
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 

@@ -471,7 +471,7 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-
+        
         
         ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
