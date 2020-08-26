@@ -555,8 +555,9 @@ class CollaborativeAttention(nn.Module):
         encoder_hidden_states=None,
         encoder_attention_mask=None
     ):
-        from_sequence = hidden_states[fpos//512][fpos%12]
-        to_sequence = hidden_states[tpos//512][tpos%12]
+        from_sequence = hidden_states[fpos//512][fpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
+        to_sequence = hidden_states[tpos//512][tpos%12].view(hidden_states.size(0),-1,hidden_states.size(2))
+        
         if encoder_hidden_states is not None:
             to_sequence = encoder_hidden_states
             attention_mask = encoder_attention_mask
