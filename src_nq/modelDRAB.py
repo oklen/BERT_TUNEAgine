@@ -119,9 +119,10 @@ class NqModel(nn.Module):
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
 #        print(tok_logits,res_labels)
+        print(res_labels)
         for index,score in enumerate(tok_logits):
             self.ALL+=1
-            if torch.argmax(score) == res_labels[index]:
+            if torch.argmax(score) == res_labels:
                 self.ACC+=1
 
 #        print(self.ALL,self.ACC)
