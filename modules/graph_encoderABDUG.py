@@ -505,7 +505,7 @@ class CollaborativeAttention(nn.Module):
         self.attention_probs_dropout_prob = 0.1
         self.mixing_initialization = mixing_initialization
         self.use_dense_layer = True
-        self.use_layer_norm = True
+        self.use_layer_norm = False
 
         self.dim_value_per_head = self.dim_value_all // self.num_attention_heads
         self.attention_head_size = (
