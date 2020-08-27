@@ -28,6 +28,7 @@ import random
 import sys
 import re
 import pandas as pd
+import copy
 
 sys.path.append("/nq_model/")
 
@@ -208,7 +209,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         names = []
         for i in name:
             names.append(i)
-        #tokens.append('[SEP]')
+        tokens.append('[SEP]')
 
             
 #        tok_is_question_begin = len(tokens)
@@ -221,31 +222,33 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         label = 0
 #        print(example.choice)
 #        print(example.answer)
+
+        
         for choice in example.choice:
-            
-            toPut=tokenizer.tokenize(example.question) + ['[SEP]'] + tokenizer.tokenize(choice)
+
+            toPut=tokenizer.tokenize(example.question) + tokenizer.tokenize(choice)
             toPut.append('[SEP]')
             #Delect from end
-            while len(tokens)+len(toPut)+1>args.max_seq_length:
-                tokens.pop()
-                tok_is_sentence_end[-1] = len(tokens)
+            mtokens = copy.deepcopy(tokens)
+            while len(mtokens)+len(toPut) > args.max_seq_length:
+                mtokens.pop()
+                tok_is_sentence_end[-1] = len(mtokens)
                 if tok_is_sentence_end[-1] == tok_is_sentence_begin[-1]:
                     tok_is_sentence_begin.pop()
                     tok_is_sentence_end.pop()
 
-            tokens.append('[SEP]')
-            tok_is_question_begin = len(tokens)
+            
+            tok_is_question_begin = len(mtokens)
 
-            tok_is_question_end = len(tokens)  + len(tokenizer.tokenize(example.question))
+            tok_is_question_end = len(mtokens)  + len(tokenizer.tokenize(example.question))
             tok_is_choice_begin = tok_is_question_end
             
-            mtokens = tokens+toPut
+            mtokens = mtokens+toPut
             
             tok_is_choice_end = len(mtokens)-1
-            
+            label = 0
             if choice == example.answer: 
                 label = 1
-            else: label = 0
 
             tok_is_choice_end = len(mtokens) - 1
             

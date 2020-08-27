@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderAB import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
@@ -102,8 +102,8 @@ class NqModel(nn.Module):
             #tok_logits = self.tok_to_label(tok_logits)
     #        print(graph_output.shape,self.config.hidden_size)
 #            print(graph_output[:,0])
-            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
-#            x = graph_output
+#            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
+            x = graph_output
 
             x = self.dropout(x)
             tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
@@ -121,7 +121,7 @@ class NqModel(nn.Module):
 #        print(tok_logits,res_labels)
         for index,score in enumerate(tok_logits):
             self.ALL+=1
-            if torch.argmax(score) == res_labels:
+            if torch.argmax(score) == res_labels[index]:
                 self.ACC+=1
 
 #        print(self.ALL,self.ACC)

@@ -758,7 +758,6 @@ class Encoder(nn.Module):
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
 #        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-
         
         hidden_states20 = torch.mean(self.ctoq(hidden_states[0],q2[(q2//512).eq(0)],q1[(q1//512).eq(0)]),0)
         hidden_states21 = torch.mean(self.ctoq(hidden_states[1],q2[(q2//512).eq(1)],q1[(q1//512).eq(1)]),0)
