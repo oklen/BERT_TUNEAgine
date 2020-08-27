@@ -750,7 +750,7 @@ class Encoder(nn.Module):
         
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         print("q1:",q1)
         print("q2:",q2)
         if torch.equal(q1,q2):
