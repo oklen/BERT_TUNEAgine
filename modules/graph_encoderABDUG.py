@@ -640,14 +640,14 @@ class CollaborativeAttention(nn.Module):
 
         context_layer = self.dense(context_layer)
         
-        hidden_states = hidden_states[0][fpos] + context_layer[0]
-        if self.use_layer_norm:
-            context_layer = self.layer_norm(hidden_states)
+#        hidden_states = hidden_states[0][fpos] + context_layer[0]
+#        if self.use_layer_norm:
+#            context_layer = self.layer_norm(hidden_states)
             
 #        context_layer = context_layer.view(-1,hidden_states.size(2))[tpos]
 #        hidden_states2  = hidden_states.view(-1,hidden_states.size(2))
 #        hidden_states2[tpos] = context_layer
-        return context_layer
+        return context_layer[0]
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, -1)
