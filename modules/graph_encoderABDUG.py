@@ -751,6 +751,8 @@ class Encoder(nn.Module):
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_tgt[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        print(q1)
+        print(q2)
         
         hidden_states10 = torch.mean(self.qtoc(hidden_states[0],q1[(q1//512).eq(0)],q2[(q2//512).eq(0)]),0)
         hidden_states11 = torch.mean(self.qtoc(hidden_states[1],q1[(q1//512).eq(1)],q2[(q2//512).eq(1)]),0)
