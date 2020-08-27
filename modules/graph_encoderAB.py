@@ -43,7 +43,8 @@ class EdgeType(enum.IntEnum):
     B_TO_NA = 22
     B_TO_BA = 23
     
-    
+    C_TO_QA = 24
+    QA_TO_C = 25
 
 
 class NodeType(enum.IntEnum):
