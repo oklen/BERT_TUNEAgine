@@ -698,8 +698,8 @@ class MultiHeadedAttention(nn.Module):
         # We assume d_v always equals d_k
         self.d_k = d_model // h
         self.h = h
-        self.linears = nn.ModuleList([nn.Linear(d_model,d_model) for _ in range(h)])
-        self.output = nn.Linear(d_model,d_model)
+        self.linears = nn.ModuleList([nn.Linear(d_model,d_model) for _ in range(4)])
+#        self.output = nn.Linear(d_model,d_model)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
         
@@ -726,8 +726,7 @@ class MultiHeadedAttention(nn.Module):
         # 3) "Concat" using a view and apply a final linear. 
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
-        return self.output(x)
-    
+        return self.linears[-1](x)    
     
 class Encoder(nn.Module):
     def __init__(self, config):
