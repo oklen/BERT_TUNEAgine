@@ -677,7 +677,54 @@ class CollaborativeAttention(nn.Module):
 
         return nn.Parameter(mixing)
     
+def attention(query, key, value, mask=None, dropout=None):
+    "Compute 'Scaled Dot Product Attention'"
+    d_k = query.size(-1)
+    scores = torch.matmul(query, key.transpose(-2, -1)) \
+             / math.sqrt(d_k)
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, -1e9)
+    p_attn = torch.softmax(scores, dim = -1)
+    if dropout is not None:
+        p_attn = dropout(p_attn)
+    return torch.matmul(p_attn, value), p_attn
 
+
+class MultiHeadedAttention(nn.Module):
+    def __init__(self, h, d_model, dropout=0.1):
+        "Take in model size and number of heads."
+        super(MultiHeadedAttention, self).__init__()
+        assert d_model % h == 0
+        # We assume d_v always equals d_k
+        self.d_k = d_model // h
+        self.h = h
+        self.linears = nn.ModuleList([nn.Linear(d_model,d_model) for _ in range(h)])
+        self.output = nn.Linear(d_model,d_model)
+        self.attn = None
+        self.dropout = nn.Dropout(p=dropout)
+        
+    def forward(self, query, key, value, mask=None):
+        "Implements Figure 2"
+        if mask is not None:
+            # Same mask applied to all h heads.
+            mask = mask.unsqueeze(1)
+        nbatches = query.size(0)
+        
+        # 1) Do all the linear projections in batch from d_model => h x d_k 
+        query, key, value = \
+            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+             for l, x in zip(self.linears, (query, key, value))]
+        
+        # 2) Apply attention on all the projected vectors in batch. 
+        x, self.attn = attention(query, key, value, mask=mask, 
+                                 dropout=self.dropout)
+        
+        # 3) "Concat" using a view and apply a final linear. 
+        x = x.transpose(1, 2).contiguous() \
+             .view(nbatches, -1, self.h * self.d_k)
+        return self.output(x)
+    
+    
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
@@ -688,8 +735,8 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = CollaborativeAttention(config)
-        self.qtoc = CollaborativeAttention(config)
+        self.ctoq = MultiHeadedAttention(16,config.hidden_size)
+        self.qtoc = MultiHeadedAttention(16,config.hidden_size)
         self.hidden_size = config.hidden_size
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
@@ -752,60 +799,29 @@ class Encoder(nn.Module):
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        
+        hidden_statesOut = []
+        
+        for i in range(3):
+            query = hidden_states[i][q1[(q1//512).eq(i)]%512]
+            key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
+            query.unsqueeze(0)
+            key.unsqueeze(0)
+            value.unsqueeze(0)
+            hq1q2 = self.qtoc(query,key,value)
+            hq1q2.squeeze(0)
+            hq1q2 = torch.mean(hq1q2,0)
+            
+            key = query
+            query = value
+            value = key
+            hq2q1 = self.ctoq(query,key,value)
+            hq2q1.squeeze(0)
+            hq2q1 = torch.mean(hq2q1,0)
+            
+            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
 
-        
-        hidden_states10 = torch.mean(self.qtoc(hidden_states[0],q1[(q1//512).eq(0)],q2[(q2//512).eq(0)]),0)
-        hidden_states11 = torch.mean(self.qtoc(hidden_states[1],q1[(q1//512).eq(1)],q2[(q2//512).eq(1)]),0)
-        hidden_states12 = torch.mean(self.qtoc(hidden_states[2],q1[(q1//512).eq(2)],q2[(q2//512).eq(2)]),0)
-#        ex_edge1 += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-#        ex_edge1 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-#        ex_edge1 += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-        
-        hidden_states20 = torch.mean(self.ctoq(hidden_states[0],q2[(q2//512).eq(0)],q1[(q1//512).eq(0)]),0)
-        hidden_states21 = torch.mean(self.ctoq(hidden_states[1],q2[(q2//512).eq(1)],q1[(q1//512).eq(1)]),0)
-        hidden_states22 = torch.mean(self.ctoq(hidden_states[2],q2[(q2//512).eq(2)],q1[(q1//512).eq(2)]),0)
-#        print(hidden_states10.shape)
-        hidden_states0 = torch.cat([hidden_states10,hidden_states20])
-        hidden_states1 = torch.cat([hidden_states11,hidden_states21])
-        hidden_states2 = torch.cat([hidden_states12,hidden_states22])
-        
-#        print(hidden_states0.shape)
-        
-#        ex_edge2 += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-#        
-#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-#        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-##        
-#        ex_edge1 = torch.stack([edges_src[ex_edge1],edges_tgt[ex_edge1]])
-#        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-#
-#
-#
-#        
-##        print(x.shape)
-#        mid_edge = edges_type.eq(EdgeType.TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
-#        
-#        x1 = self.average_pooling(hidden_states1,edges_src[mid_edge],edges_tgt[mid_edge])
-#        x2 = self.average_pooling(hidden_states2,edges_src[mid_edge],edges_tgt[mid_edge])
-#        
-#        sum_edge = edges_type.eq(EdgeType.QUESTION_TO_CLS).nonzero().view(-1).tolist()
-#        sum_edge += edges_type.eq(EdgeType.CHOICE_TO_CLS).nonzero().view(-1).tolist()
-#
-#        
-#        x1 = self.average_poolingOver(x1,edges_src[sum_edge],edges_tgt[sum_edge])
-#        x2 = self.average_poolingOver(x2,edges_src[sum_edge],edges_tgt[sum_edge])
-#        
-        
-#        x = x.view(hidden_states.shape)
-        
-#        print(torch.mean(x[index],-2).shape)
-#        all_encoder_layers[0] = self.layer[1](hidden_states,st_mask,down_edge)
-#        print(x.shape)
-#        print(torch.mean(x,-2).shape)
-
-        return torch.stack([hidden_states0,hidden_states1,hidden_states2])
+        return torch.stack(hidden_statesOut)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
