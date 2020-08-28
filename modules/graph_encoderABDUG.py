@@ -712,12 +712,12 @@ class MultiHeadedAttention(nn.Module):
         print(query.shape)
         print(key.shape)
         # 1) Do all the linear projections in batch from d_model => h x d_k 
-#        query, key, value = \
-#            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-#             for l in self.linears for x in (query, key, value)]
-        query = [l(query).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
-        key = [l(key).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
-        value = [l(value).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
+        query, key, value = \
+            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+             for l in self.linears for x in (query, key, value)]
+#        query = [l(query).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
+#        key = [l(key).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
+#        value = [l(value).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
 
         # 2) Apply attention on all the projected vectors in batch. 
         x, self.attn = attention(query, key, value, mask=mask, 
@@ -809,9 +809,9 @@ class Encoder(nn.Module):
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
             key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
-            query.unsqueeze(0)
-            key.unsqueeze(0)
-            value.unsqueeze(0)
+            query = query.unsqueeze(0)
+            key = key.unsqueeze(0)
+            value = value.unsqueeze(0)
             hq1q2 = self.qtoc(query,key,value)
             hq1q2.squeeze(0)
             hq1q2 = torch.mean(hq1q2,0)
