@@ -714,7 +714,7 @@ class MultiHeadedAttention(nn.Module):
         # 1) Do all the linear projections in batch from d_model => h x d_k 
         query, key, value = \
             [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-             for l in self.linears for x in (query, key, value)]
+             for l, x in zip(self.linears, (query, key, value))]
 #        query = [l(query).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
 #        key = [l(key).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
 #        value = [l(value).view(nbatches, -1, self.h, self.d_k).transpose(1, 2) for l in self.linears]
