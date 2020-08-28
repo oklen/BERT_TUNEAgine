@@ -606,10 +606,11 @@ class CollaborativeAttention(nn.Module):
 
         # add the content bias term
         # (batch, to_seq, heads)
-        content_bias = self.content_bias(to_sequence)
-        # (batch, heads, 1, to_seq)
-        broadcast_content_bias = content_bias.transpose(-1, -2).unsqueeze(-2)
-        attention_scores += broadcast_content_bias
+        #remove content Bias in next four lines
+#        content_bias = self.content_bias(to_sequence)
+#        # (batch, heads, 1, to_seq)
+#        broadcast_content_bias = content_bias.transpose(-1, -2).unsqueeze(-2)
+#        attention_scores += broadcast_content_bias
 
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
 #        print(attention_scores.shape)
