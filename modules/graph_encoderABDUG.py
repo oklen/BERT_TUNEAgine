@@ -709,8 +709,8 @@ class MultiHeadedAttention(nn.Module):
             # Same mask applied to all h heads.
             mask = mask.unsqueeze(1)
         nbatches = 1
-        print(query.shape)
-        print(key.shape)
+#        print(query.shape)
+#        print(key.shape)
         # 1) Do all the linear projections in batch from d_model => h x d_k 
         query, key, value = \
             [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
@@ -813,14 +813,14 @@ class Encoder(nn.Module):
             key = key.unsqueeze(0)
             value = value.unsqueeze(0)
             hq1q2 = self.qtoc(query,key,value)
-            hq1q2.squeeze(0)
+            hq1q2 = hq1q2.squeeze(0)
             hq1q2 = torch.mean(hq1q2,0)
             
             key = query
             query = value
             value = key
             hq2q1 = self.ctoq(query,key,value)
-            hq2q1.squeeze(0)
+            hq2q1 = hq2q1.squeeze(0)
             hq2q1 = torch.mean(hq2q1,0)
             
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
