@@ -137,18 +137,27 @@ def batcher(device, is_training=False):
 #            ed+=st_masks.size(2)*i
         
 #        print(edges_tgts)
+#        return NqBatch(unique_ids=unique_idss,
+#                       input_ids=input_idss.to(device),
+#                       input_mask=input_masks.to(device),
+#                       segment_ids=segment_idss.to(device),
+#                       st_mask=st_masks.to(device),
+#                       edges_src=edges_srcs.to(device),
+#                       edges_tgt=edges_tgts.to(device),
+#                       edges_type=edges_types.to(device),
+#                       edges_pos=edges_poss.to(device),
+#                       label=labels.to(device))
+        
         return NqBatch(unique_ids=unique_idss,
-                       input_ids=input_idss.to(device),
-                       input_mask=input_masks.to(device),
-                       segment_ids=segment_idss.to(device),
-                       st_mask=st_masks.to(device),
-#                       st_index=st_index,
-                       edges_src=edges_srcs.to(device),
-                       edges_tgt=edges_tgts.to(device),
-                       edges_type=edges_types.to(device),
-                       edges_pos=edges_poss.to(device),
-                       label=labels.to(device))
-
+               input_ids=input_idss,
+               input_mask=input_masks,
+               segment_ids=segment_idss,
+               st_mask=st_masks,
+               edges_src=edges_srcs,
+               edges_tgt=edges_tgts,
+               edges_type=edges_types,
+               edges_pos=edges_poss,
+               label=labels)
     return batcher_dev
 
 
@@ -305,20 +314,24 @@ def main():
 
     if args.fp16:
         model.half()
-    model.to(device)
-    if args.local_rank != -1:
-        try:
-            from apex.parallel import DistributedDataParallel as DDP
-        except ImportError:
-            raise ImportError(
-                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-
-        model = DDP(model)
-    elif n_gpu > 1:
-        model = torch.nn.DataParallel(model)
         
+    model.to("cude:1")
+    model.bert.to('cuda:0')
+    
+#    if args.local_rank != -1:
+#        try:
+#            from apex.parallel import DistributedDataParallel as DDP
+#        except ImportError:
+#            raise ImportError(
+#                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+#
+#        model = DDP(model)
+#    elif n_gpu > 1:
+#        model = torch.nn.DataParallel(model)
+
     num_train_features = None
     num_train_optimization_steps = None
+    
     #train_dataset = None
     #train_features = None
     
