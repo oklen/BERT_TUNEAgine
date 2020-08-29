@@ -48,7 +48,7 @@ from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import AdamW,WarmupLinearSchedule
 
 
-WEIGHTS_NAME = "pytorch_modelO.bin"
+WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)
@@ -383,7 +383,7 @@ def main():
         
 
     global_step = 0
-    last_acc = 63.0
+    last_acc = 85.0
     
     if args.do_train:
         logger.info("***** Running training *****")

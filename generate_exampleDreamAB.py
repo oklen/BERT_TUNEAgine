@@ -503,7 +503,7 @@ def main():
     args = parser.parse_args()
 
     #tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
-    tokenizer = AutoTokenizer.from_pretrained("albert-base-v2")
+    tokenizer = AutoTokenizer.from_pretrained("albert-xxlarge-v2")
     print("Vocab SIze!",tokenizer.vocab_size)
     
 
