@@ -315,7 +315,7 @@ def main():
     if args.fp16:
         model.half()
         
-    model.to("cude:1")
+    model.to("cuda:1")
     model.bert.to('cuda:0')
     
 #    if args.local_rank != -1:
