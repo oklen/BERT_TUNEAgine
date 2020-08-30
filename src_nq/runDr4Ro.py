@@ -139,7 +139,7 @@ def batcher(device, is_training=False):
 #            ed+=st_masks.size(2)*i
         
 #        print(edges_tgts)
-        run_og = False
+
         if run_og:
             return NqBatch(unique_ids=unique_idss,
                            input_ids=input_idss.to(device),
