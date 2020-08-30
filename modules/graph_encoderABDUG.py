@@ -782,10 +782,10 @@ class Encoder(nn.Module):
     
     
     
-    def forward(self, hidden_states, st_mask, edges, output_all_encoded_layers=True):
+    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=True):
 #        hidden_states = self.initializer(hidden_states, st_mask, edges)
         
-        edges_src, edges_tgt, edges_type, edges_pos = edges
+#        edges_src, edges_tgt, edges_type, edges_pos = edges
 #       QA_TO_CLS = 4
 #       SENTENCE_TO_CLS = 5
 #       SENTENCE_TO_NEXT = 6
