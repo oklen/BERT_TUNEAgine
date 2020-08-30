@@ -98,7 +98,7 @@ class NqModel(nn.Module):
                 #exit(0)
                 #print("ALBERT DONE!")
         #        print("BEFORE GRAPH:",sequence_output.shape)
-                sequence_output = torch.stack(sequence_output)
+                sequence_output = torch.cat(sequence_output)
                 sequence_output = sequence_output.to('cuda:1')
                 st_mask = st_mask.to('cuda:1')
                 edges_src = edges_src.to('cuda:1')
