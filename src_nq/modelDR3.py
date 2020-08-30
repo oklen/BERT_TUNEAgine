@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         
-        self.bert =  AlbertModel.from_pretrained("roberta-large-mnli")
+        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli")
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
