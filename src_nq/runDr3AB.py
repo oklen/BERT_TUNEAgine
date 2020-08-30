@@ -397,8 +397,8 @@ def main():
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
-#        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+#        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
         scheduler = WarmupLinearSchedule(optimizer,
                                      warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
                                      if args.warmup_proportion > 0 else args.warmup_steps,
