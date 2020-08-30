@@ -85,25 +85,25 @@ class NqModel(nn.Module):
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
             else:
     
-#                input_ids = input_ids.to('cuda:0')
-#                attention_mask = attention_mask.to('cuda:0')
-#                token_type_ids = token_type_ids.to('cuda:0')
-                sequence_output = []
-                for i in range(input_ids.size(0)):
-                    sequence_tmp,_ = self.bert(input_ids[i].unsqueeze(0).to('cuda:0'),  attention_mask[i].unsqueeze(0).to('cuda:0'),token_type_ids[i].unsqueeze(0).to('cuda:0'))
-                    sequence_output.append(sequence_tmp.to('cuda:1'))
-                #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
+                input_ids = input_ids.to('cuda:0')
+                attention_mask = attention_mask.to('cuda:0')
+                token_type_ids = token_type_ids.to('cuda:0')
+#                sequence_output = []
+#                for i in range(input_ids.size(0)):
+#                    sequence_tmp,_ = self.bert(input_ids[i].unsqueeze(0).to('cuda:0'),  attention_mask[i].unsqueeze(0).to('cuda:0'),token_type_ids[i].unsqueeze(0).to('cuda:0'))
+#                    sequence_output.append(sequence_tmp.to('cuda:1'))
+                sequence_output, _ = self.bert(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
                 #print(type(sequence_output),sequence_output.shape)
                 #print(type(sequence_output2),sequence_output2.shape)
                 #exit(0)
                 #print("ALBERT DONE!")
         #        print("BEFORE GRAPH:",sequence_output.shape)
-                sequence_output = torch.cat(sequence_output)
+#                sequence_output = torch.cat(sequence_output)
                 sequence_output = sequence_output.to('cuda:1')
                 st_mask = st_mask.to('cuda:1')
                 edges_src = edges_src.to('cuda:1')
                 edges_tgt = edges_tgt.to('cuda:1')
-                edges_type = edges_type.to('cuda:1') 
+                edges_type = edges_type.to('cuda:1')
                 edges_pos = edges_pos.to('cuda:1')
                 
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
