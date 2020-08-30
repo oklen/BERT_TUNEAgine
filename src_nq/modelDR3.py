@@ -15,8 +15,10 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        
-        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli")
+#        gradient_checkpointing
+        self.bert_config = RobertaConfig.from_pretrained("roberta-large-mnli")
+        self.bert_config.gradient_checkpointing = True
+        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config=self.bert_config)
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
