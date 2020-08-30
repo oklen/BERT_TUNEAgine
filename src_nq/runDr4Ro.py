@@ -436,7 +436,7 @@ def main():
                 for step, batch in enumerate(train_dataloader):
 #                                torch.cuda.empty_cache()
                     print("new begin!")
-                    loss = checkpoint_sequential(model,1,(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                    loss = checkpoint_sequential([model],1,(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids))
 #                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
