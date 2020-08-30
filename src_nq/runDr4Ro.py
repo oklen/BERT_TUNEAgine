@@ -398,10 +398,10 @@ def main():
 #                             t_total=num_train_optimization_steps)
 #        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
         optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
-        scheduler = WarmupLinearSchedule(optimizer,
-                                     warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
-                                     if args.warmup_proportion > 0 else args.warmup_steps,
-                                     t_total=num_train_optimization_steps)
+#        scheduler = WarmupLinearSchedule(optimizer,
+#                                     warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
+#                                     if args.warmup_proportion > 0 else args.warmup_steps,
+#                                     t_total=num_train_optimization_steps)
         
 
     global_step = 0
@@ -456,9 +456,8 @@ def main():
 
                     if (step + 1) % args.gradient_accumulation_steps == 0:
                         optimizer.step()
-                        scheduler.step()
+#                        scheduler.step()
                         optimizer.zero_grad()
-                        model.zero_grad()
                         global_step += 1
 
                     tr_loss += float(loss)
