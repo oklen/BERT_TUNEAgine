@@ -453,7 +453,7 @@ def main():
                     if (step + 1) % args.gradient_accumulation_steps == 0:
                         optimizer.step()
                         scheduler.step()
-                        optimizer.zero_grad()
+                        model.zero_grad()
                         global_step += 1
                     print("SIG2")
                     tr_loss += float(loss)
