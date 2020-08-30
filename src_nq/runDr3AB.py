@@ -321,10 +321,11 @@ def main():
     global run_og 
     run_og = args.run_og
     if args.run_og:
+        model.to(device)
+    else:
         model.to("cuda:1")
         model.bert.to('cuda:0')
-    else:
-        model.to(device)
+
     
 #    if args.local_rank != -1:
 #        try:
