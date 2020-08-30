@@ -92,7 +92,7 @@ def batcher(device, is_training=False):
         for i in range(len(features)):
             edges_src[i] += st_mask.size(1) * i
             edges_tgt[i] += st_mask.size(1) * i
-
+        
         edges_src = torch.cat(edges_src)
         edges_tgt = torch.cat(edges_tgt)
         edges_type = torch.cat(edges_type)
