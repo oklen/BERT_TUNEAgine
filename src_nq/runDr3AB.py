@@ -72,7 +72,6 @@ NqBatch = collections.namedtuple('NqBatch',
 
 def batcher(device, is_training=False):
     def batcher_dev(mul_features):
-        unique_idss = []
         input_idss = []
         input_masks = []
         segment_idss = []
@@ -83,7 +82,7 @@ def batcher(device, is_training=False):
         edges_poss = []
         labels  = []
         for i,features in  enumerate(mul_features):
-            unique_ids = [f.unique_id for f in features]
+#            unique_ids = [f.unique_id for f in features]
             input_ids = [f.input_ids for f in features]
             input_mask = [f.input_mask for f in features]
             segment_ids = [f.segment_ids for f in features]
@@ -111,7 +110,7 @@ def batcher(device, is_training=False):
             edges_type = [x for y in edges_type for x in y]
             edges_pos = [x for y in edges_pos for x in y]
             
-            unique_idss.append(unique_ids)
+#            unique_idss.append(unique_ids)
             input_idss.append(input_ids)
             input_masks.append(input_mask)
             segment_idss.append(segment_ids)
@@ -140,8 +139,7 @@ def batcher(device, is_training=False):
         
 #        print(edges_tgts)
         if run_og:
-            return NqBatch(unique_ids=unique_idss,
-                           input_ids=input_idss.to(device),
+            return NqBatch(input_ids=input_idss.to(device),
                            input_mask=input_masks.to(device),
                            segment_ids=segment_idss.to(device),
                            st_mask=st_masks.to(device),
@@ -151,7 +149,7 @@ def batcher(device, is_training=False):
                            edges_pos=edges_poss.to(device),
                            label=labels.to(device))
         else:
-            return NqBatch(unique_ids=unique_idss,
+            return NqBatch(
                    input_ids=input_idss,
                    input_mask=input_masks,
                    segment_ids=segment_idss,
@@ -438,7 +436,7 @@ def main():
                 for step, batch in enumerate(train_dataloader):
     
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
@@ -488,12 +486,11 @@ def main():
             ttr_loss = 0
             optimizer.zero_grad()
             logging.info("***** Running evalating *****")
-            with torch.no_grad():
-                for step, batch in enumerate(train_dataloader):
-                    tgobal_step+=1
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
-                    ttr_loss+=loss.item()
+            for step, batch in enumerate(train_dataloader):
+                tgobal_step+=1
+                loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                             (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
+                ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
             optimizer.zero_grad()

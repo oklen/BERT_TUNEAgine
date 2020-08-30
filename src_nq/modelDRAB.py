@@ -65,7 +65,7 @@ class NqModel(nn.Module):
 
         #self.apply(self.init_bert_weights)
 
-    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,unique_idss):
+    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels):
 
 #model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask, batch.st_index,
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),
