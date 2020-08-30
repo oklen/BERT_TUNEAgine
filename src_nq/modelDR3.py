@@ -76,6 +76,8 @@ class NqModel(nn.Module):
 #        print(input_idss.shape)
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
+        torch.cuda.empty_cache()
+
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss):
 #            print(input_ids.shape)
 #            print(attention_mask.shape)
