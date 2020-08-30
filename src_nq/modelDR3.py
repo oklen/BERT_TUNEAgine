@@ -83,10 +83,10 @@ class NqModel(nn.Module):
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
             else:
-                input_ids = input_ids.to('cuda:0')
-                attention_mask = attention_mask.to('cuda:0')
-                token_type_ids = token_type_ids.to('cuda:0')
     
+#                input_ids = input_ids.to('cuda:0')
+#                attention_mask = attention_mask.to('cuda:0')
+#                token_type_ids = token_type_ids.to('cuda:0')
                 
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
         
@@ -97,7 +97,7 @@ class NqModel(nn.Module):
                 #print("ALBERT DONE!")
         #        print("BEFORE GRAPH:",sequence_output.shape)
                 sequence_output = sequence_output.to('cuda:1')
-                st_mask = st_mask.to('cuda:1')            
+                st_mask = st_mask.to('cuda:1')
                 edges_src = edges_src.to('cuda:1')
                 edges_tgt = edges_tgt.to('cuda:1')
                 edges_type = edges_type.to('cuda:1') 
