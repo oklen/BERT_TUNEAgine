@@ -433,41 +433,41 @@ def main():
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-                    torch.cuda.empty_cache()
+#                                torch.cuda.empty_cache()
                     print("new begin!")
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
-##                    if n_gpu > 1:
-##                        loss = loss.mean()  # mean() to average on multi-gpu.
-#                    if args.gradient_accumulation_steps > 1:
-#                        loss = loss / args.gradient_accumulation_steps
-#                    if args.local_rank != -1:
-#                        loss = loss + 0 * sum([x.sum() for x in model.parameters()])
-#                    if args.fp16:
-#                        optimizer.backward(loss)
-#                    else:
-#                        loss.backward()
-#            
-#                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-#                    print("SIG1")
-#                    if (step + 1) % args.gradient_accumulation_steps == 0:
+#                    if n_gpu > 1:
+#                        loss = loss.mean()  # mean() to average on multi-gpu.
+                    if args.gradient_accumulation_steps > 1:
+                        loss = loss / args.gradient_accumulation_steps
+                    if args.local_rank != -1:
+                        loss = loss + 0 * sum([x.sum() for x in model.parameters()])
+                    if args.fp16:
+                        optimizer.backward(loss)
+                    else:
+                        loss.backward()
+            
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    print("SIG1")
+                    if (step + 1) % args.gradient_accumulation_steps == 0:
 #                        optimizer.step()
 #                        scheduler.step()
-#                        model.zero_grad()
-#                        global_step += 1
-#                    print("SIG2")
-#                    tr_loss += float(loss)
-#                    
-#                    nb_tr_examples += 1
-#
-#                    if (step + 1) % args.gradient_accumulation_steps == 0 and (
-#                        global_step + 1) % args.report_steps == 0 and (
-#                        args.local_rank == -1 or torch.distributed.get_rank() == 0):
-#                        lr_this_step = get_lr(optimizer)
-#                        logging.info("Epoch={} iter={} lr={:.12f} train_ave_loss={:.6f} .".format(
-#                            # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
-#                            _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
-#                        report_loss = tr_loss
+                        model.zero_grad()
+                        global_step += 1
+                    print("SIG2")
+                    tr_loss += float(loss)
+                    
+                    nb_tr_examples += 1
+
+                    if (step + 1) % args.gradient_accumulation_steps == 0 and (
+                        global_step + 1) % args.report_steps == 0 and (
+                        args.local_rank == -1 or torch.distributed.get_rank() == 0):
+                        lr_this_step = get_lr(optimizer)
+                        logging.info("Epoch={} iter={} lr={:.12f} train_ave_loss={:.6f} .".format(
+                            # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
+                            _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
+                        report_loss = tr_loss
                         
             model.eval()
             model.zero_grad()
