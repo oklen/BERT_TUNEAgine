@@ -78,11 +78,26 @@ class NqModel(nn.Module):
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss):
+            
 #            print(input_ids.shape)
 #            print(attention_mask.shape)
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+                if getattr(self.bert_config, "gradient_checkpointing", False):
+                    def create_custom_forward(module):
+                        def custom_forward(*inputs,output_all_encoded_layers=False):
+                            return module(*inputs,output_all_encoded_layers=False)
+    
+                        return custom_forward
+                    graph_output = torch.utils.checkpoint.checkpoint(
+                    create_custom_forward(self.encoder),
+                    sequence_output,
+                    st_mask,
+                    (edges_src, edges_tgt, edges_type, edges_pos),)
+                else:
+                    graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+                
             else:
                 input_ids = input_ids.to('cuda:0')
                 attention_mask = attention_mask.to('cuda:0')
@@ -103,20 +118,10 @@ class NqModel(nn.Module):
                 edges_tgt = edges_tgt.to('cuda:1')
                 edges_type = edges_type.to('cuda:1') 
                 edges_pos = edges_pos.to('cuda:1')
-                if getattr(self.bert_config, "gradient_checkpointing", False):
-                    def create_custom_forward(module):
-                        def custom_forward(*inputs,output_all_encoded_layers=False):
-                            return module(*inputs,output_all_encoded_layers=False)
-    
-                        return custom_forward
-                    graph_output = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.encoder),
-                    sequence_output,
-                    st_mask,
-                    (edges_src, edges_tgt, edges_type, edges_pos),)
-                else:
-                    graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
                 
+                graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+                
+
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
