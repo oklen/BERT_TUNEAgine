@@ -84,6 +84,7 @@ class NqModel(nn.Module):
 #            print(attention_mask.shape)
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
+                exit(0)
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
             else:
     
