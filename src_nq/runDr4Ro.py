@@ -455,7 +455,7 @@ def main():
                         optimizer.zero_grad()
                         global_step += 1
                     print("SIG2")
-                    tr_loss += loss.item()
+                    tr_loss += float(loss)
                     
                     nb_tr_examples += 1
 
