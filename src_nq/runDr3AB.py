@@ -65,7 +65,7 @@ def get_lr(optimizer):
         return param_group['lr']
     
 NqBatch = collections.namedtuple('NqBatch',
-                                 ['unique_ids', 'input_ids', 'input_mask', 'segment_ids', 'st_mask',
+                                 ['input_ids', 'input_mask', 'segment_ids', 'st_mask',
                                   'edges_src', 'edges_tgt', 'edges_type', 'edges_pos','label'])
 
 
