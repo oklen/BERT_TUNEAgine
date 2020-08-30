@@ -76,7 +76,6 @@ class NqModel(nn.Module):
 #        print(input_idss.shape)
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
-        torch.cuda.empty_cache()
 
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss):
 #            print(input_ids.shape)
@@ -89,15 +88,17 @@ class NqModel(nn.Module):
                 input_ids = input_ids.to('cuda:0')
                 attention_mask = attention_mask.to('cuda:0')
                 token_type_ids = token_type_ids.to('cuda:0')
-                
-                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-                print("Run Done!")
+                sequence_output = []
+                for i in range(input_ids.size(0)):
+                    sequence_tmp,_ = self.bert(input_ids[i].unsqueeze(0),  attention_mask[i].unsqueeze(0),token_type_ids[i].unsqueeze(0))
+                    sequence_output.append(sequence_tmp)
                 #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
                 #print(type(sequence_output),sequence_output.shape)
                 #print(type(sequence_output2),sequence_output2.shape)
                 #exit(0)
                 #print("ALBERT DONE!")
         #        print("BEFORE GRAPH:",sequence_output.shape)
+                sequence_output = torch.stack(sequence_output)
                 sequence_output = sequence_output.to('cuda:1')
                 st_mask = st_mask.to('cuda:1')
                 edges_src = edges_src.to('cuda:1')
