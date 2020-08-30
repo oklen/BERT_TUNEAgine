@@ -110,6 +110,11 @@ def batcher(device, is_training=False):
             edges_type = [x for y in edges_type for x in y]
             edges_pos = [x for y in edges_pos for x in y]
             
+            while len(edges_src) < 5200:
+                edges_src.append(0)
+                edges_tgt.append(0)
+                edges_type.append(-1)
+                edges_pos.append(0)
 
             input_idss.append(input_ids)
             input_masks.append(input_mask)
@@ -131,9 +136,9 @@ def batcher(device, is_training=False):
         edges_types = torch.tensor(edges_types,dtype=torch.long)
         edges_poss = torch.tensor(edges_poss,dtype=torch.long)
         labels  = torch.tensor(labels,dtype=torch.long)
-        print(input_idss.shape)
-        print(edges_src.shape)
-        exit(0)
+
+
+
 #        for i,ed in enumerate(edges_srcs):
 #            ed+=st_masks.size(2)*i
 #        for i,ed in enumerate(edges_tgts):
