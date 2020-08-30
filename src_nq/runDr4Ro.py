@@ -325,16 +325,16 @@ def main():
         model.to("cuda:1")
         model.bert = model.bert.to('cuda:0')        
     
-#    if args.local_rank != -1:
-#        try:
-#            from apex.parallel import DistributedDataParallel as DDP
-#        except ImportError:
-#            raise ImportError(
-#                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-#
-#        model = DDP(model)
-#    elif n_gpu > 1:
-#        model = torch.nn.DataParallel(model)
+    if args.local_rank != -1:
+        try:
+            from apex.parallel import DistributedDataParallel as DDP
+        except ImportError:
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+
+        model = DDP(model)
+    elif n_gpu > 1:
+        model = torch.nn.DataParallel(model)
 
     num_train_features = None
     num_train_optimization_steps = None
