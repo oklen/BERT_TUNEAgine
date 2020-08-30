@@ -33,6 +33,7 @@ import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
 from torch.utils.data.distributed import DistributedSampler
+from torch.optim import SGD
 from tqdm import tqdm, trange
 from glob import glob
 
@@ -302,7 +303,7 @@ def main():
     if args.do_train:
 
 
-        model = NqModel( my_config=my_config,args)
+        model = NqModel( my_config=my_config,args=args)
         #model_dict = model.state_dict()
         #pretrained_model_dict = torch.load(pretrained_model_file, map_location=lambda storage, loc: storage)
         #pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict.keys()}
@@ -395,7 +396,8 @@ def main():
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
-        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+#        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate)
         scheduler = WarmupLinearSchedule(optimizer,
                                      warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
                                      if args.warmup_proportion > 0 else args.warmup_steps,
