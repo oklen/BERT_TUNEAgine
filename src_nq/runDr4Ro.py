@@ -456,7 +456,9 @@ def main():
                         optimizer.zero_grad()
                         global_step += 1
                     print("SIG2")
-                    tr_loss += float(loss.item())
+                    tr_loss += float(loss)
+                    
+                    print("SIG3")
                     nb_tr_examples += 1
 
                     if (step + 1) % args.gradient_accumulation_steps == 0 and (
