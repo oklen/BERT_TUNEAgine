@@ -110,7 +110,7 @@ def batcher(device, is_training=False):
             edges_type = [x for y in edges_type for x in y]
             edges_pos = [x for y in edges_pos for x in y]
             
-            while len(edges_src) < 5200:
+            while len(edges_src) < 65536:
                 edges_src.append(0)
                 edges_tgt.append(0)
                 edges_type.append(-1)
