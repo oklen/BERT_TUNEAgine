@@ -103,7 +103,7 @@ class NqModel(nn.Module):
                 edges_tgt = edges_tgt.to('cuda:1')
                 edges_type = edges_type.to('cuda:1') 
                 edges_pos = edges_pos.to('cuda:1')
-                if getattr(self.config, "gradient_checkpointing", False):
+                if getattr(self.bert_config, "gradient_checkpointing", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
                             return module(*inputs,output_all_encoded_layers=False)
