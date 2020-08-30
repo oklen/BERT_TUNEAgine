@@ -323,7 +323,7 @@ def main():
         model.to(device)
     else:
         model.to("cuda:1")
-        model.bert = model.bert.to('cpu')        
+        model.bert = model.bert.to('cuda:0')        
     
 #    if args.local_rank != -1:
 #        try:
