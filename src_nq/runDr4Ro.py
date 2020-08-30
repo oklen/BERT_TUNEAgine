@@ -147,10 +147,10 @@ def batcher(device, is_training=False):
         
 #        print(edges_tgts)
         
-        print(input_idss.shape)
-        print(input_masks.shape)
-        print(edges_srcs.shape)
-        
+#        print(input_idss.shape)
+#        print(input_masks.shape)
+#        print(edges_srcs.shape)
+#        
         if run_og:
             return NqBatch(
                            input_ids=input_idss.to(device),
