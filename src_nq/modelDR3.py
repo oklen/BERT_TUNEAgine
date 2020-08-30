@@ -108,7 +108,7 @@ class NqModel(nn.Module):
                 edges_pos = edges_pos.to('cuda:1')
                 
                 graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
-                
+                del sequence_output
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
