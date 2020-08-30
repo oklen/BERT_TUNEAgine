@@ -43,12 +43,12 @@ from glob import glob
 from modules.graph_encoderAB import Config, EdgeType, NodeType, EdgePosition
 from generate_exampleDreamAB import InputFeatures
 
-from src_nq.modelDRAB import NqModel
+from src_nq.modelDR3 import NqModel
 from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import AdamW,WarmupLinearSchedule
 
 
-WEIGHTS_NAME = "pytorch_modelAB.bin"
+WEIGHTS_NAME = "pytorch_modelRo.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)

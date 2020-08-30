@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderDr4 import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         
-        self.bert =  AlbertModel.from_pretrained("albert-base-v2")
+        self.bert =  AlbertModel.from_pretrained("roberta-large-mnli")
         #self.bert = RobertaModel.from_pretrained("roberta-base")
         my_config.hidden_size = self.bert.config.hidden_size
 
