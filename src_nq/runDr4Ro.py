@@ -451,8 +451,8 @@ def main():
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     print("SIG1")
                     if (step + 1) % args.gradient_accumulation_steps == 0:
-                        optimizer.step()
-                        scheduler.step()
+#                        optimizer.step()
+#                        scheduler.step()
                         model.zero_grad()
                         global_step += 1
                     print("SIG2")
