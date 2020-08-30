@@ -91,6 +91,7 @@ class NqModel(nn.Module):
                 sequence_output = []
                 for i in range(input_ids.size(0)):
                     sequence_tmp,_ = self.bert(input_ids[i].to('cuda:0').unsqueeze(0),  attention_mask[i].to('cuda:0').unsqueeze(0),token_type_ids[i].to('cuda:0').unsqueeze(0))
+                    sequence_tmp.to('cuda:1')
                     sequence_output.append(sequence_tmp)
                 #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
                 #print(type(sequence_output),sequence_output.shape)
