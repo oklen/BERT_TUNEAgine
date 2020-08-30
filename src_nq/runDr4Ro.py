@@ -301,8 +301,7 @@ def main():
     #print(my_config)
     if args.do_train:
 
-
-        model = NqModel( my_config=my_config,args)
+        model = NqModel( my_config=my_config,args=args)
         #model_dict = model.state_dict()
         #pretrained_model_dict = torch.load(pretrained_model_file, map_location=lambda storage, loc: storage)
         #pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict.keys()}
