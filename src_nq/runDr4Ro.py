@@ -446,16 +446,17 @@ def main():
                         optimizer.backward(loss)
                     else:
                         loss.backward()
-                    exit(0)
+            
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    
+                    print("SIG1")
+
                     if (step + 1) % args.gradient_accumulation_steps == 0:
                         optimizer.step()
                         scheduler.step()
                         optimizer.zero_grad()
                         global_step += 1
-
-                    tr_loss += loss.item()
+                    print("SIG2")
+                    tr_loss += float(loss.item())
                     nb_tr_examples += 1
 
                     if (step + 1) % args.gradient_accumulation_steps == 0 and (
