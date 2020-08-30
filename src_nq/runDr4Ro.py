@@ -147,8 +147,8 @@ def batcher(device, is_training=False):
         
 #        print(edges_tgts)
         
-        print(input_ids.shape)
-        print(input_mask.shape)
+        print(input_idss.shape)
+        print(input_masks.shape)
         
         if run_og:
             return NqBatch(
