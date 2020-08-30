@@ -104,6 +104,7 @@ def batcher(device, is_training=False):
             for index,tmp in enumerate(edges_tgt):
                 for i in range(len(tmp)):
                     tmp[i]+=index*len(st_mask[0])
+#                while len(tmp) < 
                     
             edges_src = [x for y in edges_src for x in y]
             edges_tgt = [x for y in edges_tgt for x in y]
@@ -402,8 +403,8 @@ def main():
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
-#        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+#        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
         scheduler = WarmupLinearSchedule(optimizer,
                                      warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
                                      if args.warmup_proportion > 0 else args.warmup_steps,
