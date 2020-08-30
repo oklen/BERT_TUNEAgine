@@ -35,6 +35,7 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 from glob import glob
+from torch.utils.checkpoint import checkpoint_sequential
 
 
 
@@ -435,8 +436,10 @@ def main():
                 for step, batch in enumerate(train_dataloader):
 #                                torch.cuda.empty_cache()
                     print("new begin!")
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
+                    loss = checkpoint_sequential(model,1,(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids))
+#                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+#                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
 #                    if n_gpu > 1:
 #                        loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
