@@ -452,8 +452,8 @@ def main():
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-#                    if n_gpu > 1:
-#                        loss = loss.mean(size_average=False，reduce=True)  # mean() to average on multi-gpu.
+                    if n_gpu > 1:
+                        loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
                         loss = loss / args.gradient_accumulation_steps
                     if args.local_rank != -1:
@@ -506,8 +506,8 @@ def main():
                 tgobal_step+=1
                 loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                              (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-#                if n_gpu > 1:
-#                    loss = loss.mean()  # mean() to average on multi-gpu.
+                if n_gpu > 1:
+                    loss = loss.mean()  # mean() to average on multi-gpu.
                 ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
