@@ -436,7 +436,7 @@ def main():
 
                 for step, batch in enumerate(train_dataloader):
 #                                torch.cuda.empty_cache()
-                    print("new begin!")
+
                     loss = checkpoint_sequential([model],1,batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.unique_ids)
 #                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
@@ -453,14 +453,14 @@ def main():
                         loss.backward()
             
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                    print("SIG1")
+
                     if (step + 1) % args.gradient_accumulation_steps == 0:
                         optimizer.step()
                         scheduler.step()
                         optimizer.zero_grad()
                         model.zero_grad()
                         global_step += 1
-                    print("SIG2")
+
                     tr_loss += float(loss)
                     
                     nb_tr_examples += 1
