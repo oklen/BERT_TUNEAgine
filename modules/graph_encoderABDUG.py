@@ -738,6 +738,7 @@ class Encoder(nn.Module):
         self.ctoq = MultiHeadedAttention(16,config.hidden_size)
         self.qtoc = MultiHeadedAttention(16,config.hidden_size)
         self.hidden_size = config.hidden_size
+        self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
@@ -808,7 +809,7 @@ class Encoder(nn.Module):
             query = query.unsqueeze(0)
             key = key.unsqueeze(0)
             value = value.unsqueeze(0)
-            if getattr(self.bert_config, "Extgradient_checkpointing", False):
+            if getattr(self.config, "Extgradient_checkpointing", False):
                 def create_custom_forward(module):
                     def custom_forward(*inputs):
                         return module(*inputs)
