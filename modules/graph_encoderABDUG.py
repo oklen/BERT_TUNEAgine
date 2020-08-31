@@ -830,7 +830,7 @@ class Encoder(nn.Module):
             query = value
             value = key
 #            hq2q1 = self.ctoq(query,key,value)
-            if getattr(self.bert_config, "Extgradient_checkpointing", False):
+            if getattr(self.config, "Extgradient_checkpointing", False):
                 def create_custom_forward(module):
                     def custom_forward(*inputs):
                         return module(*inputs)
