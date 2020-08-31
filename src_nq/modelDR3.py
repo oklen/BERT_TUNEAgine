@@ -84,7 +84,7 @@ class NqModel(nn.Module):
 #            print(attention_mask.shape)
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-                graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+                graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
             else:
     
                 input_ids = input_ids.to('cuda:0')
@@ -108,7 +108,7 @@ class NqModel(nn.Module):
                 edges_type = edges_type.to('cuda:1')
                 edges_pos = edges_pos.to('cuda:1')
                 
-                graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
+                graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
 
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
