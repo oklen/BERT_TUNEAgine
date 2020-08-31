@@ -452,12 +452,13 @@ def main():
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     
                     if (step + 1) % args.gradient_accumulation_steps == 0:
+                        gc.collect() 
+                        torch.cuda.empty_cache()
                         optimizer.step()
                         scheduler.step()
                         optimizer.zero_grad()
                         global_step += 1
-                        gc.collect() 
-                        torch.cuda.empty_cache()
+
 
                     tr_loss += loss.item()
                     nb_tr_examples += 1
