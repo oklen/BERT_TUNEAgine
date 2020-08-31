@@ -86,7 +86,6 @@ class NqModel(nn.Module):
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
             else:
-    
                 input_ids = input_ids.to('cuda:0')
                 attention_mask = attention_mask.to('cuda:0')
                 token_type_ids = token_type_ids.to('cuda:0')
@@ -157,7 +156,7 @@ class NqModel(nn.Module):
 #        print(tok_logits)
 #        print(res_labels)
         tok_label_loss = loss_fct(tok_logits, res_labels)
-    
+
         loss.append(tok_label_loss)
 
         # paragraph
