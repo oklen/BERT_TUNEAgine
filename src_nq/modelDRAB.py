@@ -17,7 +17,7 @@ class NqModel(nn.Module):
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
         self.bert_config.gradient_checkpointing = True
-        self.bert_config.Extgradient_checkpointing = True
+#        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
@@ -85,7 +85,7 @@ class NqModel(nn.Module):
             
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-                if getattr(self.bert_config, "Extgradient_checkpointing", False):
+                if getattr(self.bert_config, "gradient_checkpointing", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
                             x = self.dropout(module(*inputs,output_all_encoded_layers=False))
