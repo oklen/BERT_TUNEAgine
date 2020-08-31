@@ -323,7 +323,7 @@ def main():
         model.to(device)
     else:
         model.to("cuda:1")
-        model.encoder.to("cuda:0")
+        model.tok_outputs.to("cuda:0")
         
 
     
