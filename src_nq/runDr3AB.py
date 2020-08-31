@@ -455,6 +455,7 @@ def main():
                         scheduler.step()
                         optimizer.zero_grad()
                         global_step += 1
+                        torch.cuda.empty_cache()
 
                     tr_loss += loss.item()
                     nb_tr_examples += 1
