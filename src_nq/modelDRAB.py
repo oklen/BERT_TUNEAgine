@@ -90,7 +90,7 @@ class NqModel(nn.Module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
                             x = self.dropout(module(*inputs,output_all_encoded_layers=False))
 #                            return self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1)
-                            return x[0][0]
+                            return self.tok_outputs(x).squeeze(-1)
 
                         return custom_forward
 #                    sequence_output,_ = torch.utils.checkpoint.checkpoint(self.bert,input_ids,  attention_mask,token_type_ids)
