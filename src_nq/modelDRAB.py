@@ -36,14 +36,14 @@ class NqModel(nn.Module):
         #print(my_config,bert_config)
         self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
         
-        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
+#        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
 #        self.doc_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
         self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
-        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
+#        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
 #        self.answer_type_outputs = nn.Linear(self.config.hidden_size, 2)
@@ -116,8 +116,7 @@ class NqModel(nn.Module):
                 edges_tgt = edges_tgt.to('cuda:1')
                 edges_type = edges_type.to('cuda:1') 
                 edges_pos = edges_pos.to('cuda:1')
-                
-            graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
+                graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
 
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
