@@ -17,6 +17,7 @@ class NqModel(nn.Module):
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
         self.bert_config.gradient_checkpointing = True
+        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
@@ -117,8 +118,7 @@ class NqModel(nn.Module):
                 edges_type = edges_type.to('cuda:1') 
                 edges_pos = edges_pos.to('cuda:1')
                 
-                graph_output = self.encoder(sequence_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
-                
+            graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
 
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
@@ -140,10 +140,10 @@ class NqModel(nn.Module):
     
 #            x = self.dropout(graph_output)
 #            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-            x = self.dropout(sequence_output)
-            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x[:,0])))).squeeze(-1))
-#            x = self.dropout(graph_output)
-#            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+#            x = self.dropout(sequence_output)
+#            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x[:,0])))).squeeze(-1))
+            x = self.dropout(graph_output)
+            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             
 #            tok_logits.append(self.tok_outputs(self.dropout(x)).squeeze(-1))
             

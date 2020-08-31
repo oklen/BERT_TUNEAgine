@@ -808,14 +808,40 @@ class Encoder(nn.Module):
             query = query.unsqueeze(0)
             key = key.unsqueeze(0)
             value = value.unsqueeze(0)
-            hq1q2 = self.qtoc(query,key,value)
+            if getattr(self.bert_config, "Extgradient_checkpointing", False):
+                def create_custom_forward(module):
+                    def custom_forward(*inputs):
+                        return module(*inputs)
+
+                    return custom_forward
+                hq1q2 = torch.utils.checkpoint.checkpoint(
+                create_custom_forward(self.qtoc),
+                query,
+                key,
+                value,)
+            else:
+                hq1q2 = self.qtoc(query,key,value)
+#            hq1q2 = self.qtoc(query,key,value)
             hq1q2 = hq1q2.squeeze(0)
             hq1q2 = torch.mean(hq1q2,0)
             
             key = query
             query = value
             value = key
-            hq2q1 = self.ctoq(query,key,value)
+#            hq2q1 = self.ctoq(query,key,value)
+            if getattr(self.bert_config, "Extgradient_checkpointing", False):
+                def create_custom_forward(module):
+                    def custom_forward(*inputs):
+                        return module(*inputs)
+
+                    return custom_forward
+                hq2q1 = torch.utils.checkpoint.checkpoint(
+                create_custom_forward(self.ctoq),
+                query,
+                key,
+                value,)
+            else:
+                hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
             hq2q1 = torch.mean(hq2q1,0)
             
