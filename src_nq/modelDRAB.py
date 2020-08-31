@@ -35,14 +35,14 @@ class NqModel(nn.Module):
         #print(my_config,bert_config)
         self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
         
-#        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
+        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
 #        self.doc_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
         self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
-#        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
+        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
 #        self.answer_type_outputs = nn.Linear(self.config.hidden_size, 2)
@@ -81,28 +81,27 @@ class NqModel(nn.Module):
             
 #            print(input_ids.shape)
 #            print(attention_mask.shape)
+            
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-                if getattr(self.bert_config, "gradient_checkpointing", False):
-                    def create_custom_forward(module):
-                        def custom_forward(*inputs,output_all_encoded_layers=False):
-                            return module(*inputs,output_all_encoded_layers=False)
-    
-                        return custom_forward
-                    graph_output = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.encoder),
-                    sequence_output,
-                    st_mask,
-                    edges_src, edges_tgt, edges_type, edges_pos,)
-                else:
-                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
-                
+#                if getattr(self.bert_config, "gradient_checkpointing", False):
+#                    def create_custom_forward(module):
+#                        def custom_forward(*inputs,output_all_encoded_layers=False):
+#                            return module(*inputs,output_all_encoded_layers=False)
+#    
+#                        return custom_forward
+#                    graph_output = torch.utils.checkpoint.checkpoint(
+#                    create_custom_forward(self.encoder),
+#                    sequence_output,
+#                    st_mask,
+#                    edges_src, edges_tgt, edges_type, edges_pos,)
+#                else:
+#                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
+#                
             else:
                 input_ids = input_ids.to('cuda:0')
                 attention_mask = attention_mask.to('cuda:0')
                 token_type_ids = token_type_ids.to('cuda:0')
-    
-                
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
         
                 #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
@@ -138,8 +137,13 @@ class NqModel(nn.Module):
 #            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
 #            x = graph_output
 #
-            x = self.dropout(graph_output)
-            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+    
+#            x = self.dropout(graph_output)
+#            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+            x = self.dropout(sequence_output)
+            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x)))).squeeze(-1))
+#            x = self.dropout(graph_output)
+#            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             
 #            tok_logits.append(self.tok_outputs(self.dropout(x)).squeeze(-1))
             
