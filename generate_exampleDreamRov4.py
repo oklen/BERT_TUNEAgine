@@ -209,7 +209,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         names = []
         for i in name:
             names.append(i)
-        tokens.append('[SEP]')
+#        tokens.append('[SEP]')
 
             
 #        tok_is_question_begin = len(tokens)
@@ -226,18 +226,18 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         
         for choice in example.choice:
 
-            toPut=tokenizer.tokenize(example.question) + tokenizer.tokenize(choice)
+            toPut=tokenizer.tokenize(example.question) + ['[SPE]']+ tokenizer.tokenize(choice)
             toPut.append('[SEP]')
             #Delect from end
             mtokens = copy.deepcopy(tokens)
-            while len(mtokens)+len(toPut) > args.max_seq_length:
+            while len(mtokens)+len(toPut) +1> args.max_seq_length:
                 mtokens.pop()
                 tok_is_sentence_end[-1] = len(mtokens)
                 if tok_is_sentence_end[-1] == tok_is_sentence_begin[-1]:
                     tok_is_sentence_begin.pop()
                     tok_is_sentence_end.pop()
 
-            
+            mtokens.append('[SEP]')
             tok_is_question_begin = len(mtokens)
 
             tok_is_question_end = len(mtokens)  + len(tokenizer.tokenize(example.question))
