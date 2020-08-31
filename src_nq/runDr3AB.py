@@ -26,6 +26,7 @@ import os
 import random
 import sys
 from io import open
+import gc
 
 sys.path.append(os.getcwd())
 import numpy as np
@@ -455,6 +456,7 @@ def main():
                         scheduler.step()
                         optimizer.zero_grad()
                         global_step += 1
+                        gc.collect() 
                         torch.cuda.empty_cache()
 
                     tr_loss += loss.item()
