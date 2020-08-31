@@ -322,8 +322,9 @@ def main():
     if args.run_og:
         model.to(device)
     else:
-        model.to("cuda:0")
-        model.bert.to('cuda:1')
+        model.to("cuda:1")
+        model.encoder.to("cuda:0")
+        
 
     
 #    if args.local_rank != -1:
