@@ -89,7 +89,7 @@ class NqModel(nn.Module):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
                             x = self.dropout(module(*inputs,output_all_encoded_layers=False))
-                            return self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1)
+                            return self.tok_outputs(self.dropout(torch.tanh(x))).squeeze(-1)
     
                         return custom_forward
                     tok_logits.append(torch.utils.checkpoint.checkpoint(
