@@ -322,10 +322,11 @@ def main():
     if args.run_og:
         model.to(device)
     else:
-        model.to("cuda:1")
-        model.tok_outputs.to("cuda:0")
-        model.tok_dense.to("cuda:0")
-        model.dropout.to("cuda:0")
+        model.bert.to("cuda:0")
+        model.encoder.to("cuda:1")
+        model.tok_outputs.to("cuda:1")
+        model.tok_dense.to("cuda:1")
+        model.dropout.to("cuda:1")
 
     
 #    if args.local_rank != -1:
