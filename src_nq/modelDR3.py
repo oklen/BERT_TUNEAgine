@@ -125,7 +125,7 @@ class NqModel(nn.Module):
 #            print(graph_output[:,0])
 #            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
             x = graph_output
-            x = torch.cat(x,sequence_output[:,0])
+            x = torch.cat((x,sequence_output[:,0]),-1)
 # DDDD
             x = self.dropout(x)
             tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
