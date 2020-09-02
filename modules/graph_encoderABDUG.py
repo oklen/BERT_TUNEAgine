@@ -546,8 +546,8 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(16,config.hidden_size,0.3)
-        self.qtoc = MultiHeadedAttention(16,config.hidden_size,0.3)
+        self.ctoq = MultiHeadedAttention(16,config.hidden_size,0.2)
+        self.qtoc = MultiHeadedAttention(16,config.hidden_size,0.2)
         self.hidden_size = config.hidden_size
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
