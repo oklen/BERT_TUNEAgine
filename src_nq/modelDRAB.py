@@ -17,7 +17,7 @@ class NqModel(nn.Module):
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
         self.bert_config.gradient_checkpointing = True
-        self.bert_config.Extgradient_checkpointing = True
+#        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
@@ -105,9 +105,9 @@ class NqModel(nn.Module):
                     x = self.dropout(torch.cat(graph_output,sequence_output[:,0],-1))
                     tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
             else:
-                input_ids = input_ids.to('cuda:1')
-                attention_mask = attention_mask.to('cuda:1')
-                token_type_ids = token_type_ids.to('cuda:1')
+                input_ids = input_ids.to('cuda:0')
+                attention_mask = attention_mask.to('cuda:0')
+                token_type_ids = token_type_ids.to('cuda:0')
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
         
                 #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
