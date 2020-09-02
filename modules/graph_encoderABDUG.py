@@ -594,7 +594,7 @@ class Encoder(nn.Module):
     
     
     
-    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=True):
+    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False):
 #        hidden_states = self.initializer(hidden_states, st_mask, edges)
         
 #        edges_src, edges_tgt, edges_type, edges_pos = edges
