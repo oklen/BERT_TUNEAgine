@@ -125,7 +125,7 @@ class NqModel(nn.Module):
                 if getattr(self.bert_config, "gradient_checkpointing", False):
                     graph_output = torch.utils.checkpoint.checkpoint(
                             self.encoder,
-                            st_mask, edges_src, edges_tgt, edges_type, edges_pos
+                            sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos,
                             )
                 else:
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
