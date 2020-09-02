@@ -123,7 +123,8 @@ class NqModel(nn.Module):
                 edges_type = edges_type.to('cuda:1')
                 edges_pos = edges_pos.to('cuda:1')
                 graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
-                x = self.dropout(graph_output)
+                
+                x = self.dropout(graph_output.to('cuda:0'))
                 tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
