@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
-        self.bert_config.gradient_checkpointing = True
+#        self.bert_config.gradient_checkpointing = True
 #        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
@@ -34,7 +34,7 @@ class NqModel(nn.Module):
         #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
-        self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
+        self.tok_dense = nn.Linear(my_config.hidden_size*3, my_config.hidden_size*3)
         
 #        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
@@ -42,7 +42,7 @@ class NqModel(nn.Module):
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
-        self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
+        self.tok_outputs = nn.Linear(my_config.hidden_size*3, 1) # tune to avoid fell into bad places
 #        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
