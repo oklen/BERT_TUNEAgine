@@ -494,11 +494,12 @@ def main():
             ttr_loss = 0
             optimizer.zero_grad()
             logging.info("***** Running evalating *****")
-            for step, batch in enumerate(train_dataloader):
-                tgobal_step+=1
-                loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                             (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-                ttr_loss+=loss.item()
+            with torch.no_grad():
+                for step, batch in enumerate(train_dataloader):
+                    tgobal_step+=1
+                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
+                    ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
             optimizer.zero_grad()
