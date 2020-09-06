@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
-#        self.bert_config.gradient_checkpointing = True
+        self.bert_config.gradient_checkpointing = True
 #        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
@@ -85,8 +85,8 @@ class NqModel(nn.Module):
 #            print(attention_mask.shape)
             
             if self.args.run_og:
-#                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) .requires_grad_()
-                sequence_output,_ = torch.utils.checkpoint.checkpoint(self.bert,input_ids,  attention_mask,token_type_ids)
+                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) .requires_grad_()
+
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
