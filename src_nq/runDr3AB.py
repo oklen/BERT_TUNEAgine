@@ -39,9 +39,6 @@ from tqdm import tqdm, trange
 from glob import glob
 
 
-
-
-
 from modules.graph_encoderABDUG import Config, EdgeType, NodeType, EdgePosition
 #from generate_exampleDreamAB import InputFeatures
 
