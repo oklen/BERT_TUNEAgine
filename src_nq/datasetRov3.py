@@ -6,7 +6,7 @@ import pandas as pd
 
 import logging
 
-from generate_exampleDreamAB import DrExample,EdgeType
+from generate_exampleDreamAB import DrExample,EdgeType,InputFeatures
 
 if sys.version_info[0] == 2:
     import cPickle as pickle
