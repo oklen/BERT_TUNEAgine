@@ -321,7 +321,7 @@ def main():
         model.cuda()
         if args.local_rank != -1:
 #            model = torch.nn.parallel.DistributedDataParallel(model,find_unused_parameters=True)
-            model = torch.nn.parallel.DistributedDataParallel(model)
+            model = torch.nn.parallel.DistributedDataParallel(model,delay_allreduce=True)
 
     else:
         model.bert.to("cuda:0")
