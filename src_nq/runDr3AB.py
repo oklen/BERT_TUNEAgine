@@ -252,7 +252,7 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
     else:
-#        torch.cuda.set_device(args.local_rank)
+        torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
         torch.distributed.init_process_group(backend='nccl')
         n_gpu = 1
@@ -320,7 +320,9 @@ def main():
     global run_og 
     run_og = args.run_og
     if args.run_og:
-        model.to(device)
+        model.cuda()
+        if args.local_rank != -1:
+            model = nn.parallel.DistributedDataParallel(model)
     else:
         model.bert.to("cuda:0")
         model.encoder.to("cuda:1")
