@@ -188,9 +188,8 @@ class NqModel(nn.Module):
         tok_label_loss = loss_fct(tok_logits, res_labels)
     
         loss.append(tok_label_loss)
-        print(loss)
-        print(labels)
-        if labels != None:
+
+        if labels is not None:
             return torch.sum(torch.stack(loss))
         else:
             return tok_logits
