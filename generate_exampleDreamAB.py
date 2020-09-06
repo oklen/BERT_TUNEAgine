@@ -48,7 +48,7 @@ else:
 
 
 from spacy.lang.en import English
-from modules.graph_encoderAB import NodePosition, Graph, EdgeType, get_edge_position
+from modules.graph_encoderABDUG import NodePosition, Graph, EdgeType, get_edge_position
 
 
 nlp = English()

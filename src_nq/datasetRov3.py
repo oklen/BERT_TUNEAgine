@@ -6,7 +6,7 @@ import pandas as pd
 import tensorflow as tf
 import logging
 
-from generate_exampleDreamRov3 import DrExample,EdgeType
+from generate_exampleDreamAB import DrExample,EdgeType
 
 if sys.version_info[0] == 2:
     import cPickle as pickle
