@@ -43,7 +43,7 @@ from glob import glob
 
 
 from modules.graph_encoderABDUG import Config, EdgeType, NodeType, EdgePosition
-from generate_exampleDreamAB import InputFeatures
+#from generate_exampleDreamAB import InputFeatures
 
 from src_nq.modelDRAB import NqModel
 from src_nq.datasetRov3 import NqDataset
