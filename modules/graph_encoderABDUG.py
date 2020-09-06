@@ -502,12 +502,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.2):
+    def __init__(self, h, d_model, dropout=0.15):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*2
+        self.hidden_size = d_model
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -546,8 +546,8 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(8,config.hidden_size,0.2)
-        self.qtoc = MultiHeadedAttention(8,config.hidden_size,0.2)
+        self.ctoq = MultiHeadedAttention(16,config.hidden_size,0.2)
+        self.qtoc = MultiHeadedAttention(16,config.hidden_size,0.2)
         self.hidden_size = config.hidden_size
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
