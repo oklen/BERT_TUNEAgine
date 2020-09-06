@@ -486,7 +486,7 @@ def main():
                 train_sampler = RandomSampler(train_features)
             else:
                 train_sampler = DistributedSampler(train_features)
-            if args.local_rand == -1:
+            if args.local_rank == -1:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
             else:
