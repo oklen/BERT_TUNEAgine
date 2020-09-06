@@ -247,15 +247,16 @@ def main():
                         help="Whether to use 16-bit float precision instead of 32-bit")
     args = parser.parse_args()
     #print(args)
-
+    n_gpu = torch.cuda.device_count()
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
-    else:
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
+    if n_gpu!=1: 
+        
+#        torch.cuda.set_device(args.local_rank)
+#        device = torch.device("cuda", args.local_rank)
         torch.distributed.init_process_group(backend='nccl')
-        n_gpu = 1
+#        n_gpu = 1
 
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
@@ -303,6 +304,8 @@ def main():
 
 
         model = NqModel( my_config=my_config,args=args)
+        if n_gpu >1:
+            model=torch.nn.parallel.DistributedDataParallel(model)
         #model_dict = model.state_dict()
         #pretrained_model_dict = torch.load(pretrained_model_file, map_location=lambda storage, loc: storage)
         #pretrained_model_dict = {k: v for k, v in pretrained_model_dict.items() if k in model_dict.keys()}
@@ -429,12 +432,13 @@ def main():
                 train_dataset = NqDataset(args, data_path, is_training=True)
                 train_features = train_dataset.features
                 #logging.info("Data Load Done!")
-                if args.local_rank == -1:
+                if n_gpu == 1:
                     train_sampler = RandomSampler(train_features)
                 else:
                     train_sampler = DistributedSampler(train_features)
+                    
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
+                                              collate_fn=batcher(device, is_training=True), num_workers=n_gpu,pin_memory=True, drop_last=True)
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
 
