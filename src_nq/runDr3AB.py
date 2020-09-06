@@ -250,6 +250,7 @@ def main():
         n_gpu = torch.cuda.device_count()
     else:
 #        torch.cuda.set_device(args.local_rank)
+        print(args.local_rank)
         device = torch.device("cuda", args.local_rank)
         torch.distributed.init_process_group(backend='nccl')
         n_gpu = 1
