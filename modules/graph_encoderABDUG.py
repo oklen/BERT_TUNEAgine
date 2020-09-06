@@ -4,7 +4,7 @@ import copy
 import json
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
+#from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 
 
 class EdgeType(enum.IntEnum):
