@@ -188,20 +188,10 @@ class NqModel(nn.Module):
         tok_label_loss = loss_fct(tok_logits, res_labels)
     
         loss.append(tok_label_loss)
-
-        # paragraph
         
-#        para_logits = para_logits.view(para_logits.size(0),self.my_config.max_paragraph_len)
-#        para_logits = self.par_to_label(torch.tanh(para_logits))
-#
-#
-#        para_loss = loss_fct(para_logits, label)
-#        #loss.append(para_loss)
-#
-#        # document
-#        answer_type_loss = loss_fct(answer_type_logits, label)
-        #loss.append(answer_type_loss)
-        if labels != None:
-            return torch.sum(torch.stack(loss))
-        else:
-            return tok_logits
+        return torch.sum(torch.stack(loss))
+
+#        if labels != None:
+#            return torch.sum(torch.stack(loss))
+#        else:
+#            return tok_logits
