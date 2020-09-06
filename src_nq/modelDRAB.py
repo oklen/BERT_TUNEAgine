@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
-#        self.bert_config.gradient_checkpointing = True
+        self.bert_config.gradient_checkpointing = True
 #        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
@@ -43,6 +43,7 @@ class NqModel(nn.Module):
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
         self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
+        
 #        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
 #        self.para_outputs = nn.Linear(self.config.hidden_size, 1)
@@ -85,13 +86,12 @@ class NqModel(nn.Module):
             
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-                if getattr(self.bert_config, "gradient_checkpointing", False):
+                if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
                             x = self.dropout(module(*inputs,output_all_encoded_layers=False))
 #                            return self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1)
                             return self.tok_outputs(x).squeeze(-1)
-
                         return custom_forward
 #                    sequence_output,_ = torch.utils.checkpoint.checkpoint(self.bert,input_ids,  attention_mask,token_type_ids)
                     tok_logits.append(torch.utils.checkpoint.checkpoint(
