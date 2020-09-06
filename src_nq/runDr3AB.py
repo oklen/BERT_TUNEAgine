@@ -319,7 +319,7 @@ def main():
     if args.run_og:
         model.cuda()
         if args.local_rank != -1:
-            model = torch.nn.parallel.DistributedDataParallel(model)
+            model = torch.nn.parallel.DistributedDataParallel(model,find_unused_parameters=True)
     else:
         model.bert.to("cuda:0")
         model.encoder.to("cuda:1")
