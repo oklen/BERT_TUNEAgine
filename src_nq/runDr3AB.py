@@ -494,7 +494,7 @@ def main():
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
             else:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True, drop_last=True)
+                                              collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
             
             train_features = train_dataset.features
             logging.info("Data ready {} ".format(len(train_features)))
