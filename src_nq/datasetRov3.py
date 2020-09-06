@@ -3,7 +3,7 @@ import sys
 import six
 import json
 import pandas as pd
-import tensorflow as tf
+
 import logging
 
 from generate_exampleDreamAB import DrExample,EdgeType
