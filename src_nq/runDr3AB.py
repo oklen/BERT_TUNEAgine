@@ -64,7 +64,7 @@ def get_lr(optimizer):
     
 NqBatch = collections.namedtuple('NqBatch',
                                  ['input_ids', 'input_mask', 'segment_ids', 'st_mask',
-                                  'edges_src', 'edges_tgt', 'edges_type', 'edges_pos','label'])
+                                  'edges_src', 'edges_tgt', 'edges_type', 'edges_pos','label','all_sen'])
 
 
 
@@ -78,6 +78,7 @@ def batcher(device, is_training=False):
         edges_tgts = []
         edges_types = []
         edges_poss = []
+        sen_bes = []
         labels  = []
         for i,features in  enumerate(mul_features):
 #            unique_ids = [f.unique_id for f in features]
@@ -85,6 +86,7 @@ def batcher(device, is_training=False):
             input_mask = [f.input_mask for f in features]
             segment_ids = [f.segment_ids for f in features]
             st_mask = [f.graph.st_mask for f in features]
+            sen_be = [f.all_sen for f in features]
     #        st_index = torch.tensor([f.graph.st_index for f in features], dtype=torch.long)
             edges_src = [f.graph.edges_src for f in features]
             edges_tgt = [f.graph.edges_tgt for f in features]
@@ -108,6 +110,9 @@ def batcher(device, is_training=False):
             edges_type = [x for y in edges_type for x in y]
             edges_pos = [x for y in edges_pos for x in y]
             
+            for sen in sen_be:
+                while len(sen) < 64: 
+                    sen.append((-1,-1))
 #            unique_idss.append(unique_ids)
             input_idss.append(input_ids)
             input_masks.append(input_mask)
@@ -118,6 +123,7 @@ def batcher(device, is_training=False):
             edges_types.append(edges_type)
             edges_poss.append(edges_pos)
             labels.append(label)
+            sen_bes.append(sen_be)
             
 #        unique_idss = torch.tensor(unique_idss,dtype=torch.long)
         input_idss = torch.tensor(input_idss,dtype=torch.long)
@@ -129,6 +135,7 @@ def batcher(device, is_training=False):
         edges_types = torch.tensor(edges_types,dtype=torch.long)
         edges_poss = torch.tensor(edges_poss,dtype=torch.long)
         labels  = torch.tensor(labels,dtype=torch.long)
+        sen_bes = torch.tensor(sen_bes,dtype=torch.int)
         
 #        for i,ed in enumerate(edges_srcs):
 #            ed+=st_masks.size(2)*i
@@ -145,7 +152,8 @@ def batcher(device, is_training=False):
                            edges_tgt=edges_tgts.to(device),
                            edges_type=edges_types.to(device),
                            edges_pos=edges_poss.to(device),
-                           label=labels.to(device))
+                           label=labels.to(device),
+                           all_sen=sen_bes.to(device))
         else:
             return NqBatch(
                    input_ids=input_idss,
@@ -156,7 +164,8 @@ def batcher(device, is_training=False):
                    edges_tgt=edges_tgts,
                    edges_type=edges_types,
                    edges_pos=edges_poss,
-                   label=labels)
+                   label=labels,
+                   all_sen=sen_bes)
     return batcher_dev
 
 

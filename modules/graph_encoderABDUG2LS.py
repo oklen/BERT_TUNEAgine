@@ -4,8 +4,8 @@ import copy
 import json
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
-
+#from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
+from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -507,7 +507,7 @@ class MultiHeadedAttention(nn.Module):
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*4
+        self.hidden_size = d_model*3
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -548,6 +548,8 @@ class Encoder(nn.Module):
         
         self.ctoq = MultiHeadedAttention(16,config.hidden_size,0.2)
         self.qtoc = MultiHeadedAttention(16,config.hidden_size,0.2)
+        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
+                                 bidirectional=True, num_layers=2, batch_first=True)
         self.hidden_size = config.hidden_size
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
@@ -594,7 +596,7 @@ class Encoder(nn.Module):
     
     
     
-    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False):
+    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False):
 #        hidden_states = self.initializer(hidden_states, st_mask, edges)
         
 #        edges_src, edges_tgt, edges_type, edges_pos = edges
@@ -634,7 +636,11 @@ class Encoder(nn.Module):
             else:
                 hq1q2 = self.qtoc(query,key,value)
 #            hq1q2 = self.qtoc(query,key,value)
+            qa_node = pack_sequence([hq1q2])
+            qa_node, (_, _) = self.rnn(qa_node,None)
+            
             hq1q2 = hq1q2.squeeze(0)
+            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq1q2 #Add the part to ori
             hq1q2 = torch.mean(hq1q2,0)
             
             key = query
@@ -655,6 +661,7 @@ class Encoder(nn.Module):
             else:
                 hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
+            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq2q1
             hq2q1 = torch.mean(hq2q1,0)
             
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
