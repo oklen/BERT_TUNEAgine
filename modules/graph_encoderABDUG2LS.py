@@ -4,7 +4,7 @@ import copy
 import json
 import torch
 import torch.nn as nn
-#from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
+from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
 
 class EdgeType(enum.IntEnum):
@@ -550,6 +550,10 @@ class Encoder(nn.Module):
         self.qtoc = MultiHeadedAttention(16,config.hidden_size,0.2)
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
                                  bidirectional=True, num_layers=2, batch_first=True)
+        
+        self.conv1 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
+#        self.conv2 = GraphConv(config.hidden_size, config.hidden_size)
+        
         self.hidden_size = config.hidden_size
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
@@ -607,15 +611,19 @@ class Encoder(nn.Module):
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
         
-#        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()        
-        
+        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
         hidden_statesOut = []
-        
+        qas = []
+
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
             key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
@@ -636,8 +644,7 @@ class Encoder(nn.Module):
             else:
                 hq1q2 = self.qtoc(query,key,value)
 #            hq1q2 = self.qtoc(query,key,value)
-            qa_node = pack_sequence([hq1q2])
-            qa_node, (_, _) = self.rnn(qa_node,None)
+
             
             hq1q2 = hq1q2.squeeze(0)
             hidden_states[i][q2[(q2//512).eq(i)]%512] = hq1q2 #Add the part to ori
@@ -663,9 +670,25 @@ class Encoder(nn.Module):
             hq2q1 = hq2q1.squeeze(0)
             hidden_states[i][q1[(q1//512).eq(i)]%512] = hq2q1
             hq2q1 = torch.mean(hq2q1,0)
+            qa = all_sen[i][-1]
+            qas.append(qa)
+            all_sen[i] = all_sen[i][:-1]
+            for b,e in all_sen[i]:
+                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],-1)
+            sen = hidden_states[i][all_sen[i,:,0]]
+            sen = pack_sequence([sen])
+            sen,(_,_) = self.rnn(sen,None)
+            sen,_ =  pad_packed_sequence(sen, batch_first=True)
+            hidden_states[i][all_sen[i,:,0]] = sen[0]
             
+#            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
+        x=  hidden_states.view(-1,self.config.hidden_size)
+        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
+        for i in range(3):
+            hq1q2 = torch.mean(hidden_states[i][all_sen[i,:,0]],-1)
+            hq2q1 = hidden_states[i][qas[i]]
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
-
+            
         return torch.stack(hidden_statesOut)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
