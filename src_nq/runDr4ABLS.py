@@ -135,7 +135,7 @@ def batcher(device, is_training=False):
         edges_types = torch.tensor(edges_types,dtype=torch.long)
         edges_poss = torch.tensor(edges_poss,dtype=torch.long)
         labels  = torch.tensor(labels,dtype=torch.long)
-        sen_bes = torch.tensor(sen_bes,dtype=torch.int)
+        sen_bes = torch.tensor(sen_bes,dtype=torch.long)
         
 #        for i,ed in enumerate(edges_srcs):
 #            ed+=st_masks.size(2)*i
