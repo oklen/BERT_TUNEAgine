@@ -551,7 +551,7 @@ class Encoder(nn.Module):
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
-        self.conv1 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
+        self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
 #        self.conv2 = GraphConv(config.hidden_size, config.hidden_size)
         
         self.hidden_size = config.hidden_size
@@ -677,7 +677,7 @@ class Encoder(nn.Module):
 #            all_sen[i] = all_sen[i][:-1]
             for b,e in all_sen[i]:
                 hidden_states[i][b] = torch.mean(hidden_states[i][b:e],0)
-            print(all_sen)
+#            print(all_sen)
             sen = hidden_states[i][all_sen[i,:-1,0]]
             sen = pack_sequence([sen])
             sen,(_,_) = self.rnn(sen,None)
