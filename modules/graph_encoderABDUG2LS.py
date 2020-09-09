@@ -676,18 +676,18 @@ class Encoder(nn.Module):
             qas.append(qa)
 #            all_sen[i] = all_sen[i][:-1]
             for b,e in all_sen[i]:
-                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],-1)
-            sen = hidden_states[i][all_sen[i,:,0]]
+                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],0)
+            sen = hidden_states[i][all_sen[i,:-1,0]]
             sen = pack_sequence([sen])
             sen,(_,_) = self.rnn(sen,None)
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            hidden_states[i][all_sen[i,:,0]] = sen[0]
+            hidden_states[i][all_sen[i,:-1,0]] = sen[0]
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         x=  hidden_states.view(-1,self.config.hidden_size)
         x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         for i in range(3):
-            hq1q2 = torch.mean(hidden_states[i][all_sen[i,:-1,0]],-1)
+            hq1q2 = torch.mean(hidden_states[i][all_sen[i,:-1,0]],0)
             hq2q1 = hidden_states[i][qas[i]]
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
