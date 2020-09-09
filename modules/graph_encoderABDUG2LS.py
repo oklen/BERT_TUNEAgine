@@ -507,7 +507,7 @@ class MultiHeadedAttention(nn.Module):
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*3
+        self.hidden_size = d_model*8
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -647,8 +647,8 @@ class Encoder(nn.Module):
 
             
             hq1q2 = hq1q2.squeeze(0)
-            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq1q2 #Add the part to ori
-            hq1q2 = torch.mean(hq1q2,0)
+            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
+#            hq1q2 = torch.mean(hq1q2,0)
             
             key = query
             query = value
@@ -668,8 +668,10 @@ class Encoder(nn.Module):
             else:
                 hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
-            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq2q1
-            hq2q1 = torch.mean(hq2q1,0)
+            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq2q1
+            
+#            hq2q1 = torch.mean(hq2q1,0)
+            
             qa = all_sen[i][-1]
             qas.append(qa)
             all_sen[i] = all_sen[i][:-1]
