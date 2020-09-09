@@ -672,7 +672,7 @@ class Encoder(nn.Module):
             
 #            hq2q1 = torch.mean(hq2q1,0)
             
-            qa = all_sen[i][-1]
+            qa = all_sen[i][-1][0]
             qas.append(qa)
 #            all_sen[i] = all_sen[i][:-1]
             for b,e in all_sen[i]:
