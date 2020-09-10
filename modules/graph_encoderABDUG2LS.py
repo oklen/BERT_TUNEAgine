@@ -647,7 +647,7 @@ class Encoder(nn.Module):
 
             
             hq1q2 = hq1q2.squeeze(0)
-            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
+#            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
 #            hq1q2 = torch.mean(hq1q2,0)
             
             key = query
@@ -668,21 +668,20 @@ class Encoder(nn.Module):
             else:
                 hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
-            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq2q1
-            
-#            hq2q1 = torch.mean(hq2q1,0)
-            
-            qa = all_sen[i][-1][0]
-            qas.append(qa)
-#            all_sen[i] = all_sen[i][:-1]
-            for b,e in all_sen[i]:
-                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],0)
-#            print(all_sen)
-            sen = hidden_states[i][all_sen[i,:-1,0]]
-            sen = pack_sequence([sen])
-            sen,(_,_) = self.rnn(sen,None)
-            sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            hidden_states[i][all_sen[i,:-1,0]] = sen[0]
+#            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq2q1
+#            
+#            
+#            qa = all_sen[i][-1][0]
+#            qas.append(qa)
+#
+#            for b,e in all_sen[i]:
+#                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],0)
+#
+#            sen = hidden_states[i][all_sen[i,:-1,0]]
+#            sen = pack_sequence([sen])
+#            sen,(_,_) = self.rnn(sen,None)
+#            sen,_ =  pad_packed_sequence(sen, batch_first=True)
+#            hidden_states[i][all_sen[i,:-1,0]] = sen[0]
             hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
 
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
