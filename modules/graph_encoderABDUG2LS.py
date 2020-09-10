@@ -684,7 +684,7 @@ class Encoder(nn.Module):
                 hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
             
             sen = hidden_states3[i][now_all_sen[:-1,0]]
-            print(sen)
+#            print(sen)
             sen = pack_sequence([sen])
             sen,(_,_) = self.rnn(sen,None)
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
