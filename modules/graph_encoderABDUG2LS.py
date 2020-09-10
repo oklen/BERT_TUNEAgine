@@ -685,9 +685,9 @@ class Encoder(nn.Module):
             hidden_states[i][all_sen[i,:-1,0]] = sen[0]
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
-        x=  hidden_states.view(-1,self.config.hidden_size)
-        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states = x.view(hidden_states.shape)
+#        x=  hidden_states.view(-1,self.config.hidden_size)
+#        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
+#        hidden_states = x.view(hidden_states.shape)
         
         for i in range(3):
             hq1q2 = torch.mean(hidden_states[i][all_sen[i,:-1,0][all_sen[i,:-1,0].ne(-1)]],0)
