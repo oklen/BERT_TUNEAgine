@@ -34,8 +34,9 @@ class NqModel(nn.Module):
         #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
+#        self.tok_dense = nn.Linear(my_config.hidden_size, my_config.hidden_size)
         self.tok_dense = nn.Linear(my_config.hidden_size, my_config.hidden_size)
-        
+
 #        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
 #        self.doc_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
@@ -107,7 +108,7 @@ class NqModel(nn.Module):
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
 #                    print(sequence_output)
-                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
+#                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
 #                    x = self.dropout(graph_output)
 #                    x = self.dropout(graph_output)
                     x = self.dropout(sequence_output[:,0])
