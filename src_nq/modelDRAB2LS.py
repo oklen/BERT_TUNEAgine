@@ -188,7 +188,7 @@ class NqModel(nn.Module):
 #        print(tok_logits)
 #        print(res_labels)
         tok_label_loss = loss_fct(tok_logits, res_labels)
-    
+        print(tok_label_loss)
         loss.append(tok_label_loss)
 
         if labels is not None:
