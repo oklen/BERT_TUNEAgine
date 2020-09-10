@@ -107,7 +107,7 @@ class NqModel(nn.Module):
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
 #                    print(sequence_output)
-#                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
+                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
 #                    x = self.dropout(graph_output)
 #                    x = self.dropout(graph_output)
                     x = self.dropout(sequence_output[:,0])
@@ -179,7 +179,7 @@ class NqModel(nn.Module):
         
 
         # token
-#        print(tok_logits)
+        print(tok_logits)
         tok_logits = torch.stack(tok_logits)
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
