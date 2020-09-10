@@ -624,7 +624,7 @@ class Encoder(nn.Module):
         hidden_statesOut = []
         qas = []
         
-        hidden_states2 = torch.zero_like(hidden_states)
+        hidden_states2 = torch.zeros_like(hidden_states)
 
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
@@ -649,7 +649,7 @@ class Encoder(nn.Module):
 
             
             hq1q2 = hq1q2.squeeze(0)
-#            hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
+            hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
 #            hq1q2 = torch.mean(hq1q2,0)
             
             key = query
@@ -670,7 +670,7 @@ class Encoder(nn.Module):
             else:
                 hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
-#            hidden_states[i][q2[(q2//512).eq(i)]%512] = hq2q1
+            hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
 #            
 #            
 #            qa = all_sen[i][-1][0]
