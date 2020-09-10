@@ -625,7 +625,8 @@ class Encoder(nn.Module):
         qas = []
         
         hidden_states2 = torch.zeros_like(hidden_states)
-
+        hidden_states3 = torch.zeros_like(hidden_states)
+        
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
             key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
@@ -677,26 +678,26 @@ class Encoder(nn.Module):
             qas.append(qa)
 
             for b,e in all_sen[i]:
-                hidden_states2[i][b] = torch.mean(hidden_states2[i][b:e],0)
+                hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
 
-            sen = hidden_states2[i][all_sen[i,:-1,0]]
+            sen = hidden_states3[i][all_sen[i,:-1,0]]
             sen = pack_sequence([sen])
             sen,(_,_) = self.rnn(sen,None)
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            hidden_states2[i][all_sen[i,:-1,0]] = sen[0]
+            hidden_states3[i][all_sen[i,:-1,0]] = sen[0]
             
             hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
 
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
-        x=  hidden_states2.view(-1,self.config.hidden_size)
+        x=  hidden_states3.view(-1,self.config.hidden_size)
         x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states2 = x.view(hidden_states2.shape)
+        hidden_states3 = x.view(hidden_states3.shape)
         
         for i in range(3):
-            hq1q2 = torch.mean(hidden_states2[i][all_sen[i,:-1,0][all_sen[i,:-1,0].ne(-1)]],0)
-            hq2q1 = hidden_states2[i][qas[i]]
+            V1 = torch.mean(hidden_states3[i][all_sen[i,:-1,0][all_sen[i,:-1,0].ne(-1)]],0)
+            V2 = hidden_states3[i][qas[i]]
 #            print(hq1q2.shape,hq2q1.shape)
-#            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
+            hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
 
