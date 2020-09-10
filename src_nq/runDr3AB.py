@@ -135,7 +135,7 @@ def batcher(device, is_training=False):
         edges_types = torch.tensor(edges_types,dtype=torch.long)
         edges_poss = torch.tensor(edges_poss,dtype=torch.long)
         labels  = torch.tensor(labels,dtype=torch.long)
-        sen_bes = torch.tensor(sen_bes,dtype=torch.int)
+        sen_bes = torch.tensor(sen_bes,dtype=torch.long)
         
 #        for i,ed in enumerate(edges_srcs):
 #            ed+=st_masks.size(2)*i
@@ -326,11 +326,11 @@ def main():
         model.half()
     global run_og 
     run_og = args.run_og
-    if args.run_og:
-        model.cuda()
-        if args.local_rank != -1:
+    
+    model.to(device)
+    if args.local_rank != -1:
 #            model = torch.nn.parallel.DistributedDataParallel(model,find_unused_parameters=True)
-            model = torch.nn.parallel.DistributedDataParallel(model)
+        model = torch.nn.parallel.DistributedDataParallel(model)
 
     else:
         model.bert.to("cuda:0")
