@@ -16,7 +16,7 @@ class NqModel(nn.Module):
         self.my_mask = None
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
-        self.bert_config.gradient_checkpointing = True
+#        self.bert_config.gradient_checkpointing = True
 #        self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
