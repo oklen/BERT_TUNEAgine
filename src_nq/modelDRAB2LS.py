@@ -83,7 +83,10 @@ class NqModel(nn.Module):
             
 #            print(input_ids.shape)
 #            print(attention_mask.shape)
-            
+            print("BEGIN!")
+            print(input_ids)
+            print(attention_mask)
+            print(token_type_ids)
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
 #                .requires_grad_()
@@ -102,7 +105,7 @@ class NqModel(nn.Module):
                     st_mask,
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
-                    print(sequence_output)
+#                    print(sequence_output)
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
 #                    x = self.dropout(graph_output)
                     x = self.dropout(graph_output)
