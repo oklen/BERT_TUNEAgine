@@ -432,7 +432,8 @@ def main():
         tr_loss, report_loss = 0.0, 0.0
         nb_tr_examples = 0
         model.zero_grad()
-
+        optimizer.zero_grad()
+        
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
