@@ -472,8 +472,8 @@ def main():
 #                        gc.collect() 
 #                        torch.cuda.empty_cache()
                         optimizer.step()
-                        optimizer.zero_grad()
                         scheduler.step()
+                        optimizer.zero_grad()
                         global_step += 1
 
 
