@@ -623,6 +623,8 @@ class Encoder(nn.Module):
         
         hidden_statesOut = []
         qas = []
+        
+        hidden_states2 = torch.zero_like(hidden_states)
 
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
