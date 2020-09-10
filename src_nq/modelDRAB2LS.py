@@ -105,8 +105,10 @@ class NqModel(nn.Module):
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
 #                    x = self.dropout(graph_output)
                     x = self.dropout(graph_output)
+                    print(x)
 #                    x = self.dropout(graph_output)
                     tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+
             else:
                 input_ids = input_ids.to('cuda:0')
                 attention_mask = attention_mask.to('cuda:0')
@@ -171,6 +173,7 @@ class NqModel(nn.Module):
         
 
         # token
+        print(tok_logits)
         tok_logits = torch.stack(tok_logits)
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
@@ -188,7 +191,6 @@ class NqModel(nn.Module):
 #        print(tok_logits)
 #        print(res_labels)
         tok_label_loss = loss_fct(tok_logits, res_labels)
-        print(tok_label_loss)
         loss.append(tok_label_loss)
 
         if labels is not None:
