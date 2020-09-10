@@ -623,6 +623,7 @@ class Encoder(nn.Module):
         
         hidden_statesOut = []
         qas = []
+        sen_ss = []
         
         hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
@@ -675,6 +676,7 @@ class Encoder(nn.Module):
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
+            sen_ss.append(now_all_sen)
             qa = now_all_sen[i][-1][0]
             qas.append(qa)
 
@@ -688,7 +690,7 @@ class Encoder(nn.Module):
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
             hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
             
-            hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
+#            hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
 
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         x=  hidden_states3.view(-1,self.config.hidden_size)
@@ -696,10 +698,10 @@ class Encoder(nn.Module):
         hidden_states3 = x.view(hidden_states3.shape)
         
         for i in range(3):
-            V1 = torch.mean(hidden_states3[i][all_sen[i,:-1,0][all_sen[i,:-1,0].ne(-1)]],0)
+            V1 = torch.mean(hidden_states3[i][sen_ss[i,:-1,0]],0)
             V2 = hidden_states3[i][qas[i]]
 #            print(hq1q2.shape,hq2q1.shape)
-#            hidden_statesOut.append(torch.cat([V1,V2]))
+            hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
 
