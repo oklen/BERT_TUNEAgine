@@ -686,7 +686,7 @@ class Encoder(nn.Module):
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
             hidden_states3[i][all_sen[i,:-1,0]] = sen[0]
             
-            hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
+#            hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
 
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         x=  hidden_states3.view(-1,self.config.hidden_size)
