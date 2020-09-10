@@ -471,8 +471,8 @@ def main():
                     if (step + 1) % args.gradient_accumulation_steps == 0:
 #                        gc.collect() 
 #                        torch.cuda.empty_cache()
-                        optimizer.zero_grad()
                         optimizer.step()
+                        optimizer.zero_grad()
                         scheduler.step()
                         global_step += 1
 
