@@ -677,7 +677,7 @@ class Encoder(nn.Module):
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             sen_ss.append(now_all_sen)
-            qa = now_all_sen[i][-1][0]
+            qa = now_all_sen[-1][0]
             qas.append(qa)
 
             for b,e in now_all_sen:
