@@ -463,7 +463,7 @@ def main():
                     else:
                         loss.backward()
             
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.3)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
                     if (step + 1) % args.gradient_accumulation_steps == 0:
                         optimizer.step()

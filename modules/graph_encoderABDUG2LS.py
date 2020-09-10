@@ -692,7 +692,7 @@ class Encoder(nn.Module):
         for i in range(3):
             hq1q2 = torch.mean(hidden_states[i][all_sen[i,:-1,0][all_sen[i,:-1,0].ne(-1)]],0)
             hq2q1 = hidden_states[i][qas[i]]
-            print(hq1q2.shape,hq2q1.shape)
+#            print(hq1q2.shape,hq2q1.shape)
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
         return torch.stack(hidden_statesOut)
