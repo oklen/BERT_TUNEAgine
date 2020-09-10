@@ -673,17 +673,18 @@ class Encoder(nn.Module):
             hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
 #            
 #            
-#            qa = all_sen[i][-1][0]
-#            qas.append(qa)
-#
-#            for b,e in all_sen[i]:
-#                hidden_states[i][b] = torch.mean(hidden_states[i][b:e],0)
-#
-#            sen = hidden_states[i][all_sen[i,:-1,0]]
-#            sen = pack_sequence([sen])
-#            sen,(_,_) = self.rnn(sen,None)
-#            sen,_ =  pad_packed_sequence(sen, batch_first=True)
-#            hidden_states[i][all_sen[i,:-1,0]] = sen[0]
+            qa = all_sen[i][-1][0]
+            qas.append(qa)
+
+            for b,e in all_sen[i]:
+                hidden_states2[i][b] = torch.mean(hidden_states2[i][b:e],0)
+
+            sen = hidden_states2[i][all_sen[i,:-1,0]]
+            sen = pack_sequence([sen])
+            sen,(_,_) = self.rnn(sen,None)
+            sen,_ =  pad_packed_sequence(sen, batch_first=True)
+            hidden_states2[i][all_sen[i,:-1,0]] = sen[0]
+            
             hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
 
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
