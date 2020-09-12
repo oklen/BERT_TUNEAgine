@@ -610,10 +610,10 @@ class Encoder(nn.Module):
 #       SENTENCE_TO_BEFORE = 7
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
-        
-        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+
+#        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
@@ -689,10 +689,8 @@ class Encoder(nn.Module):
             sen,(_,_) = self.rnn(sen,None)
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
             hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-            
-#            hidden_statesOut.append(torch.cat([torch.mean(hq1q2,0),torch.mean(hq2q1,0)]))
-
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
+            
         x=  hidden_states3.view(-1,self.config.hidden_size)
         x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states3 = x.view(hidden_states3.shape)
