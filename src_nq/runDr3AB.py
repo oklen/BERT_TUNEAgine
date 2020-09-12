@@ -331,8 +331,7 @@ def main():
     if args.local_rank != -1:
 #            model = torch.nn.parallel.DistributedDataParallel(model,find_unused_parameters=True)
         model = torch.nn.parallel.DistributedDataParallel(model)
-
-    else:
+    elif not run_og:
         model.bert.to("cuda:0")
         model.encoder.to("cuda:1")
         model.tok_outputs.to("cuda:0")
