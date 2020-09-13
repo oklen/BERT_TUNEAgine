@@ -104,6 +104,7 @@ class NqModel(nn.Module):
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
+                    graph_output = self.encoder2(self.encoder.hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
                     x = self.dropout(graph_output)
                     
 #                    x = self.dropout(torch.cat((graph_output,sequence_output[:,0]),-1))

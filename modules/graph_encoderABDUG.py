@@ -549,6 +549,7 @@ class Encoder(nn.Module):
         self.ctoq = MultiHeadedAttention(16,config.hidden_size)
         self.qtoc = MultiHeadedAttention(16,config.hidden_size)
         self.hidden_size = config.hidden_size
+        self.hidden_states = None
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
@@ -611,7 +612,7 @@ class Encoder(nn.Module):
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
-        
+        self.hidden_states=hidden_states
         hidden_statesOut = []
         
         for i in range(3):
@@ -635,6 +636,7 @@ class Encoder(nn.Module):
                 hq1q2 = self.qtoc(query,key,value)
 #            hq1q2 = self.qtoc(query,key,value)
             hq1q2 = hq1q2.squeeze(0)
+            self.hidden_states[i][q2[(q2//512).eq(i)]%512] = hq1q2
             hq1q2 = torch.mean(hq1q2,0)
             
             key = query
@@ -655,6 +657,7 @@ class Encoder(nn.Module):
             else:
                 hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
+            self.hidden_states[i][q1[(q1//512).eq(i)]%512] = hq2q1
             hq2q1 = torch.mean(hq2q1,0)
             
             hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
