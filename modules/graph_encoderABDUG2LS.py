@@ -700,8 +700,8 @@ class Encoder(nn.Module):
         
         for i in range(3):
             V1 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-#            V2 = hidden_states3[i][qas[i]]
-            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
+            V2 = hidden_states3[i][qas[i]]
+#            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             hidden_statesOut.append(torch.cat([V1,V2]))
             
