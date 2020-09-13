@@ -613,10 +613,10 @@ class Encoder(nn.Module):
 
 #        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
 #        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+#        mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
@@ -695,7 +695,7 @@ class Encoder(nn.Module):
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
         x=  hidden_states3.view(-1,self.config.hidden_size)
-        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
+#        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states3 = x.view(hidden_states3.shape)
         
         for i in range(3):
