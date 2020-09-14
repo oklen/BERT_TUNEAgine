@@ -203,6 +203,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 #            tokens.append('[CLS]')
 #            sentence = sentence[3:-1]  //Dont't erase W: M:
             sentence = tokenizer.tokenize(sentence)
+            sentence[-1] = '[SPE]' # Add sep to cut all sentence
             tokens += sentence
             name.add(tokens[tok_is_sentence_begin[-1]])
             tok_is_sentence_end.append(len(tokens))
@@ -252,25 +253,6 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 label = 1
 
             tok_is_choice_end = len(mtokens) - 1
-            
-            #Delete From begin to fit max_seq_length
-#            while len(tokens) > args.max_seq_length:
-#                bp = tok_is_sentence_end[0]-1
-#                tokens = tokens[tok_is_sentence_end[0]:]
-#                tokens = ['[CLS]']+tokens #recover [CLS]
-#                tok_is_sentence_begin = tok_is_sentence_begin[1:]
-#                tok_is_sentence_end = tok_is_sentence_end[1:]
-#                for i in range(len(tok_is_sentence_begin)):
-#                    tok_is_sentence_begin[i]-=bp
-#                    tok_is_sentence_end[i]-=bp
-#                
-##                tok_is_sentence_begin[0]-=1 
-#                
-#                tok_is_question_begin-=bp
-#                tok_is_question_end-=bp
-#                tok_is_choice_begin-=bp
-#                tok_is_choice_end-=bp
-            
 
 
             input_ids = tokenizer.convert_tokens_to_ids(mtokens)

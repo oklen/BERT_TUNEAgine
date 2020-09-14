@@ -65,7 +65,7 @@ class NqModel(nn.Module):
         self.ALL = 0
         
         self.ErrId = []
-
+        
         #self.apply(self.init_bert_weights)
 
     def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens):
