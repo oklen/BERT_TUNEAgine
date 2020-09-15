@@ -551,7 +551,7 @@ class Encoder(nn.Module):
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
-        self.conv3 = RGCNConv(config.hidden_size*2, config.hidden_size, 35, num_bases=30)
+        self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
 #        self.conv2 = GraphConv(config.hidden_size, config.hidden_size)
         
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
@@ -628,7 +628,7 @@ class Encoder(nn.Module):
         
         hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
-        hidden_states4 = torch.cat([hidden_states,hidden_states],-1)
+        hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
@@ -650,12 +650,11 @@ class Encoder(nn.Module):
             else:
                 hq1q2 = self.qtoc(query,key,value)
 #            hq1q2 = self.qtoc(query,key,value)
-
             
             hq1q2 = hq1q2.squeeze(0)
             hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
 #            hq1q2 = torch.mean(hq1q2,0)
-            
+
             key = query
             query = value
             value = key
@@ -664,7 +663,7 @@ class Encoder(nn.Module):
                 def create_custom_forward(module):
                     def custom_forward(*inputs):
                         return module(*inputs)
-
+                    
                     return custom_forward
                 hq2q1 = torch.utils.checkpoint.checkpoint(
                 create_custom_forward(self.ctoq),
@@ -686,24 +685,30 @@ class Encoder(nn.Module):
                 hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
             
 #            sen = hidden_states3[i][now_all_sen[:-1,0]]
-            sen = hidden_states3[i][now_all_sen[:,0]]
+            # sen = hidden_states3[i][now_all_sen[:,0]]
             
 #            print(sen)
-            sen = pack_sequence([sen])
-            sen,(_,_) = self.rnn(sen,None)
-            sen,_ =  pad_packed_sequence(sen, batch_first=True)
+            # sen = pack_sequence([sen])
+            # sen,(_,_) = self.rnn(sen,None)
+            # sen,_ =  pad_packed_sequence(sen, batch_first=True)
+            
 #            hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-            #hidden_states3[i][now_all_sen[:,0]] = sen[0]
-            hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
+#            hidden_states3[i][now_all_sen[:,0]] = sen[0]
+            
+            # hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
+            
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
-        x=  hidden_states4.view(-1,self.config.hidden_size*2)
+        x = hidden_states3.view(-1,self.config.hidden_size)
         x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states3[i] = x.view(hidden_states3.shape)[i]
+        hidden_states4 = x.view(hidden_states3.shape)
+        hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
+        
         
         for i in range(3):
-            V1 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V2 = hidden_states3[i][qas[i]]
+            V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
+            V2 = hidden_states5[i][qas[i]]
+            
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
