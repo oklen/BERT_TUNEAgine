@@ -554,6 +554,7 @@ class Encoder(nn.Module):
         self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
 #        self.conv2 = GraphConv(config.hidden_size, config.hidden_size)
         
+        self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
@@ -627,7 +628,8 @@ class Encoder(nn.Module):
         
         hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
-        
+        hidden_states4 = torch.cat([hidden_states,hidden_states],-1)
+
         for i in range(3):
             query = hidden_states[i][q1[(q1//512).eq(i)]%512]
             key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
@@ -685,25 +687,26 @@ class Encoder(nn.Module):
             
 #            sen = hidden_states3[i][now_all_sen[:-1,0]]
             sen = hidden_states3[i][now_all_sen[:,0]]
-
+            
 #            print(sen)
             sen = pack_sequence([sen])
             sen,(_,_) = self.rnn(sen,None)
             sen,_ =  pad_packed_sequence(sen, batch_first=True)
 #            hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-            hidden_states3[i][now_all_sen[:,0]] = sen[0]
+            #hidden_states3[i][now_all_sen[:,0]] = sen[0]
+            hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
-        x=  hidden_states3.view(-1,self.config.hidden_size)
+#        x=  hidden_states3.view(-1,self.config.hidden_size)
 #        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states3 = x.view(hidden_states3.shape)
+#        hidden_states3 = x.view(hidden_states3.shape)
         
         for i in range(3):
-            V1 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V2 = hidden_states3[i][qas[i]]
+            V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
-            hidden_statesOut.append(torch.cat([V1,V2]))
+            hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
             
         return torch.stack(hidden_statesOut)
 
