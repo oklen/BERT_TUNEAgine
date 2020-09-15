@@ -702,8 +702,8 @@ class Encoder(nn.Module):
         hidden_states3[i] = x.view(hidden_states3.shape)[i]
         
         for i in range(3):
-            V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            V2 = hidden_states4[i][qas[i]]
+            V1 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            V2 = hidden_states3[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
