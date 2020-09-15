@@ -15,10 +15,10 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
+        self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
 #        self.bert_config.gradient_checkpointing = True
 #        self.bert_config.Extgradient_checkpointing = True
-        self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
+        self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
 
@@ -54,7 +54,7 @@ class NqModel(nn.Module):
 
         #self.encoder = Encoder(my_config)
         self.encoder = Encoder(my_config)
-        self.encoder2 = Encoder(my_config)
+        # self.encoder2 = Encoder(my_config)
 #        self.encoder2 = Encoder(my_config)
         
         self.my_config = my_config
@@ -104,7 +104,7 @@ class NqModel(nn.Module):
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
-                    graph_output = self.encoder2(self.encoder.hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
+                    # graph_output = self.encoder2(self.encoder.hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
                     x = self.dropout(graph_output)
                     
 #                    x = self.dropout(torch.cat((graph_output,sequence_output[:,0]),-1))

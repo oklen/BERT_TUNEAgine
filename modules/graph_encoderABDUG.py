@@ -502,7 +502,7 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.15):
+    def __init__(self, h, d_model, dropout=0.2):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
@@ -634,7 +634,9 @@ class Encoder(nn.Module):
                 value,)
             else:
                 hq1q2 = self.qtoc(query,key,value)
+
 #            hq1q2 = self.qtoc(query,key,value)
+
             hq1q2 = hq1q2.squeeze(0)
             self.hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2
             hq1q2 = torch.mean(hq1q2,0)
