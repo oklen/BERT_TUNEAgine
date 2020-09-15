@@ -551,7 +551,7 @@ class Encoder(nn.Module):
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
-        self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
+        self.conv3 = RGCNConv(config.hidden_size*2, config.hidden_size, 35, num_bases=30)
 #        self.conv2 = GraphConv(config.hidden_size, config.hidden_size)
         
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
@@ -612,12 +612,12 @@ class Encoder(nn.Module):
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
 
-#        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-#        mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-#        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        # mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+        # mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
 
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
@@ -697,17 +697,18 @@ class Encoder(nn.Module):
             hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
             
-#        x=  hidden_states3.view(-1,self.config.hidden_size)
-#        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-#        hidden_states3 = x.view(hidden_states3.shape)
+        x=  hidden_states4.view(-1,self.config.hidden_size*2)
+        x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
+        hidden_states3[i] = x.view(hidden_states3.shape)[i]
         
         for i in range(3):
             V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
-            hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            
+            # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
+            hidden_statesOut.append(torch.cat([V1,V2]))
+
         return torch.stack(hidden_statesOut)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
