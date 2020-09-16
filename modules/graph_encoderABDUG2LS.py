@@ -740,6 +740,10 @@ class Encoder(nn.Module):
             
             TV1 = torch.cat([V11,V12],-1)
             TV2 = torch.cat([V21,V22],-1)
+            
+            TV1 = self.dropout(TV1)
+            TV2 = self.dropout(TV2)
+            
             V1 = self.lineSub(TV1)
             V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
