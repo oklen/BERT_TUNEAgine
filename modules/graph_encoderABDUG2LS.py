@@ -635,8 +635,8 @@ class Encoder(nn.Module):
         
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_B).nozero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.B_TO_A).nozero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         
