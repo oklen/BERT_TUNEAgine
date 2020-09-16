@@ -502,12 +502,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.2):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*4
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -635,6 +635,9 @@ class Encoder(nn.Module):
         
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_B).nozero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.B_TO_A).nozero().view(-1).tolist()
+        
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
@@ -740,7 +743,6 @@ class Encoder(nn.Module):
             
             TV1 = torch.cat([V11,V12],-1)
             TV2 = torch.cat([V21,V22],-1)
-            
             TV1 = self.dropout(TV1)
             TV2 = self.dropout(TV2)
             
