@@ -461,7 +461,7 @@ def main():
         
 
     global_step = 0
-    last_acc = 85.0
+    last_acc = 89.0
     
     if args.do_train:
         logger.info("***** Running training *****")
@@ -528,7 +528,7 @@ def main():
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
                         run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
-            run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
+            # run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
             # model.eval()
             # model.zero_grad()
             # model.ACC = model.ALL = 0
