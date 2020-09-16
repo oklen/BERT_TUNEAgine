@@ -548,7 +548,7 @@ class Encoder(nn.Module):
         
         self.ctoq = MultiHeadedAttention(16,config.hidden_size)
         self.qtoc = MultiHeadedAttention(16,config.hidden_size)
-        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.1,
+        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
@@ -725,13 +725,15 @@ class Encoder(nn.Module):
         x = x_all[:, -1]
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states4 = x.view(hidden_states3.shape)
-        hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
+        # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
         for i in range(3):
-            V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
-            V2 = hidden_states5[i][qas[i]]
+            # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
+            # V2 = hidden_states5[i][qas[i]]
             
+            V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))

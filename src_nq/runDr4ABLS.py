@@ -67,7 +67,6 @@ NqBatch = collections.namedtuple('NqBatch',
                                   'edges_src', 'edges_tgt', 'edges_type', 'edges_pos','label','all_sen'])
 
 
-
 def batcher(device, is_training=False):
     def batcher_dev(mul_features):
         input_idss = []
