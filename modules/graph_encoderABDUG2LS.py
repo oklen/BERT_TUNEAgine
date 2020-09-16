@@ -546,16 +546,16 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(16,config.hidden_size)
-        self.qtoc = MultiHeadedAttention(16,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(8,config.hidden_size)
+        self.qtoc = MultiHeadedAttention(8,config.hidden_size)
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(5):
+        for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,16,1,0.1))
+                    DNAConv(config.hidden_size,8,1,0.4))
             
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
