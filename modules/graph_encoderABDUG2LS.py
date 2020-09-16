@@ -560,8 +560,8 @@ class Encoder(nn.Module):
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
-#        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
         
+#        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
         
     @classmethod
@@ -731,9 +731,16 @@ class Encoder(nn.Module):
         for i in range(3):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
+            V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            V2 = hidden_states4[i][qas[i]]
+            V21 = hidden_states3[i][qas[i]]
+            V22 = hidden_states4[i][qas[i]]
+            
+            V1 = self.lineSub(torch.cat([V11,V12],-1))
+            V2 = self.lineSub(torch.cat([V21,V22],-1))
+            # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
