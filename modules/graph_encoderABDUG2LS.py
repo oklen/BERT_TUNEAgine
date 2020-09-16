@@ -560,6 +560,7 @@ class Encoder(nn.Module):
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
+        self.dropout = nn.Dropout(0.1)
         
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
@@ -737,8 +738,10 @@ class Encoder(nn.Module):
             V21 = hidden_states3[i][qas[i]]
             V22 = hidden_states4[i][qas[i]]
             
-            V1 = self.lineSub(torch.cat([V11,V12],-1))
-            V2 = self.lineSub(torch.cat([V21,V22],-1))
+            TV1 = torch.cat([V11,V12],-1)
+            TV2 = torch.cat([V21,V22],-1)
+            V1 = self.lineSub(TV1)
+            V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
