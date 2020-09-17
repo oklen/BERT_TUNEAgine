@@ -40,8 +40,8 @@ class EdgeType(enum.IntEnum):
     A_TO_NB = 20
     A_TO_BB = 21
     
-    B_TO_NA = 22
-    B_TO_BA = 23
+    A_TO_NA = 22
+    A_TO_BA = 23
     
     C_TO_QA = 24
     QA_TO_C = 25
@@ -624,19 +624,26 @@ class Encoder(nn.Module):
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
         
-        ex_edge  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
         
-        ex_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        
+        ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        
+        
+        # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+        # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         
@@ -722,8 +729,13 @@ class Encoder(nn.Module):
         # x = hidden_states3.view(-1,self.config.hidden_size)
         x_all = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
-        for conv in self.conv2:
-            x = torch.tanh(conv(x_all,ex_edge))
+        
+        for i,conv in enumerate(self.conv2):
+            if i%2==0:
+                x = torch.tanh(conv(x_all,ex_edge2))
+            else: 
+                x = torch.tanh(conv(x_all,ex_edge))
+                
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
