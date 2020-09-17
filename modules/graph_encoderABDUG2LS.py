@@ -661,7 +661,7 @@ class Encoder(nn.Module):
         hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
-            all_sen_now = all_sen[i][all_sen[i].ne(-1)]
+            all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             query = hidden_states[i][1:all_sen_now[-1][0]]
             key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
             query = query.unsqueeze(0)
