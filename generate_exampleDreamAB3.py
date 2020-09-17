@@ -315,14 +315,14 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             for i in range(len(ALL_SEN)):
                 if i != 0:
                     if mtokens[ALL_SEN[i][0]]==mtokens[ALL_SEN[i-1][0]]:
-                        graph.add_node(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BB)
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BB)
                     else:
-                        graph.add_node(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BA)
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BA)
                 if i+1 != len(ALL_SEN):
                     if mtokens[ALL_SEN[i][0]] == mtokens[ALL_SEN[i+1][0]]:
-                        graph.add_node(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NB)
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NB)
                     else:
-                        graph.add_ndoe(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NA)
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NA)
             
             for anode in A:
                 graph.add_edge(tok_is_question_begin,anode,EdgeType.QUESTION_TO_A)
