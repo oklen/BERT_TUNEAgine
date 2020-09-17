@@ -660,8 +660,8 @@ class Encoder(nn.Module):
         hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
-            query = hidden_states[i][q1[(q1//512).eq(i)]%512]
-            key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
+            query = hidden_states[i][1:all_sen[i][-1][0]]
+            key = value = hidden_states[i][all_sen[i][-1][0]:all_sen[i][-1][1]]
             query = query.unsqueeze(0)
             key = key.unsqueeze(0)
             value = value.unsqueeze(0)
