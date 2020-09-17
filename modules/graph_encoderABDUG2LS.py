@@ -733,9 +733,9 @@ class Encoder(nn.Module):
         
         for i,conv in enumerate(self.conv2):
             if i%2==0:
-                x = torch.tanh(conv(x_all,ex_edge2))
-            else: 
                 x = torch.tanh(conv(x_all,ex_edge))
+            else: 
+                x = torch.tanh(conv(x_all,ex_edge2))
                 
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
@@ -756,6 +756,8 @@ class Encoder(nn.Module):
             
             TV1 = torch.cat([V11,V12],-1)
             TV2 = torch.cat([V21,V22],-1)
+            
+            
             TV1 = self.dropout(TV1)
             TV2 = self.dropout(TV2)
             
