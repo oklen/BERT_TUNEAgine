@@ -641,11 +641,11 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
         
-        
+        ex_edge2 += ex_edge #Use all connect to passage message
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
-        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+        #ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
         
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
