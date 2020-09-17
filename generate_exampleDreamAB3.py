@@ -276,8 +276,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             AB = [[],[]]
 #            if len(names) > 2: print(name)
 #            continue 
-            names = set()
-            last_size = len(name)
+            # names = set()
+            # last_size = len(name)
             
             for i,(tok_begin,tok_end) in enumerate(zip(tok_is_sentence_begin,tok_is_sentence_end)):
                 AB[names.index(tokens[tok_begin])%2].append(tok_begin)
