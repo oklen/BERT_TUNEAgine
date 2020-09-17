@@ -646,7 +646,7 @@ class Encoder(nn.Module):
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
-        #ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
         
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
@@ -740,9 +740,9 @@ class Encoder(nn.Module):
         
         for i,conv in enumerate(self.conv2):
             if i%2==0:
-                x = torch.tanh(conv(x_all,ex_edge))
-            else: 
                 x = torch.tanh(conv(x_all,ex_edge2))
+            else: 
+                x = torch.tanh(conv(x_all,ex_edge))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
             
