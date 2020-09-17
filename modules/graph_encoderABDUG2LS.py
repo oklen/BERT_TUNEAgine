@@ -641,7 +641,8 @@ class Encoder(nn.Module):
         ex_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
         
-        ex_edge2 += ex_edge #Use all connect to passage message
+        # ex_edge2 += ex_edge #Use all connect to passage message
+        
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
@@ -660,8 +661,9 @@ class Encoder(nn.Module):
         hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
-            query = hidden_states[i][1:all_sen[i][-1][0]]
-            key = value = hidden_states[i][all_sen[i][-1][0]:all_sen[i][-1][1]]
+            all_sen_now = all_sen[i][all_sen[i].ne(-1)]
+            query = hidden_states[i][1:all_sen_now[-1][0]]
+            key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
             query = query.unsqueeze(0)
             key = key.unsqueeze(0)
             value = value.unsqueeze(0)
@@ -683,7 +685,7 @@ class Encoder(nn.Module):
             hq1q2 = hq1q2.squeeze(0)
             
             # hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
-            hidden_states2[i][1:all_sen[i][-1][0]] = hq1q2 #Add the part to ori
+            hidden_states2[i][1:all_sen_now[-1][0]] = hq1q2 #Add the part to ori
 
 #            hq1q2 = torch.mean(hq1q2,0)
 
@@ -707,7 +709,7 @@ class Encoder(nn.Module):
             hq2q1 = hq2q1.squeeze(0)
 
             # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
-            hidden_states2[i][all_sen[i][-1][0]:all_sen[i][-1][1]] = hq2q1
+            hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -737,10 +739,10 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
-            # if i%2==0:
-            #     x = torch.tanh(conv(x_all,ex_edge))
-            # else: 
-            x = torch.tanh(conv(x_all,ex_edge2))
+            if i%2==0:
+                x = torch.tanh(conv(x_all,ex_edge))
+            else: 
+                x = torch.tanh(conv(x_all,ex_edge2))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
             
