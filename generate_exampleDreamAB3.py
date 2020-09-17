@@ -324,7 +324,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                         graph.add_node(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NB)
                     else:
                         graph.add_ndoe(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NA)
-
+            
             for anode in A:
                 graph.add_edge(tok_is_question_begin,anode,EdgeType.QUESTION_TO_A)
                 graph.add_edge(anode,tok_is_question_begin,EdgeType.A_TO_QUESTION)
