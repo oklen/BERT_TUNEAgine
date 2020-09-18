@@ -527,7 +527,8 @@ def main():
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
-                        run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
+            run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
+            
             # run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
             # model.eval()
             # model.zero_grad()
