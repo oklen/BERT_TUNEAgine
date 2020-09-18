@@ -316,7 +316,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 
             for speaker in speakers:
                 last = -1
-                for i in range(ALL_SEN):
+                for i in range(len(ALL_SEN)):
                     if mtokens[ALL_SEN[i][0]] == speaker:
                         if last !=-1:
                             graph.add_edge(last,ALL_SEN[i][0],EdgeType.A_TO_A)
