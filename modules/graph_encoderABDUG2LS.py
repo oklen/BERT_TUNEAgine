@@ -553,7 +553,7 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(6):
+        for i in range(9):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
             
@@ -652,8 +652,8 @@ class Encoder(nn.Module):
         ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
         ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
         
-        q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+        # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
         hidden_statesOut = []
         qas = []
