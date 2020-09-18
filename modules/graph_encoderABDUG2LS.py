@@ -18,7 +18,7 @@ class EdgeType(enum.IntEnum):
     CHOICE_TO_CLS = 4
     SENTENCE_TO_CLS = 5
     
-    A_TO_B = 6
+    A_TO_A = 6
     B_TO_A = 7
     
     QUESTION_TOKEN_TO_SENTENCE = 8
@@ -737,6 +737,7 @@ class Encoder(nn.Module):
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
         x_all = hidden_states3.view(-1,1,self.hidden_size)
+        
 #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
