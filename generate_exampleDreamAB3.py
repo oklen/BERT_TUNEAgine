@@ -282,7 +282,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             
             for i,(tok_begin,tok_end) in enumerate(zip(tok_is_sentence_begin,tok_is_sentence_end)):
                 AB[names.index(tokens[tok_begin])%2].append(tok_begin)
-                names.insert(tokens[tok_begin])
+                names.add(tokens[tok_begin])
 #                if len(ALL_SEN) != 0:
 #                    graph.add_edge(ALL_SEN[-1][0],tok_begin,EdgeType.SENTENCE_TO_NEXT)
 #                    graph.add_edge(tok_begin,ALL_SEN[-1][0],EdgeType.SENTENCE_TO_BEFORE)

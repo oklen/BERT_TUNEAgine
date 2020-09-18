@@ -638,8 +638,10 @@ class Encoder(nn.Module):
         
         ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
-        ex_edge3 = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        ex_edge3 += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        
+        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
         
         # ex_edge2 += ex_edge #Use all connect to passage message
         
