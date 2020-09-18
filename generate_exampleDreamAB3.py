@@ -278,7 +278,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 #            continue 
             # names = set()
             # last_size = len(name)
-            names = set()
+            speakers = set()
             
             for i,(tok_begin,tok_end) in enumerate(zip(tok_is_sentence_begin,tok_is_sentence_end)):
                 AB[names.index(tokens[tok_begin])%2].append(tok_begin)
@@ -314,10 +314,10 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             A = AB[0]
             B = AB[1]
 
-            for name in names:
+            for speaker in speakers:
                 last = -1
                 for i in range(ALL_SEN):
-                    if mtokens[ALL_SEN[i][0]] == name:
+                    if mtokens[ALL_SEN[i][0]] == speaker:
                         if last !=-1:
                             graph.add_edge(last,ALL_SEN[i][0],EdgeType.A_TO_A)
                             graph.add_edge(ALL_SEN[i][0],last,EdgeType.A_TO_A)
