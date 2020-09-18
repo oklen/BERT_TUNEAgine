@@ -527,51 +527,51 @@ def main():
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
-            run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
+            # run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
             
             # run_eval(model=model, args=args, optimizer=optimizer, device=device, last_acc=last_acc)
-            # model.eval()
-            # model.zero_grad()
-            # model.ACC = model.ALL = 0
-            # train_dataset = NqDataset(args, "test.json", is_training=True)
-            # train_features = train_dataset.features
-            # #logging.info("Data Load Done!")
+            model.eval()
+            model.zero_grad()
+            model.ACC = model.ALL = 0
+            train_dataset = NqDataset(args, "test.json", is_training=True)
+            train_features = train_dataset.features
+            #logging.info("Data Load Done!")
             
-            # if args.local_rank == -1:
-            #     train_sampler = RandomSampler(train_features)
-            # else:
-            #     train_sampler = DistributedSampler(train_features)
-            # if args.local_rank == -1:
-            #     train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-            #                                   collate_fn=batcher(device, is_training=True), num_workers=0)
-            # else:
-            #     train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-            #                                   collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
+            if args.local_rank == -1:
+                train_sampler = RandomSampler(train_features)
+            else:
+                train_sampler = DistributedSampler(train_features)
+            if args.local_rank == -1:
+                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                              collate_fn=batcher(device, is_training=True), num_workers=0)
+            else:
+                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                              collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
             
-            # train_features = train_dataset.features
-            # logging.info("Data ready {} ".format(len(train_features)))
-            # tgobal_step = 0
-            # ttr_loss = 0
-            # optimizer.zero_grad()
-            # logging.info("***** Running evalating *****")
-            # with torch.no_grad():
-            #     for step, batch in enumerate(train_dataloader):
-            #         tgobal_step+=1
-            #         loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-            #                      (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
-            #         ttr_loss+=loss.item()
-            # logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
-            # model.zero_grad()
-            # optimizer.zero_grad()
+            train_features = train_dataset.features
+            logging.info("Data ready {} ".format(len(train_features)))
+            tgobal_step = 0
+            ttr_loss = 0
+            optimizer.zero_grad()
+            logging.info("***** Running evalating *****")
+            with torch.no_grad():
+                for step, batch in enumerate(train_dataloader):
+                    tgobal_step+=1
+                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label)
+                    ttr_loss+=loss.item()
+            logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
+            model.zero_grad()
+            optimizer.zero_grad()
 
-            # if model.ACC/model.ALL*100>last_acc:
-            #     logging.info("Save Model")
-            #     last_acc = model.ACC/model.ALL*100
-            #     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+            if model.ACC/model.ALL*100>last_acc:
+                logging.info("Save Model")
+                last_acc = model.ACC/model.ALL*100
+                model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 
-            #     # If we save using the predefined names, we can load using `from_pretrained`
-            #     output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-            #     torch.save(model_to_save.state_dict(), output_model_file)
+                # If we save using the predefined names, we can load using `from_pretrained`
+                output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+                torch.save(model_to_save.state_dict(), output_model_file)
                     
                 
 
