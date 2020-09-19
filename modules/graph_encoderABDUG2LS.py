@@ -553,9 +553,9 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(9):
+        for i in range(6):
             self.conv2.append(
-                    DNAConv(config.hidden_size,8,1,0.4))
+                    DNAConv(config.hidden_size,8,1,0.5))
             
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
@@ -636,9 +636,9 @@ class Encoder(nn.Module):
         ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
-        ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
+        # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
+        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
         ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
         
         ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
