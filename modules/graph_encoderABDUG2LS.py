@@ -553,7 +553,7 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(6):
+        for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.5))
             
@@ -643,6 +643,7 @@ class Encoder(nn.Module):
         
         ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
         
+        ex_edge += ex_edge3
         # ex_edge2 += ex_edge #Use all connect to passage message
         
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
@@ -743,12 +744,12 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
-            if i%3==0:
+            if i%2==0:
                 x = torch.tanh(conv(x_all,ex_edge2))
-            elif i%3==1:
-                x = torch.tanh(conv(x_all,ex_edge))
-            else: 
+            elif i%2==1:
                 x = torch.tanh(conv(x_all,ex_edge3))
+            # else: 
+            #     x = torch.tanh(conv(x_all,ex_edge))
                 
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
