@@ -747,7 +747,7 @@ class Encoder(nn.Module):
             if i%2==0:
                 x = torch.tanh(conv(x_all,ex_edge2))
             elif i%2==1:
-                x = torch.tanh(conv(x_all,ex_edge3))
+                x = torch.tanh(conv(x_all,ex_edge))
             # else: 
             #     x = torch.tanh(conv(x_all,ex_edge))
                 
