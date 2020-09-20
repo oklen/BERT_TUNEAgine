@@ -539,7 +539,7 @@ class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1):
         super(getMaxScore, self).__init__()
         self.hidden_size = d_model
-        self.linears = nn.Modulelist([nn.Linear(d_model,self.hidden_size) for _ in range(2)])
+        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
     
     def forward(self,query,key):
