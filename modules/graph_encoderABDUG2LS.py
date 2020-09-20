@@ -757,8 +757,9 @@ class Encoder(nn.Module):
             
         x = x_all[:, -1]
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states4 = x.view(hidden_states3.shape)
-        # hidden_states4 = self.conv(x.view(hidden_states3.shape),ex_edge3)
+        # hidden_states4 = x.view(hidden_states3.shape)
+        # x = x.view(hidden_states3.shape)
+        hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
