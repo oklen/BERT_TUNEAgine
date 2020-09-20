@@ -535,7 +535,19 @@ class MultiHeadedAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x)
+class getMaxScore(nn.Module):
+    def __init__(self,d_model,dropout = 0.1):
+        super(getMaxScore, self).__init__()
+        self.hidden_size = d_model
+        self.linears = nn.Modulelist([nn.Linear(d_model,self.hidden_size) for _ in range(2)])
+        self.dropout = nn.Dropout(dropout)
     
+    def forward(self,query,key):
+        query,key = self.linears[0](query),self.linears[1](key)
+        scores = torch.matmul(query, key.transpose(-2, -1)) 
+        p_attn = torch.softmax(scores, dim = -1)
+        return key[torch.argmax(p_attn)]
+
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
@@ -551,17 +563,19 @@ class Encoder(nn.Module):
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
                                  bidirectional=True, num_layers=2, batch_first=True)
         
+
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
-        self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
+        # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
@@ -721,9 +735,9 @@ class Encoder(nn.Module):
             
         x = x_all[:, -1]
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        # hidden_states4 = x.view(hidden_states3.shape)
+        hidden_states4 = x.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
-        hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
+        # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
@@ -740,8 +754,8 @@ class Encoder(nn.Module):
             V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            # V11 = self.getMaxScorePart(V21,hidden_states[i][sen_ss[i][:-1,0]])
-            V12 = self.getMaxScorePart(V22, hidden_states4[i][sen_ss[i][:-1,0]])
+            # V11 = self.TopNet[0](V21,hidden_states[i][sen_ss[i][:-1,0]])
+            V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
             
             
             TV1 = torch.cat([V11,V12],-1)
