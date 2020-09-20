@@ -24,14 +24,6 @@ class NqModel(nn.Module):
 
         self.right = 0
         self.all = 0
-        #self.bert =  AlbertModel(albert_base_configuration)
-        
-        #self.bert2 = BertModel(bert_config)
-
-        #self.bert = BertModel(BertConfig())
-        
-        
-        #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
         self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)

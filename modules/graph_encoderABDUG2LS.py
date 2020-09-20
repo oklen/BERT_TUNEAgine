@@ -556,6 +556,7 @@ class Encoder(nn.Module):
         for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
+        self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
@@ -643,7 +644,7 @@ class Encoder(nn.Module):
         
         ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
         
-        ex_edge += ex_edge3
+        # ex_edge += ex_edge3
         # ex_edge2 += ex_edge #Use all connect to passage message
         
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
@@ -756,7 +757,8 @@ class Encoder(nn.Module):
             
         x = x_all[:, -1]
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states4 = x.view(hidden_states3.shape)
+        hidden_states4 = self.conv(x.view(hidden_states3.shape),ex_edge3)
+        # hidden_states4 = x.view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
