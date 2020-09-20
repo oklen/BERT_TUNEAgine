@@ -552,7 +552,7 @@ class getMaxScore(nn.Module):
             MaxInd=torch.argmax(scores)
             scores[MaxInd] = -100000
             topks.append(key[MaxInd])
-        return key[torch.mean(torch.stack(topks),0)]
+        return torch.mean(torch.stack(topks),0)
 
 class Encoder(nn.Module):
     def __init__(self, config):
