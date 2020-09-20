@@ -541,12 +541,18 @@ class getMaxScore(nn.Module):
         self.hidden_size = d_model
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
+        self.k = 2
     
     def forward(self,query,key):
         query,key = self.linears[0](query),self.linears[1](key)
-        scores = torch.matmul(query, key.transpose(-2, -1)) 
-        p_attn = torch.softmax(scores, dim = -1)
-        return key[torch.argmax(p_attn)]
+        scores = torch.matmul(query, key.transpose(-2, -1))
+        # p_attn = torch.softmax(scores, dim = -1)
+        topks = []
+        for i in range(self.k):
+            MaxInd=torch.argmax(scores)
+            scores[MaxInd] = -100000
+            topks.append(key[MaxInd])
+        return key[torch.mean(0,torch.stack(topks))]
 
 class Encoder(nn.Module):
     def __init__(self, config):
