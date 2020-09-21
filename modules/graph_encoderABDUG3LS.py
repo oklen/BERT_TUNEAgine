@@ -574,7 +574,7 @@ class Encoder(nn.Module):
 
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(4):
+        for i in range(3):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
@@ -731,12 +731,12 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
-            if i%2==0:
+            if i%3==0:
                 x = torch.tanh(conv(x_all,ex_edge2))
-            elif i%2==1:
+            elif i%3==1:
                 x = torch.tanh(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge))
+            else: 
+                x = torch.tanh(conv(x_all,ex_edge3))
                 
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
