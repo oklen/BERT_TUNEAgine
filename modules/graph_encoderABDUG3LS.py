@@ -574,7 +574,7 @@ class Encoder(nn.Module):
 
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(3):
+        for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
@@ -759,11 +759,11 @@ class Encoder(nn.Module):
             V21 = hidden_states3[i][qas[i]]
             V22 = hidden_states4[i][qas[i]]
             
-            V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            # V11 = self.TopNet[0](V21,hidden_states[i][sen_ss[i][:-1,0]])
-            V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
+            V11 = self.TopNet[0](V21,hidden_states[i][sen_ss[i][:-1,0]])
+            # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
             
             
             TV1 = torch.cat([V11,V12],-1)
