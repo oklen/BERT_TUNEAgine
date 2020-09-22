@@ -731,12 +731,12 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
-            if i%3==0:
+            if i%2==0:
                 x = torch.tanh(conv(x_all,ex_edge2))
-            elif i%3==1:
+            elif i%2==1:
                 x = torch.tanh(conv(x_all,ex_edge))
-            else: 
-                x = torch.tanh(conv(x_all,ex_edge3))
+            # else: 
+            #     x = torch.tanh(conv(x_all,ex_edge3))
                 
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
