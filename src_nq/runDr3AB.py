@@ -34,7 +34,7 @@ import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
 from torch.utils.data.distributed import DistributedSampler
-from torch.optim import SGD,AdamW,WarmupLinearSchedule
+from torch.optim import SGD,AdamW
 from tqdm import tqdm, trange
 from glob import glob
 
