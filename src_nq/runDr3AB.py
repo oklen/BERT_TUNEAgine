@@ -45,7 +45,7 @@ from generate_exampleDreamAB import InputFeatures
 from src_nq.modelDRAB import NqModel
 from src_nq.datasetRov3 import NqDataset
 # from src_nq.optimization import AdamW,WarmupLinearSchedule switch to torch implement
-from src_nq.optimization import WarmupLinearSchedule
+from src_nq.optimization import WarmupLinearSchedule,AdamW
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
