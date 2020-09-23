@@ -583,7 +583,7 @@ class Encoder(nn.Module):
                 DNAConv(config.hidden_size,8,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.2)
@@ -766,22 +766,21 @@ class Encoder(nn.Module):
         for i in range(3):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
-
-            
-            
              
             V21 = hidden_states3[i][qas[i]]
             V22 = hidden_states4[i][qas[i]]
+            V23 = hidden_states6[i][qas[i]]
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
             V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
             
             
-            TV1 = torch.cat([V11,V12],-1)
-            TV2 = torch.cat([V21,V22],-1)
+            TV1 = torch.cat([V11,V12,V13],-1)
+            TV2 = torch.cat([V21,V22,V23],-1)
             
             
             TV1 = self.dropout(TV1)
@@ -796,8 +795,7 @@ class Encoder(nn.Module):
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
             hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
             # hidden_statesOut.append(torch.cat([V1,V2]))
-
-
+            
         return torch.stack(hidden_statesOut)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
