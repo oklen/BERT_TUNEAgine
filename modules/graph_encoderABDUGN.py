@@ -544,6 +544,7 @@ class DualAttention(nn.Module):
         # We assume d_v always equals d_k
         self.dat = MultiHeadedAttention(8,config.hidden_size)
         self.hidden_states = None
+        self.config = config
         
     def forward(self, hidden_states,edges_src,edges_type):
         q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
