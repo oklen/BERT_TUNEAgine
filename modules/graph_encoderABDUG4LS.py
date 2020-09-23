@@ -785,6 +785,7 @@ class Encoder(nn.Module):
             
             TV1 = self.dropout(TV1)
             TV2 = self.dropout(TV2)
+            print(torch.cat([V11,V12]).shape)
             print(TV1.shape)
             V1 = self.lineSub(TV1)
             V2 = self.lineSub(TV2)
