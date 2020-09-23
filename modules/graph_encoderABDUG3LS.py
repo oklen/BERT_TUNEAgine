@@ -570,8 +570,8 @@ class Encoder(nn.Module):
         self.qtoc = MultiHeadedAttention(8,config.hidden_size)
         self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
                                  bidirectional=True, num_layers=2, batch_first=True)
+        self.gelu = torch.nn.functional.gelu
         
-
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
@@ -780,7 +780,9 @@ class Encoder(nn.Module):
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(torch.cat([V1,V2]))
+            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            # hidden_statesOut.append(torch.cat([V1,V2]))
+
 
         return torch.stack(hidden_statesOut)
 
