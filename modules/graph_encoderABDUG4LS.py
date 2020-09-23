@@ -752,7 +752,7 @@ class Encoder(nn.Module):
             elif i%2==1:
                 x2 = self.dnaAct(conv(x_all2,ex_edge3))
             x2 = x2.view(-1,1,self.hidden_size)
-            x_all2 = torch.cat([x_all2,x2],dim=-1)
+            x_all2 = torch.cat([x_all2,x2],dim=1)
         x2 = x_all2[:,-1]
         
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
