@@ -662,8 +662,8 @@ class Encoder(nn.Module):
     
     
     def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False):
-        _,hidden_states =self.DualAttention(hidden_states,edges_src,edges_type) 
-        res,_ = self.DualAttention(hidden_states,edges_src,edges_type)
+        _,hidden_states =self.ctoq(hidden_states,edges_src,edges_type) 
+        res,_ = self.ctoq(hidden_states,edges_src,edges_type)
         return res
          
         
