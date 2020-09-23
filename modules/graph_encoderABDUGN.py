@@ -5,7 +5,7 @@ import json
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
-from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
+
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -18,7 +18,7 @@ class EdgeType(enum.IntEnum):
     CHOICE_TO_CLS = 4
     SENTENCE_TO_CLS = 5
     
-    A_TO_A = 6
+    A_TO_B = 6
     B_TO_A = 7
     
     QUESTION_TOKEN_TO_SENTENCE = 8
@@ -40,8 +40,8 @@ class EdgeType(enum.IntEnum):
     A_TO_NB = 20
     A_TO_BB = 21
     
-    A_TO_NA = 22
-    A_TO_BA = 23
+    B_TO_NA = 22
+    B_TO_BA = 23
     
     C_TO_QA = 24
     QA_TO_C = 25
@@ -502,7 +502,7 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.2):
+    def __init__(self, h, d_model, dropout=0.1):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
@@ -536,44 +536,71 @@ class MultiHeadedAttention(nn.Module):
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x)
     
-class getMaxScore(nn.Module):
-    def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
-        self.hidden_size = d_model
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
-        self.dropout = nn.Dropout(dropout)
+class DualAttention(nn.Module):
+    def __init__(self, config):
+        "Take in model size and number of heads."
+        super(DualAttention, self).__init__()
 
-        self.k = 6
-    
-    def forward(self,query,key):
-        okey = key
-        query,key = self.linears[0](query),self.linears[1](key)
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
-    
-class getThresScore(nn.Module):
-    def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
-        self.hidden_size = d_model
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
-        self.dropout = nn.Dropout(dropout)
-        self.threahold = 0.2
-        self.k = 6
-    
-    def forward(self,query,key):
-        okey = key
-        query,key = self.linears[0](query),self.linears[1](key)
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        self.scores = torch.nn.sigmoid(self.scores)
-        topks = scores.ge(self.threahold)
-        return torch.mean(okey[topks],0)
+        # We assume d_v always equals d_k
+        self.dat = MultiHeadedAttention(8,config.hidden_size)
+        self.hidden_states = None
+        
+    def forward(self, hidden_states,edges_src,edges_type):
+        q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+        q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        self.hidden_states=hidden_states
+        hidden_statesOut = []
+        
+        for i in range(3):
+            query = hidden_states[i][q1[(q1//512).eq(i)]%512]
+            key = value = hidden_states[i][q2[(q2//512).eq(i)]%512]
+            query = query.unsqueeze(0)
+            key = key.unsqueeze(0)
+            value = value.unsqueeze(0)
+            if getattr(self.config, "Extgradient_checkpointing", False):
+                def create_custom_forward(module):
+                    def custom_forward(*inputs):
+                        return module(*inputs)
+
+                    return custom_forward
+                hq1q2 = torch.utils.checkpoint.checkpoint(
+                create_custom_forward(self.dat),
+                query,
+                key,
+                value,)
+            else:
+                hq1q2 = self.dat(query,key,value)
+
+#            hq1q2 = self.qtoc(query,key,value)
+
+            hq1q2 = hq1q2.squeeze(0)
+            self.hidden_states[i][q1[(q1//512).eq(i)]%512] = hq1q2
+            hq1q2 = torch.mean(hq1q2,0)
+            
+            key = query
+            query = value
+            value = key
+#            hq2q1 = self.ctoq(query,key,value)
+            if getattr(self.config, "Extgradient_checkpointing", False):
+                def create_custom_forward(module):
+                    def custom_forward(*inputs):
+                        return module(*inputs)
+
+                    return custom_forward
+                hq2q1 = torch.utils.checkpoint.checkpoint(
+                create_custom_forward(self.dat),
+                query,
+                key,
+                value,)
+            else:
+                hq2q1 = self.dat(query,key,value)
+            hq2q1 = hq2q1.squeeze(0)
+            self.hidden_states[i][q2[(q2//512).eq(i)]%512] = hq2q1
+            hq2q1 = torch.mean(hq2q1,0)
+            
+            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
+
+        return torch.stack(hidden_statesOut),self.hidden_states
     
 class Encoder(nn.Module):
     def __init__(self, config):
@@ -585,44 +612,60 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(8,config.hidden_size)
-        self.qtoc = MultiHeadedAttention(8,config.hidden_size)
-        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
-                                 bidirectional=True, num_layers=2, batch_first=True)
-        self.gelu = torch.nn.functional.gelu
-        
-        # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
-        self.conv2 = torch.nn.ModuleList()
-        for i in range(4):
-            self.conv2.append(
-                    DNAConv(config.hidden_size,8,1,0.4))
-        self.conv3 = torch.nn.ModuleList()
-        for i in range(4):
-            self.conv3.append(
-                DNAConv(config.hidden_size,8,1,0,0.4))
-        # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
-            
-        self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
+        self.ctoq = DualAttention(config)
+        # self.qtoc = MultiHeadedAttention(8,config.hidden_size)
         self.hidden_size = config.hidden_size
+        self.hidden_states = None
         self.config = config
-        self.dropout = nn.Dropout(0.1)
-        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
-        self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
+        
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
-
+        
     @classmethod
-    def getMaxScorePart(self,query,key):
-        d_k = query.size(-1)
-        scores = torch.matmul(query, key.transpose(-2, -1)) \
-             / math.sqrt(d_k)
-        return key[torch.argmax(scores)]
+    def average_pooling(cls, graph_hidden, edges_src, edges_tgt):
+        batch_size, n_nodes, hidden_size = graph_hidden.size()
+        graph_hidden = graph_hidden.view(batch_size * n_nodes, hidden_size)
+        src_tensor = graph_hidden[edges_src]
+
+        indices = edges_tgt.view(-1, 1).expand(-1, hidden_size)
+        sum_hidden = graph_hidden.clone().fill_(0)
+        sum_hidden.scatter_add_(dim=0, index=indices, src=src_tensor)
+
+        n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
+        n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
+        # print(edges_src)
+        # print(edges_tgt)
+        indices = n_edges.nonzero().view(-1)
+        graph_hidden[indices] += sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
+
+        return graph_hidden.view(batch_size, n_nodes, hidden_size)
+    
+    
+    def average_poolingOver(cls, graph_hidden, edges_src, edges_tgt):
+        batch_size, n_nodes, hidden_size = graph_hidden.size()
+        graph_hidden = graph_hidden.view(batch_size * n_nodes, hidden_size)
+        src_tensor = graph_hidden[edges_src]
+
+        indices = edges_tgt.view(-1, 1).expand(-1, hidden_size)
+        sum_hidden = graph_hidden.clone().fill_(0)
+        sum_hidden.scatter_add_(dim=0, index=indices, src=src_tensor)
+
+        n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
+        n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
+
+
+        indices = n_edges.nonzero().view(-1)
+        graph_hidden[indices] = sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
+
+        return graph_hidden.view(batch_size, n_nodes, hidden_size)
     
     
     
-    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False):
-#        hidden_states = self.initializer(hidden_states, st_mask, edges)
+    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False):
+        _,hidden_states =self.DualAttention(hidden_states,edges_src,edges_type) 
+        res,_ = self.DualAttention(hidden_states,edges_src,edges_type)
+        return res
+         
         
 #        edges_src, edges_tgt, edges_type, edges_pos = edges
 #       QA_TO_CLS = 4
@@ -631,195 +674,12 @@ class Encoder(nn.Module):
 #       SENTENCE_TO_BEFORE = 7
             
 #        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
+        
+#        mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+#        mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()        
+        
 
-        # mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        # mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        
-        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
-        
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-        
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
-        
-        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
-        
-        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
-        
-        # ex_edge += ex_edge3
-        # ex_edge2 += ex_edge #Use all connect to passage message
-        
-        # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        
-        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-        ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
-        
-        # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
-        
-        hidden_statesOut = []
-        qas = []
-        sen_ss = []
-        
-        hidden_states2 = torch.zeros_like(hidden_states)
-        hidden_states3 = torch.zeros_like(hidden_states)
-        hidden_states4 = torch.zeros_like(hidden_states)
-
-        for i in range(3):
-            all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            query = hidden_states[i][1:all_sen_now[-1][0]]
-            key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
-            query = query.unsqueeze(0)
-            key = key.unsqueeze(0)
-            value = value.unsqueeze(0)
-            if getattr(self.config, "Extgradient_checkpointing", False):
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        return module(*inputs)
-
-                    return custom_forward
-                hq1q2 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.qtoc),
-                query,
-                key,
-                value,)
-            else:
-                hq1q2 = self.qtoc(query,key,value)
-#            hq1q2 = self.qtoc(query,key,value)
-            
-            hq1q2 = hq1q2.squeeze(0)
-            
-            # hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
-            hidden_states2[i][1:all_sen_now[-1][0]] = hq1q2 #Add the part to ori
-
-#            hq1q2 = torch.mean(hq1q2,0)
-
-            key = query
-            query = value
-            value = key
-#            hq2q1 = self.ctoq(query,key,value)
-            if getattr(self.config, "Extgradient_checkpointing", False):
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        return module(*inputs)
-                    
-                    return custom_forward
-                hq2q1 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.ctoq),
-                query,
-                key,
-                value,)
-            else:
-                hq2q1 = self.ctoq(query,key,value)
-            hq2q1 = hq2q1.squeeze(0)
-
-            # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
-            hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
-#            
-            
-            now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            sen_ss.append(now_all_sen)
-            qa = now_all_sen[-1][0]
-            qas.append(qa)
-
-            for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
-            
-            # sen = pack_sequence([sen])
-            # sen,(_,_) = self.rnn(sen,None)
-            # sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            
-#            hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-#            hidden_states3[i][now_all_sen[:,0]] = sen[0]
-            
-            # hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
-            
-#            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
-        # x = hidden_states3.view(-1,self.config.hidden_size)
-        x_all = hidden_states3.view(-1,1,self.hidden_size)
-        x_all2 = hidden_states3.view(-1,1,self.hidden_size)
-#        print(x_all.shape)
-        
-        for i,conv in enumerate(self.conv2):
-            if i%2==0:
-                x = self.dnaAct(conv(x_all,ex_edge2))
-            elif i%2==1:
-                x = self.dnaAct(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge3))
-                
-            x = x.view(-1,1,self.hidden_size)
-            x_all = torch.cat([x_all, x], dim=1)
-        x = x_all[:, -1]
-        
-        for i,conv in enumerate(self.conv3):
-            if i%2==0:
-                x2 = self.dnaAct(conv(x_all2,ex_edge2))
-            elif i%2==1:
-                x2 = self.dnaAct(conv(x_all2,ex_edge3))
-            x2 = x2.view(-1,1,self.hidden_size)
-            x_all2 = torch.cat([x_all2,x2],dim=1)
-        x2 = x_all2[:,-1]
-        
-        # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states4 = x.view(hidden_states3.shape)
-        hidden_states6 = x2.view(hidden_states3.shape)
-        # x = x.view(hidden_states3.shape)
-        # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
-        # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
-        
-        
-        for i in range(3):
-            # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
-            # V2 = hidden_states5[i][qas[i]]
-             
-            V21 = hidden_states3[i][qas[i]]
-            V22 = hidden_states4[i][qas[i]]
-            V23 = hidden_states6[i][qas[i]]
-            
-            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            
-            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
-            # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
-            # print("shape:")
-            # print(V11.shape,V12.shape,V13.shape)
-            TV1 = torch.cat([V11,V12,V13],-1)
-            TV2 = torch.cat([V21,V22,V23],-1)
-            
-            
-            TV1 = self.dropout(TV1)
-            TV2 = self.dropout(TV2)
-
-            
-            V1 = self.lineSub(TV1)
-            V2 = self.lineSub(TV2)
-            # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            # V2 = hidden_states4[i][qas[i]]
-#            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
-#            print(hq1q2.shape,hq2q1.shape)
-            # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
-            # hidden_statesOut.append(torch.cat([V1,V2]))
-            
-        return torch.stack(hidden_statesOut)
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
