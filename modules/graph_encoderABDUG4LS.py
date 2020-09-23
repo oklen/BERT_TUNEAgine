@@ -588,9 +588,9 @@ class Encoder(nn.Module):
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.1)
         self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        self.dnaAct = torch.tanh
+        self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
     @classmethod
