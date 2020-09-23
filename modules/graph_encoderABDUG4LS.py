@@ -577,7 +577,10 @@ class Encoder(nn.Module):
         for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
-
+        self.conv3 = torch.nn.ModuleList()
+        for i in range(4):
+            self.conv3.append(
+                DNAConv(config.hidden_size,8,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
@@ -743,9 +746,18 @@ class Encoder(nn.Module):
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
         
+        for i,conv in enumerate(self.conv3):
+            if i%2==0:
+                x2 = self.dnaAct(conv(x_all2,ex_edge2))
+            elif i%2==1:
+                x2 = self.dnaAct(conv(x_all2,ex_edge3))
+            x2 = x2.view(-1,1,self.hidden_size)
+            x_all2 = torch.cat([x_all2,x2],dim=-1)
+        x2 = x_all2[:,-1]
+        
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states4 = x.view(hidden_states3.shape)
-
+        hidden_states6 = x2.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
