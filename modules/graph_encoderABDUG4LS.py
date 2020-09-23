@@ -590,7 +590,7 @@ class Encoder(nn.Module):
         self.config = config
         self.dropout = nn.Dropout(0.2)
         self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        self.dnaAct = torch.relu
+        self.dnaAct = torch.tanh
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
     @classmethod
@@ -787,8 +787,8 @@ class Encoder(nn.Module):
             
             TV1 = self.dropout(TV1)
             TV2 = self.dropout(TV2)
-            print(torch.cat([V11,V12]).shape)
-            print(TV1.shape)
+
+            
             V1 = self.lineSub(TV1)
             V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
