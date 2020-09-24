@@ -608,6 +608,7 @@ class Encoder(nn.Module):
         self.config = config
         self.dropout = nn.Dropout(0.3)
         self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
+        
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)

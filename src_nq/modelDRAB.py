@@ -3,7 +3,9 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUGN import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+# from modules.graph_encoderABDUGN import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG5LS import Encoder
+
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
@@ -24,7 +26,6 @@ class NqModel(nn.Module):
 
         self.right = 0
         self.all = 0
-        
         #self.bert =  AlbertModel(albert_base_configuration)
         
         #self.bert2 = BertModel(bert_config)
