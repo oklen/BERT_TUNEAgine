@@ -508,7 +508,7 @@ class MultiHeadedAttention(nn.Module):
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*4
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -586,7 +586,7 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        # self.ctoq = MultiHeadedAttention(8,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(8,config.hidden_size)
         self.qtoc = MultiHeadedAttention(8,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
@@ -723,14 +723,12 @@ class Encoder(nn.Module):
                     
                     return custom_forward
                 hq2q1 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.qtoc), #Switched
+                create_custom_forward(self.ctoq),
                 query,
                 key,
                 value,)
             else:
-                hq2q1 = self.qtoc(query,key,value)
-                # hq2q1 = self.ctoq(query,key,value)
-
+                hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
 
             # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
