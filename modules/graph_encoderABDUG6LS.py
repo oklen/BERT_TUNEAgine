@@ -756,28 +756,6 @@ class Encoder(nn.Module):
         x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
-        # for i,conv in enumerate(self.conv2):
-        #     if i%2==0:
-        #         x = self.dnaAct(conv(x_all,ex_edge2))
-        #     elif i%2==1:
-        #         x = self.dnaAct(conv(x_all,ex_edge))
-        #     # else: 
-        #     #     x = torch.tanh(conv(x_all,ex_edge3))
-                
-        #     x = x.view(-1,1,self.hidden_size)
-        #     x_all = torch.cat([x_all, x], dim=1)
-        # x = x_all[:, -1]
-        
-        # for i,conv in enumerate(self.conv2):
-        #     if i%2==0:
-        #         x2 = self.dnaAct(conv(x_all2,ex_edge2))
-        #     elif i%2==1:
-        #         x2 = self.dnaAct(conv(x_all2,ex_edge3))
-        #     x2 = x2.view(-1,1,self.hidden_size)
-        #     x_all2 = torch.cat([x_all2,x2],dim=1)
-        # x2 = x_all2[:,-1]
-
-
         for i,conv in enumerate(self.conv2):
             if i%2==0:
                 x = self.dnaAct(conv(x_all,ex_edge2))
@@ -798,6 +776,7 @@ class Encoder(nn.Module):
             x2 = x2.view(-1,1,self.hidden_size)
             x_all2 = torch.cat([x_all2,x2],dim=1)
         x2 = x_all2[:,-1]
+
         
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states4 = x.view(hidden_states3.shape)
