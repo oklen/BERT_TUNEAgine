@@ -553,7 +553,7 @@ class getMaxScore(nn.Module):
         scores = torch.sigmoid(scores)
         # p_attn = torch.softmax(scores, dim = -1)
         # topks = []
-        return torch.mean(okey[scores.ge(0.8)],0)
+        return torch.mean(okey[scores.ge(0.4)],0)
     
 class getThresScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
