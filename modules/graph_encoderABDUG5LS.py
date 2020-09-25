@@ -760,21 +760,38 @@ class Encoder(nn.Module):
         
         for i,conv in enumerate(self.conv2):
             if i%2==0:
-                x = self.dnaAct(conv(x_all,ex_edge2))
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    x =  self.dnaAct(torch.utils.checkpoint.checkpoint(
+                create_custom_forward(conv),
+                x_all,ex_edge2,))
+                else:
+                    x = self.dnaAct(conv(x_all,ex_edge2))
             elif i%2==1:
-                x = self.dnaAct(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge3))
-                
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    x =  self.dnaAct(torch.utils.checkpoint.checkpoint(
+                create_custom_forward(conv),
+                x_all,ex_edge,))
+                else:
+                    x = self.dnaAct(conv(x_all,ex_edge))
             x = x.view(-1,1,self.hidden_size)
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
         
         for i,conv in enumerate(self.conv2):
             if i%2==0:
-                x2 = self.dnaAct(conv(x_all2,ex_edge2))
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    x2 =  self.dnaAct(torch.utils.checkpoint.checkpoint(
+                create_custom_forward(conv),
+                x_all,ex_edge2,))
+                else:
+                    x2 = self.dnaAct(conv(x_all,ex_edge2))
             elif i%2==1:
-                x2 = self.dnaAct(conv(x_all2,ex_edge3))
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    x2 =  self.dnaAct(torch.utils.checkpoint.checkpoint(
+                create_custom_forward(conv),
+                x_all,ex_edge3,))
+                else:
+                    x2 = self.dnaAct(conv(x_all,ex_edge3))
             x2 = x2.view(-1,1,self.hidden_size)
             x_all2 = torch.cat([x_all2,x2],dim=1)
         x2 = x_all2[:,-1]
