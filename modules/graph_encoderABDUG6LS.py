@@ -550,10 +550,11 @@ class getMaxScore(nn.Module):
         okey = key
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
-        scores = torch.sigmoid(scores)
-        # p_attn = torch.softmax(scores, dim = -1)
-        # topks = []
-        return torch.mean(okey[scores.ge(0.4)],0)
+        gate = torch.sigmoid(scores)
+        gate = gate.ge(0.5)
+        
+        gate[torch.argmax(scores)] = True
+        return torch.mean(okey[gate],0)
     
 class getThresScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -570,6 +571,7 @@ class getThresScore(nn.Module):
         scores = torch.matmul(query, key.transpose(-2, -1))
         self.scores = torch.nn.sigmoid(self.scores)
         topks = scores.ge(self.threahold)
+        topks = okey[topks]
         return torch.mean(okey[topks],0)
     
 class Encoder(nn.Module):
@@ -584,8 +586,8 @@ class Encoder(nn.Module):
         
         self.ctoq = MultiHeadedAttention(8,config.hidden_size)
         self.qtoc = MultiHeadedAttention(8,config.hidden_size)
-        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
-                                 bidirectional=True, num_layers=2, batch_first=True)
+        # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
+        #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
@@ -776,7 +778,7 @@ class Encoder(nn.Module):
         # x2 = x_all2[:,-1]
 
         for i in range(4):
-            conv = self.conv2[i%2]
+            conv = self.conv2[i]
             if i%2==0:
                 x = self.dnaAct(conv(x_all,ex_edge2))
             elif i%2==1:
@@ -789,7 +791,7 @@ class Encoder(nn.Module):
         x = x_all[:, -1]
         
         for i in range(4):
-            conv = self.conv2[i%2]
+            conv = self.conv2[i]
             if i%2==0:
                 x2 = self.dnaAct(conv(x_all2,ex_edge2))
             elif i%2==1:
@@ -814,12 +816,12 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
-            V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             
             
-            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
             # V13 = self.TopNet[1](V23, hidden_states6[i][sen_ss[i][:-1,0]])
             # print("shape:")
