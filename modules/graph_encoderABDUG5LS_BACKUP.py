@@ -588,8 +588,8 @@ class Encoder(nn.Module):
         
         self.ctoq = MultiHeadedAttention(8,config.hidden_size)
         self.qtoc = MultiHeadedAttention(8,config.hidden_size)
-        # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
-        #                          bidirectional=True, num_layers=2, batch_first=True)
+        self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
+                                 bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
@@ -607,7 +607,7 @@ class Encoder(nn.Module):
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.3)
-        # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
