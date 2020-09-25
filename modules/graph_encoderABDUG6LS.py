@@ -550,14 +550,10 @@ class getMaxScore(nn.Module):
         okey = key
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
+        scores = torch.sigmoid(scores)
         # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
+        # topks = []
+        return torch.mean(okey[scores.ge(0.8)],0)
     
 class getThresScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -607,7 +603,7 @@ class Encoder(nn.Module):
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.3)
-        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(3)])
         
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
@@ -818,12 +814,14 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
-            V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             
-            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
-            # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
+            
+            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0]])
+            V13 = self.TopNet[1](V23, hidden_states6[i][sen_ss[i][:-1,0]])
             # print("shape:")
             # print(V11.shape,V12.shape,V13.shape)
             TV1 = torch.cat([V11,V12,V13],-1)
