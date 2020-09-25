@@ -508,7 +508,7 @@ class MultiHeadedAttention(nn.Module):
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*4
+        self.hidden_size = d_model*2
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -594,7 +594,7 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(2):
+        for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
         # self.conv3 = torch.nn.ModuleList()
@@ -759,7 +759,7 @@ class Encoder(nn.Module):
 #        print(x_all.shape)
         
         for i in range(4):
-            conv = self.conv2[i%2]
+            conv = self.conv2[i]
             if i%2==0:
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     x =  self.dnaAct(torch.utils.checkpoint.checkpoint(
@@ -779,7 +779,7 @@ class Encoder(nn.Module):
         x = x_all[:, -1]
         
         for i in range(4):
-            conv = self.conv2[i%2]
+            conv = self.conv2[i]
             if i%2==0:
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     x2 =  self.dnaAct(torch.utils.checkpoint.checkpoint(
