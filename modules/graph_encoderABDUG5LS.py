@@ -594,7 +594,7 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(4):
+        for i in range(2):
             self.conv2.append(
                     DNAConv(config.hidden_size,8,1,0.4))
         # self.conv3 = torch.nn.ModuleList()
@@ -758,7 +758,8 @@ class Encoder(nn.Module):
         x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
-        for i,conv in enumerate(self.conv2):
+        for i in range(4):
+            conv = self.conv2[i%2]
             if i%2==0:
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     x =  self.dnaAct(torch.utils.checkpoint.checkpoint(
@@ -777,7 +778,8 @@ class Encoder(nn.Module):
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
         
-        for i,conv in enumerate(self.conv2):
+        for i in range(4):
+            conv = self.conv2[i%2]
             if i%2==0:
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     x2 =  self.dnaAct(torch.utils.checkpoint.checkpoint(
