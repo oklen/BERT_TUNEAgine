@@ -90,8 +90,6 @@ class NqModel(nn.Module):
 #            print(token_type_ids)
             if self.args.run_og:
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
-#                .requires_grad_()
-
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
