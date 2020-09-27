@@ -587,8 +587,8 @@ class Encoder(nn.Module):
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         self.atten_heads = 16
         
-        self.ctoq = MultiHeadedAttention(self.atten_heads*2,config.hidden_size)
-        self.qtoc = MultiHeadedAttention(self.atten_heads*2,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(self.atten_heads*4,config.hidden_size)
+        # self.qtoc = MultiHeadedAttention(self.atten_heads*2,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
@@ -716,7 +716,7 @@ class Encoder(nn.Module):
             key = query
             query = value
             value = key
-#            hq2q1 = self.ctoq(query,key,value)
+            hq2q1 = self.ctoq(query,key,value)
             if getattr(self.config, "Extgradient_checkpointing", False):
                 def create_custom_forward(module):
                     def custom_forward(*inputs):
@@ -730,8 +730,8 @@ class Encoder(nn.Module):
                 key,
                 value,)
             else:
-                # hq2q1 = self.ctoq(query,key,value)
-                hq2q1 = self.qtoc(query,key,value)
+                hq2q1 = self.ctoq(query,key,value)
+                # hq2q1 = self.qtoc(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
 
             # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
