@@ -794,10 +794,10 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
-            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
