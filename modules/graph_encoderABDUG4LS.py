@@ -561,7 +561,7 @@ class getMaxScore(nn.Module):
     
 class getMaxScoreSimple(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
+        super(getMaxScoreSimple, self).__init__()
 
         self.k = 6
     
