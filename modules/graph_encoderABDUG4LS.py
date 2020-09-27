@@ -606,7 +606,10 @@ class Encoder(nn.Module):
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
-        self.dropout = nn.Dropout(0.1)
+        # self.dropout = nn.Dropout(0.1)
+
+        self.dropout = nn.Dropout(0.3)
+        
         self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
