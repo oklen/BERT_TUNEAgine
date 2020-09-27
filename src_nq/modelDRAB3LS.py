@@ -15,10 +15,10 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
+        self.bert_config = AlbertConfig.from_pretrained("albert-large-v2")
         # self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
-        self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
+        self.bert =  AlbertModel.from_pretrained("albert-large-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
 
@@ -105,7 +105,7 @@ class NqModel(nn.Module):
                     st_mask,
                     edges_src, edges_tgt, edges_type, edges_pos,))
                 else:
-#                    print(sequence_output)
+
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
 #                    x = self.dropout(graph_output)
                     x = self.dropout(graph_output)
