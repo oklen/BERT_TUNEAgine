@@ -585,9 +585,10 @@ class Encoder(nn.Module):
 #        self.layer = nn.ModuleList([layer])
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
+        self.atten_heads = 16
         
-        self.ctoq = MultiHeadedAttention(8,config.hidden_size)
-        self.qtoc = MultiHeadedAttention(8,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(self.atten_heads,config.hidden_size)
+        self.qtoc = MultiHeadedAttention(self.atten_heads,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
@@ -596,11 +597,11 @@ class Encoder(nn.Module):
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,8,1,0.4))
+                    DNAConv(config.hidden_size,self.atten_heads,1,0.4))
         self.conv3 = torch.nn.ModuleList()
         for i in range(4):
             self.conv3.append(
-                DNAConv(config.hidden_size,8,1,0,0.4))
+                DNAConv(config.hidden_size,self.atten_heads,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)

@@ -577,6 +577,7 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
+        self.att_heads = 16
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
@@ -584,8 +585,8 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(8,config.hidden_size)
-        self.qtoc = MultiHeadedAttention(8,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
@@ -594,7 +595,7 @@ class Encoder(nn.Module):
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,8,1,0.4))
+                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
         # self.conv3 = torch.nn.ModuleList()
         # for i in range(4):
         #     self.conv3.append(
