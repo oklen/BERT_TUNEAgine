@@ -34,7 +34,6 @@ import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
 from torch.utils.data.distributed import DistributedSampler
-#from torch.optim import AdamW
 
 
 from tqdm import tqdm, trange
@@ -47,6 +46,7 @@ from generate_exampleDreamAB import InputFeatures
 from src_nq.modelDRAB2LS import NqModel
 from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import WarmupLinearSchedule,AdamW
+from torch.optim import AdamW
 
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
