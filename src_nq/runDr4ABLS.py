@@ -467,7 +467,7 @@ def main():
                     else:
                         loss.backward()
                     
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
                     
                     if (step + 1) % args.gradient_accumulation_steps == 0:
 #                        gc.collect() 
