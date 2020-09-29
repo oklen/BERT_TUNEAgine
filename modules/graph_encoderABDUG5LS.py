@@ -177,12 +177,13 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.2):
+    #Old classic use dropout 0.2
+    def __init__(self, h, d_model, dropout=0.1):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*2
+        self.hidden_size = d_model
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -504,19 +505,21 @@ class Encoder(nn.Module):
             TV1 = torch.cat([V11,V12,V13],-1)
             TV2 = torch.cat([V21,V22,V23],-1)
             
-            
-            TV1 = self.dropout(TV1)
-            TV2 = self.dropout(TV2)
+            # TV1 = self.dropout(TV1)
+            # TV2 = self.dropout(TV2)
 
             
-            V1 = self.lineSub(TV1)
-            V2 = self.lineSub(TV2)
+            # V1 = self.lineSub(TV1)
+            # V2 = self.lineSub(TV2)
+            
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            hidden_statesOut.append(torch.cat([TV1,TV2]))
+
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
