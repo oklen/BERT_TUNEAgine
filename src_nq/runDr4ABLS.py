@@ -53,6 +53,7 @@ WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)
+
 #def warmup_linear(x, warmup=0.002):
 #    """ Specifies a triangular learning rate schedule where peak is reached at `warmup`*`t_total`-th (as provided to BertAdam) training step.
 #        After `t_total`-th training step, learning rate is zero. """
@@ -467,7 +468,7 @@ def main():
                     else:
                         loss.backward()
                     
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 50.0)
                     
                     if (step + 1) % args.gradient_accumulation_steps == 0:
 #                        gc.collect() 
