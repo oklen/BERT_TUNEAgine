@@ -34,7 +34,7 @@ class NqModel(nn.Module):
         #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
-#        self.tok_dense = nn.Linear(my_config.hidden_size, my_config.hidden_size)
+        self.tok_dense = nn.Linear(my_config.hidden_size*6, my_config.hidden_size*6)
         # self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
 
 #        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
@@ -58,6 +58,7 @@ class NqModel(nn.Module):
 #        self.encoder2 = Encoder(my_config)
         
         self.my_config = my_config
+        self.output_act = torch.nn.functional.gelu
         
 #        self.my_mask = 
 
@@ -113,7 +114,7 @@ class NqModel(nn.Module):
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
+                    tok_logits.append(self.tok_outputs(x).squeeze(-1))
                     # tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
 
             else:
