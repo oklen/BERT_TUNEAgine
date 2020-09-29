@@ -830,18 +830,20 @@ class Encoder(nn.Module):
             TV2 = torch.cat([V21,V22,V23],-1)
             
             
-            TV1 = self.dropout(TV1)
-            TV2 = self.dropout(TV2)
+            # TV1 = self.dropout(TV1)
+            # TV2 = self.dropout(TV2)
 
             
-            V1 = self.lineSub(TV1)
-            V2 = self.lineSub(TV2)
+            # V1 = self.lineSub(TV1)
+            # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            hidden_statesOut.append(torch.cat([TV1,TV2]))
+
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
