@@ -541,6 +541,18 @@ class MultiHeadedAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x)
+    def getTopK(self,query,key):
+        okey = key
+        topks = []
+        query = self.linears[0](query)
+        key = self.linears[1](key)
+        scores = torch.matmul(query, key.transpose(-2, -1))
+        for i in range(self.k):
+            MaxInd=torch.argmax(scores)
+            if scores[MaxInd] == -100000: break
+            scores[MaxInd] = -100000
+            topks.append(okey[MaxInd])
+        return torch.mean(torch.stack(topks),0)
     
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -828,7 +840,9 @@ class Encoder(nn.Module):
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            V11 = self.qtoc.getTopK(V21,hidden_states3[i][sen_ss[i][:-1,0]])
+
             V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
