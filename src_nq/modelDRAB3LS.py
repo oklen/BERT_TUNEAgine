@@ -90,13 +90,8 @@ class NqModel(nn.Module):
 #            print(attention_mask)
 #            print(token_type_ids)
             if self.args.run_og:
-                sequence_output = []
-                # sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
-                for i in range(3):
-                    tmp,_ = self.bert(input_ids[i].unsqueeze(0),attention_mask[i].unsqueeze(0),token_type_ids[i].unsqueeze(0))
-                    sequence_output.append(tmp)
-                sequence_output = torch.cat(sequence_output,0)
-                
+
+                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
