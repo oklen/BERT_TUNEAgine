@@ -292,11 +292,11 @@ class Encoder(nn.Module):
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads,1,0.5))
+                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
         self.conv3 = torch.nn.ModuleList()
         for i in range(4):
             self.conv3.append(
-                DNAConv(config.hidden_size,self.att_heads,1,0,0.5))
+                DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
