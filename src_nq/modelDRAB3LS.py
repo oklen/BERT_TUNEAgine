@@ -91,19 +91,12 @@ class NqModel(nn.Module):
         loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
         tok_logits = []
         res_labels = []
+        
 #        print(input_idss.shape)
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
-            
-#            print(input_ids.shape)
-#            print(attention_mask.shape)
-#            print("BEGIN!")
-#            print(input_ids)
-#            print(attention_mask)
-#            print(token_type_ids)
             if self.args.run_og:
-
                 sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):

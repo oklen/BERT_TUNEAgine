@@ -423,7 +423,7 @@ def main():
         
 
     global_step = 0
-    last_acc = 85.0
+    last_acc = 89.5
     
     if args.do_train:
         logger.info("***** Running training *****")
