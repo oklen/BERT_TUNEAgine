@@ -520,6 +520,7 @@ class MultiHeadedAttention(nn.Module):
         self.output = nn.Linear(self.hidden_size,d_model)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
+        self.k = 6
         
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
