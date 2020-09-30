@@ -120,6 +120,12 @@ def gelu(x):
 def swish(x):
     return x * torch.sigmoid(x)
 
+def gelu_new(x):
+    """Implementation of the gelu activation function currently in Google Bert repo (identical to OpenAI GPT).
+    Also see https://arxiv.org/abs/1606.08415
+    """
+    return 0.5 * x * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * torch.pow(x, 3.0))))
+
 
 ACT2FN = {"gelu": gelu, "relu": torch.nn.functional.relu, "swish": swish}
 
@@ -616,11 +622,11 @@ class Encoder(nn.Module):
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads,1,0.5))
+                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
         self.conv3 = torch.nn.ModuleList()
         for i in range(4):
             self.conv3.append(
-                DNAConv(config.hidden_size,self.att_heads,1,0,0.5))
+                DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
             
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
@@ -634,7 +640,8 @@ class Encoder(nn.Module):
         # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         self.TopNet = nn.ModuleList([getMaxScoreSimple(self.hidden_size) for _ in range(2)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
-        self.dnaAct = torch.relu
+        # self.dnaAct = torch.relu
+        self.dnaAct = gelu_new
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
 
