@@ -639,7 +639,7 @@ class Encoder(nn.Module):
         # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         self.TopNet = nn.ModuleList([getMaxScoreSimple(self.hidden_size) for _ in range(2)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
-        self.dnaAct = torch.gelu
+        self.dnaAct = self.gelu
         # self.dnaAct = torch.nn.functional.gelu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
