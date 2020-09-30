@@ -48,6 +48,7 @@ from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import WarmupLinearSchedule,AdamW
 from torch.optim import AdamW
 
+from transformers import AlbertTokenizer
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
@@ -424,6 +425,7 @@ def main():
 
     global_step = 0
     last_acc = 89.5
+    albert_toker = AlbertTokenizer.from_pretrained('albert-base-v2')
     
     if args.do_train:
         logger.info("***** Running training *****")
@@ -435,7 +437,7 @@ def main():
         nb_tr_examples = 0
         model.zero_grad()
         optimizer.zero_grad()
-        
+        Err_test = False
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
@@ -454,7 +456,9 @@ def main():
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-    
+                    if not Err_test:
+                        print(albert_toker.convert_ids_to_tokens(batch.input_ids[0]))
+                        Err_test = True
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     if n_gpu > 1:
@@ -515,11 +519,15 @@ def main():
             ttr_loss = 0
             optimizer.zero_grad()
             logging.info("***** Running evalating *****")
+            
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
+                    tmp_acc = model.ACC
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
+                    if model.ACC == tmp_acc:
+                        print(albert_toker.convert_ids_to_tokens(batch.inputs[0]))
                     ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
