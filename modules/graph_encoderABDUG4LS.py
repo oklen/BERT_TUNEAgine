@@ -753,12 +753,12 @@ class Encoder(nn.Module):
                     
                     return custom_forward
                 hq2q1 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.ctoq),
+                create_custom_forward(self.qtoc),
                 query,
                 key,
                 value,)
             else:
-                hq2q1 = self.ctoq(query,key,value)
+                hq2q1 = self.qtoc(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
 
             # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
