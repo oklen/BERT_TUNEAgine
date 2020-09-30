@@ -30,8 +30,8 @@ class NqModel(nn.Module):
         self.args = args
         self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
         
-        self.bert_config.hidden_dropout_prob = 0.1
-        self.bert_config.attention_probs_dropout_prob = 0.1
+        # self.bert_config.hidden_dropout_prob = 0.1
+        # self.bert_config.attention_probs_dropout_prob = 0.1
         
         # self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
