@@ -457,6 +457,7 @@ def main():
 
                 for step, batch in enumerate(train_dataloader):
                     if not Err_test:
+                        print(batch.input_ids[0])
                         print(albert_toker.convert_ids_to_tokens(batch.input_ids[0]))
                         Err_test = True
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
