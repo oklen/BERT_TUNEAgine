@@ -550,18 +550,18 @@ class getMaxScore(nn.Module):
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
+        Topks = []
         for i in range(self.k):
             MaxInd=torch.argmax(scores)
             if scores[MaxInd] == -100000: break
             scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
+            Topks.append(okey[MaxInd])
+        return torch.mean(torch.stack(Topks),0)
     
     
 class getMaxScoreSimple(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
+        super(getMaxScoreSimple, self).__init__()
 
         self.k = 6
     

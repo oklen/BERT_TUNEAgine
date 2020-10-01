@@ -120,12 +120,6 @@ def gelu(x):
 def swish(x):
     return x * torch.sigmoid(x)
 
-def gelu_new(x):
-    """Implementation of the gelu activation function currently in Google Bert repo (identical to OpenAI GPT).
-    Also see https://arxiv.org/abs/1606.08415
-    """
-    return 0.5 * x * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * torch.pow(x, 3.0))))
-
 
 ACT2FN = {"gelu": gelu, "relu": torch.nn.functional.relu, "swish": swish}
 
@@ -520,7 +514,6 @@ class MultiHeadedAttention(nn.Module):
         self.output = nn.Linear(self.hidden_size,d_model)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
-        self.k = 6
         
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
@@ -542,18 +535,6 @@ class MultiHeadedAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x)
-    def getTopK(self,query,key):
-        okey = key
-        topks = []
-        query = self.linears[0](query)
-        key = self.linears[1](key)
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
     
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -569,13 +550,13 @@ class getMaxScore(nn.Module):
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
+        Topks = []
         for i in range(self.k):
             MaxInd=torch.argmax(scores)
             if scores[MaxInd] == -100000: break
             scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
+            Topks.append(okey[MaxInd])
+        return torch.mean(torch.stack(Topks),0)
     
     
 class getMaxScoreSimple(nn.Module):
@@ -640,7 +621,6 @@ class Encoder(nn.Module):
         for i in range(4):
             self.conv3.append(
                 DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
-            
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
@@ -648,11 +628,10 @@ class Encoder(nn.Module):
         self.config = config
         self.dropout = nn.Dropout(0.1)
 
-        # self.dropout = nn.Dropout(0.3) seems to high        
-        # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        self.TopNet = nn.ModuleList([getMaxScoreSimple(self.hidden_size) for _ in range(2)])
+        # self.dropout = nn.Dropout(0.3) seems to high
+        
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
-        # self.dnaAct = self.gelu
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
@@ -838,12 +817,14 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
+            hidden_states4 = self.dropout(hidden_states4)
+            hidden_states3 = self.dropout(hidden_states3)
+            hidden_states6 = self.dropout(hidden_states6)
+            
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
             V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            # V11 = self.qtoc.getTopK(V21,hidden_states3[i][sen_ss[i][:-1,0]])
-
             V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
@@ -852,8 +833,8 @@ class Encoder(nn.Module):
             TV2 = torch.cat([V21,V22,V23],-1)
             
             
-            # TV1 = self.dropout(TV1)
-            # TV2 = self.dropout(TV2)
+            TV1 = self.dropout(TV1)
+            TV2 = self.dropout(TV2)
 
             
             # V1 = self.lineSub(TV1)
@@ -863,9 +844,7 @@ class Encoder(nn.Module):
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
-            hidden_statesOut.append(torch.cat([TV1,TV2]))
-
+            hidden_statesOut.append(self.gelu(torch.cat([TV1,TV2])))
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
