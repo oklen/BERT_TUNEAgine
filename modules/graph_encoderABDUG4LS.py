@@ -491,9 +491,7 @@ class MixingMatrixInit(Enum):
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
     d_k = query.size(-1)
-    query = gelu(query)
-    key = gelu(key)
-    
+
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
     if mask is not None:
