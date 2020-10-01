@@ -438,6 +438,7 @@ def main():
         model.zero_grad()
         optimizer.zero_grad()
         Err_test = False
+        ErrorSelect = open("./Err.txt",'w+');
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
@@ -457,8 +458,7 @@ def main():
 
                 for step, batch in enumerate(train_dataloader):
                     if not Err_test:
-                        print(batch.input_ids[0][0])
-                        print(albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]))
+                        ErrorSelect.write(albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]))
                         Err_test = True
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
@@ -528,7 +528,7 @@ def main():
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     if model.ACC == tmp_acc:
-                        print(albert_toker.convert_ids_to_tokens(batch.inputs[0][0]))
+                        ErrorSelect.write(albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]))
                     ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
@@ -542,7 +542,7 @@ def main():
                 # If we save using the predefined names, we can load using `from_pretrained`
                 output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
                 torch.save(model_to_save.state_dict(), output_model_file)
-                    
+        ErrorSelect.close();
                 
 
 if __name__ == "__main__":
