@@ -172,8 +172,6 @@ class LayerNorm(nn.Module):
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
     d_k = query.size(-1)
-    query = gelu(query)
-    key = gelu(key)
     
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
@@ -186,12 +184,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
     #Old classic use dropout 0.2
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.0):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*2
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
