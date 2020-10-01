@@ -46,7 +46,7 @@ from generate_exampleDreamAB import InputFeatures
 
 from src_nq.modelDRAB3LS import NqModel
 from src_nq.datasetRov3 import NqDataset
-from src_nq.optimization import WarmupLinearSchedule,AdamW
+from src_nq.optimization import WarmupLinearSchedule,WarmupConstantSchedule,AdamW
 
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
@@ -414,12 +414,14 @@ def main():
 #                             t_total=num_train_optimization_steps)
         optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
-        
-        scheduler = WarmupLinearSchedule(optimizer,
+
+        # scheduler = WarmupLinearSchedule(optimizer,
+        #                              warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
+        #                              if args.warmup_proportion > 0 else args.warmup_steps,
+        #                              t_total=num_train_optimization_steps)
+        scheduler = WarmupConstantSchedule(optimizer,
                                      warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
-                                     if args.warmup_proportion > 0 else args.warmup_steps,
-                                     t_total=num_train_optimization_steps)
-        
+                                     if args.warmup_proportion > 0 else args.warmup_steps)
 
     global_step = 0
     last_acc = 85.0

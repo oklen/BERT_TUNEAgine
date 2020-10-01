@@ -51,8 +51,8 @@ class NqModel(nn.Module):
         #self.bert =  RobertaModel(RobertaConfig(max_position_embeddings=514,vocab_size=50265))
 
         #print(my_config,bert_config)
-        self.tok_dense = nn.Linear(my_config.hidden_size*6, my_config.hidden_size*6)
-        # self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
+        # self.tok_dense = nn.Linear(my_config.hidden_size*6, my_config.hidden_size*6)
+        self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
 
 #        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
@@ -60,7 +60,7 @@ class NqModel(nn.Module):
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
-        self.tok_outputs = nn.Linear(my_config.hidden_size*6, 1) # tune to avoid fell into bad places
+        self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
         
 #        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
@@ -119,14 +119,14 @@ class NqModel(nn.Module):
                 else:
 
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
-#                    x = self.dropout(graph_output)
+                    # x = self.dropout(graph_output)
                     # x = self.dropout(graph_output)
                 
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
-                    # tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+                    # tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
+                    tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(graph_output)))).squeeze(-1))
 
             else:
                 input_ids = input_ids.to('cuda:0')

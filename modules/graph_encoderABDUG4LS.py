@@ -502,12 +502,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.2):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*4
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -550,18 +550,18 @@ class getMaxScore(nn.Module):
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         # p_attn = torch.softmax(scores, dim = -1)
-        Topks = []
+        topks = []
         for i in range(self.k):
             MaxInd=torch.argmax(scores)
             if scores[MaxInd] == -100000: break
             scores[MaxInd] = -100000
-            Topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(Topks),0)
+            topks.append(okey[MaxInd])
+        return torch.mean(torch.stack(topks),0)
     
     
 class getMaxScoreSimple(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScoreSimple, self).__init__()
+        super(getMaxScore, self).__init__()
 
         self.k = 6
     
@@ -745,12 +745,12 @@ class Encoder(nn.Module):
                     
                     return custom_forward
                 hq2q1 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.qtoc),
+                create_custom_forward(self.ctoq),
                 query,
                 key,
                 value,)
             else:
-                hq2q1 = self.qtoc(query,key,value)
+                hq2q1 = self.ctoq(query,key,value)
             hq2q1 = hq2q1.squeeze(0)
 
             # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
@@ -817,10 +817,6 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
-            # hidden_states4 = self.dropout(hidden_states4)
-            # hidden_states3 = self.dropout(hidden_states3)
-            # hidden_states6 = self.dropout(hidden_states6)
-            
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
@@ -837,14 +833,14 @@ class Encoder(nn.Module):
             TV2 = self.dropout(TV2)
 
             
-            # V1 = self.lineSub(TV1)
-            # V2 = self.lineSub(TV2)
+            V1 = self.lineSub(TV1)
+            V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(self.gelu(torch.cat([TV1,TV2])))
+            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
