@@ -817,9 +817,9 @@ class Encoder(nn.Module):
             V22 = hidden_states4[i][qas[i]]
             V23 = hidden_states6[i][qas[i]]
             
-            hidden_states4 = self.dropout(hidden_states4)
-            hidden_states3 = self.dropout(hidden_states3)
-            hidden_states6 = self.dropout(hidden_states6)
+            # hidden_states4 = self.dropout(hidden_states4)
+            # hidden_states3 = self.dropout(hidden_states3)
+            # hidden_states6 = self.dropout(hidden_states6)
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
