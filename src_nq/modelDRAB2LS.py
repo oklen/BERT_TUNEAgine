@@ -114,9 +114,9 @@ class NqModel(nn.Module):
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    tok_logits.append(self.tok_outputs(x).squeeze(-1))
+                    # tok_logits.append(self.tok_outputs(x).squeeze(-1))
                     # x = self.dropout(graph_output)
-                    # tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+                    tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
 
             else:
                 input_ids = input_ids.to('cuda:0')
