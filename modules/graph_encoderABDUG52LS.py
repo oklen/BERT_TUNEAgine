@@ -396,7 +396,7 @@ class Encoder(nn.Module):
 
         for i in range(3):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            for j in range(1):
+            for j in range(2):
                 if j==0:
                     query = hidden_states[i][1:all_sen_now[-1][0]]
                     key = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
