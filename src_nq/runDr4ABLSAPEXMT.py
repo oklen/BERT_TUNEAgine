@@ -565,6 +565,8 @@ def main():
                                   'token_type_idss': batch[2],  # XLM don't use segment_ids
                                   'labels':         batch[3],
                                   'all_sens':        batch[4]}
+                        print(batch)
+                        exit(0)
                         loss = model(**inputs)
                     
                     if n_gpu > 1:
