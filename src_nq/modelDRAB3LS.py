@@ -103,6 +103,7 @@ class NqModel(nn.Module):
         # outer_j = 0
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
             if self.args.run_og:
+                print(input_ids.shape,input_embs.shape)
                 if input_embs==None:
                     sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 else:
