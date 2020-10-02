@@ -490,7 +490,7 @@ def main():
         
         train_features = train_dataset.features
         logging.info("Dream_Data ready {} ".format(len(train_features)))
-        RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler,batch_size=args.train_batch_size)
+        RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler(RaceFeatures),batch_size=args.train_batch_size)
         logging.info("RACE_Data ready {} ".format(len(RaceFeatures)))
         RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
         
@@ -502,7 +502,7 @@ def main():
                 
                 # race_features_num = len(RaceFeatures)
 
-                for step, _ in enumerate(range(int(num_train_optimization_steps))):
+                for step, _ in enumerate(range(int(feature_cnt))):
                     # if not Err_test:
                     #     WrOut = ""
                     #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
