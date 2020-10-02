@@ -559,7 +559,7 @@ def main():
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     else:
                         batch = RACE_train_dataloader.get_next()
-                        batch = tuple(t.to(args.device) for t in batch)
+                        batch = tuple(t.to(device) for t in batch)
                         inputs = {'input_idss':      batch[0],
                                   'attention_masks': batch[1],
                                   'token_type_idss': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
