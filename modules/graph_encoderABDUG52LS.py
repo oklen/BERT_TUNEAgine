@@ -433,9 +433,9 @@ class Encoder(nn.Module):
     
     #            hq1q2 = torch.mean(hq1q2,0)
     
-                key2 = query
-                query2 = key
-                value2 = query
+                key2 = query.clone()
+                query2 = key.clone()
+                value2 = query.clone()
     #            hq2q1 = self.ctoq(query,key,value)
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     def create_custom_forward(module):
@@ -444,12 +444,12 @@ class Encoder(nn.Module):
                         
                         return custom_forward
                     hq2q1 = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.ctoq),
+                    create_custom_forward(self.qtoc),
                     query2,
                     key2,
                     value2,)
                 else:
-                    hq2q1 = self.ctoq(query2,key2,value2)
+                    hq2q1 = self.qtoc(query2,key2,value2)
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
