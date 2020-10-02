@@ -473,7 +473,9 @@ def main():
                 for step, batch in enumerate(train_dataloader):
                 # ============================ Code for adversarial training=============
                     # initialize delta
-
+                    print("Give inputs shape and input_mask shape")
+                    print(batch.inputs.shape)
+                    print(batch.input_mask.shape)
                     embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
                     # embeds_init = model.embeddings.word_embeddings(batch[0])
 
@@ -550,7 +552,7 @@ def main():
                             exit()
         
                         if isinstance(model, torch.nn.DataParallel):
-                            embeds_init = model.module.embeddings.word_embeddings(batch.input_ids)
+                            embeds_init = model.bert.module.embeddings.word_embeddings(batch.input_ids)
                         else:
                             embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
 
