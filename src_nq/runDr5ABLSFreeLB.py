@@ -501,14 +501,14 @@ def main():
                     for astep in range(args.adv_steps):
 
                         delta.requires_grad_()
-                        print(delta)
-                        print(embeds_init)
+                        # print(delta)
+                        # print(embeds_init)
                         # inputs['inputs_embeds'] = delta + embeds_init
                         # inputs['dp_masks'] = dp_masks
-        
+                        inputs_embeds = delta+embeds_init
 
                         loss = model(batch.input_ids,batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen,delta + embeds_init) # model outputs are always tuple in transformers (see doc)
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen,inputs_embeds) # model outputs are always tuple in transformers (see doc)
                         # (1) backward
 
                         if args.gradient_accumulation_steps > 1:
