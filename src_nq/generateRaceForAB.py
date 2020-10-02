@@ -358,7 +358,7 @@ def main():
 #        print(input_path)
         process = RaceProcessor()
         examples = process._read_samples(args.data_dir, args.input_pattern)
-        features = convert_examples_to_features(examples, process.get_labels(), args.max_seq_length, tokenizer)
+        features = convert_examples_to_features(examples, process.get_labels(), args.max_seq_length, tokenizer,"multi-choice")
         with open(cached_path, "wb") as writer:
             random.shuffle(features)
             pickle.dump(features, writer)
