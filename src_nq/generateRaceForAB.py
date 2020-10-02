@@ -362,4 +362,5 @@ def main():
         with open(cached_path, "wb") as writer:
             random.shuffle(features)
             pickle.dump(features, writer)
+        print("Done")
             
