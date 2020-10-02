@@ -562,7 +562,7 @@ def main():
                         batch = tuple(t.to(device) for t in batch)
                         inputs = {'input_idss':      batch[0],
                                   'attention_masks': batch[1],
-                                  'token_type_idss': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
+                                  'token_type_idss': batch[2],  # XLM don't use segment_ids
                                   'labels':         batch[3],
                                   'all_sen':        batch[4]}
                         loss = model(**inputs)
