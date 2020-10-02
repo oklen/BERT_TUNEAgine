@@ -432,7 +432,7 @@ def main():
     last_acc = 89.5
     albert_toker = AlbertTokenizer.from_pretrained('albert-base-v2')
     model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
-
+    torch.autograd.set_detect_anomaly(True)
     
     if args.do_train:
         logger.info("***** Running training *****")
