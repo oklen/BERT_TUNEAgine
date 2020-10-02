@@ -473,14 +473,14 @@ def main():
                 for step, batch in enumerate(train_dataloader):
                 # ============================ Code for adversarial training=============
                     # initialize delta
-                    print("Give inputs shape and input_mask shape")
-                    print(batch.input_ids.shape)
-                    print(batch.input_mask.shape)
-                    embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
+                    # print("Give inputs shape and input_mask shape")
+                    # print(batch.input_ids.shape)
+                    # print(batch.input_mask.shape)
+                    embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids.squeeze(0))
                     # embeds_init = model.embeddings.word_embeddings(batch[0])
 
                     if args.adv_init_mag > 0:
-                        input_mask = batch.input_mask.to(embeds_init)
+                        input_mask = batch.input_mask.squeeze(0).to(embeds_init)
                         input_lengths = torch.sum(input_mask, 1)
                         # check the shape of the mask here..
         
@@ -552,9 +552,9 @@ def main():
                             exit()
         
                         if isinstance(model, torch.nn.DataParallel):
-                            embeds_init = model.bert.module.embeddings.word_embeddings(batch.input_ids)
+                            embeds_init = model.bert.module.embeddings.word_embeddings(batch.input_ids.squeeze(0))
                         else:
-                            embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
+                            embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids.squeeze(0))
 
             # ============================ End (2) ==================
             
