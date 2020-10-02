@@ -508,8 +508,7 @@ def main():
                         loss = model(batch.input_ids,batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen,delta + embeds_init) # model outputs are always tuple in transformers (see doc)
                         # (1) backward
-                        if args.n_gpu > 1:
-                            loss = loss.mean()  # mean() to average on multi-gpu parallel training
+
                         if args.gradient_accumulation_steps > 1:
                             loss = loss / args.gradient_accumulation_steps
         
