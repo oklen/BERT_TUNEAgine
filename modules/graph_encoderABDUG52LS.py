@@ -406,7 +406,8 @@ class Encoder(nn.Module):
                     value = value.unsqueeze(0)
                 else:
                     query = hidden_states2[i][1:all_sen_now[-1][0]]
-                    key = value = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    key = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    value = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
                     query = query.unsqueeze(0)
                     key = key.unsqueeze(0)
                     value = value.unsqueeze(0)
