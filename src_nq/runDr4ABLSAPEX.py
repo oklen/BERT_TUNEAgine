@@ -332,7 +332,7 @@ def main():
     run_og = args.run_og
     if args.run_og:
         if n_gpu:
-            model.cuda()
+            model.cuda(pin_memory=True)
         if args.local_rank != -1:
 #            model = torch.nn.parallel.DistributedDataParallel(model,find_unused_parameters=True)
             model = torch.nn.parallel.DistributedDataParallel(model)
