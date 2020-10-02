@@ -499,7 +499,7 @@ def main():
                     # the main loop
                     # dp_masks = None
                     for astep in range(args.adv_steps):
-
+                        delta = delta.long()
                         delta.requires_grad_()
                         # print(delta)
                         # print(embeds_init)
