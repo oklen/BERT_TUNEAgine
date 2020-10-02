@@ -474,7 +474,7 @@ def main():
                 # ============================ Code for adversarial training=============
                     # initialize delta
 
-                    embeds_init = model.embeddings.word_embeddings(batch.input_ids)
+                    embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
                     # embeds_init = model.embeddings.word_embeddings(batch[0])
 
                     if args.adv_init_mag > 0:
@@ -552,7 +552,7 @@ def main():
                         if isinstance(model, torch.nn.DataParallel):
                             embeds_init = model.module.embeddings.word_embeddings(batch.input_ids)
                         else:
-                            embeds_init = model.embeddings.word_embeddings(batch.input_ids)
+                            embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
 
             # ============================ End (2) ==================
             
