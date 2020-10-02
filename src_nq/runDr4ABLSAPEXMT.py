@@ -178,6 +178,45 @@ def batcher(device, is_training=False):
     return batcher_dev
 
 
+def convert_features_to_tensors(features, output_mode, is_multi_choice=True):
+
+    input_ids = []
+    input_mask = []
+    segment_ids = []
+    label_id = []
+    all_sens = []
+
+
+    n_class = len(features[0])
+    for f in features:
+        input_ids.append([])
+        input_mask.append([])
+        segment_ids.append([])
+        all_sens.append([])
+        for i in range(n_class):
+            input_ids[-1].append(f[i].input_ids)
+            input_mask[-1].append(f[i].input_mask)
+            segment_ids[-1].append(f[i].segment_ids)
+            all_sens[-1].append(f[i].all_sen)
+
+        label_id.append([f[0].label_id])
+
+    
+
+    all_input_ids = torch.tensor(input_ids, dtype=torch.long)
+    all_input_mask = torch.tensor(input_mask, dtype=torch.long)
+    all_segment_ids = torch.tensor(segment_ids, dtype=torch.long)
+    all_all_sens = torch.tensor(all_sens,dtype=torch.long)
+
+    if output_mode in ["classification", "multi-choice"]:
+        all_label_ids = torch.tensor(label_id, dtype=torch.long)
+    elif output_mode == "regression":
+        all_label_ids = torch.tensor(label_id, dtype=torch.float)
+
+    data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids,all_all_sens)
+
+    return data
+
 RawResult = collections.namedtuple("RawResult",
                                    ["unique_id", "tok_start_logits", "tok_end_logits", "tok_ref_indexes",
                                     "para_logits", "para_ref_indexes", "doc_logits"])
@@ -382,19 +421,22 @@ def main():
     
 #    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
 #    model.load_state_dict(torch.load(output_model_file))
+
     prefix = "cached_{0}_{1}_{2}_{3}".format(str(args.max_seq_length), str(args.doc_stride), str(args.max_query_length),"RaceA")
     prefix = os.path.join("features", prefix)
     cached_path = os.path.join(prefix, "train.pkl")
     with open(cached_path, "rb") as reader:
         RaceFeatures = pickle.load(reader)
-        
+    num_race = len(RaceFeatures)
+    RaceFeatures = convert_features_to_tensors(RaceFeatures, "multi-choice")
+    
     if args.do_train:
         num_train_features = 0
         for data_path in glob(args.train_pattern):
             train_dataset = NqDataset(args, data_path, is_training=True)
             train_features = train_dataset.features
             num_train_features += len(train_dataset.features)
-        num_train_features += len(RaceFeatures)
+        num_train_features += num_race
         
         print(num_train_features,args.train_batch_size,args.gradient_accumulation_steps)
         
@@ -473,8 +515,8 @@ def main():
         Err_test = False
         ErrorSelect = open("./Err.txt",'w+');
         
-        feature_cnt = num_train_features*2+len(RaceFeatures)
-        sampling_prob = [num_train_features*2/feature_cnt,len(RaceFeatures)/feature_cnt]
+        feature_cnt = num_train_features*2+num_race
+        sampling_prob = [num_train_features*2/feature_cnt,num_race/feature_cnt]
         
         train_dataset = NqDataset(args, data_path, is_training=True)
         train_features = train_dataset.features

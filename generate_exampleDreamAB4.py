@@ -123,6 +123,8 @@ class InputFeatures(object):
         self.segment_ids = segment_ids
         self.graph = graph
         self.label = label
+        self.label_id = None
+
         #self.show()
 
         #exit(0)
