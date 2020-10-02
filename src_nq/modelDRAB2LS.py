@@ -70,7 +70,7 @@ class NqModel(nn.Module):
         
         #self.apply(self.init_bert_weights)
 
-    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens):
+    def forward(self, input_idss, attention_masks, token_type_idss, st_masks=None, edgess=None, labels=None,all_sens=None):
 
 #model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask, batch.st_index,
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),
@@ -80,108 +80,87 @@ class NqModel(nn.Module):
         tok_logits = []
         res_labels = []
 #        print(input_idss.shape)
-
-        edges_srcs, edges_tgts, edges_types, edges_poss = edgess
-        for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
-            
-#            print(input_ids.shape)
-#            print(attention_mask.shape)
-#            print("BEGIN!")
-#            print(input_ids)
-#            print(attention_mask)
-#            print(token_type_ids)
-            if self.args.run_og:
-                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
-#                .requires_grad_()
-
-                if getattr(self.bert_config, "gradient_checkpointingNot", False):
-                    def create_custom_forward(module):
-                        def custom_forward(*inputs,output_all_encoded_layers=False):
-                            x = self.dropout(module(*inputs,output_all_encoded_layers=False))
-#                            return self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1)
-                            return self.tok_outputs(x).squeeze(-1)
-                        return custom_forward
-
-#                    sequence_output,_ = torch.utils.checkpoint.checkpoint(self.bert,input_ids,  attention_mask,token_type_ids)
-                    tok_logits.append(torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.encoder),
-                    sequence_output,
-                    st_mask,
-                    edges_src, edges_tgt, edges_type, edges_pos,))
+        if edgess==None:
+            edges_srcs, edges_tgts, edges_types, edges_poss = edgess
+            for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
+    
+                if self.args.run_og:
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
+    #                .requires_grad_()
+    
+                    if getattr(self.bert_config, "gradient_checkpointingNot", False):
+                        def create_custom_forward(module):
+                            def custom_forward(*inputs,output_all_encoded_layers=False):
+                                x = self.dropout(module(*inputs,output_all_encoded_layers=False))
+    #                            return self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1)
+                                return self.tok_outputs(x).squeeze(-1)
+                            return custom_forward
+    
+    #                    sequence_output,_ = torch.utils.checkpoint.checkpoint(self.bert,input_ids,  attention_mask,token_type_ids)
+                        tok_logits.append(torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(self.encoder),
+                        sequence_output,
+                        st_mask,
+                        edges_src, edges_tgt, edges_type, edges_pos,))
+                    else:
+                        graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
+                        x = self.dropout(graph_output)
+                        # x = graph_output
+                    
+    #                    x = self.dropout(sequence_output[:,0])
+    #                    print(x)
+    #                    x = self.dropout(graph_output)
+                        # tok_logits.append(self.tok_outputs(x).squeeze(-1))
+                        # x = self.dropout(graph_output)
+                        tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+    
                 else:
-                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
-                    x = self.dropout(graph_output)
-                    # x = graph_output
-                
+                    input_ids = input_ids.to('cuda:0')
+                    attention_mask = attention_mask.to('cuda:0')
+                    token_type_ids = token_type_ids.to('cuda:0')
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
+            
+                    #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
+                    #print(type(sequence_output),sequence_output.shape)
+                    #print(type(sequence_output2),sequence_output2.shape)
+                    #exit(0)
+                    #print("ALBERT DONE!")
+            #        print("BEFORE GRAPH:",sequence_output.shape)
+                    sequence_output = sequence_output.to('cuda:1')
+                    st_mask = st_mask.to('cuda:1')
+                    edges_src = edges_src.to('cuda:1')
+                    edges_tgt = edges_tgt.to('cuda:1')
+                    edges_type = edges_type.to('cuda:1')
+                    edges_pos = edges_pos.to('cuda:1')
+    #                if getattr(self.bert_config, "gradient_checkpointing", False):
+    #                    graph_output = torch.utils.checkpoint.checkpoint(
+    #                            self.encoder,
+    #                            sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos,
+    #                            )
+    #                else:
+                    graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
+                    
+                    x = self.dropout(graph_output.to('cuda:0'))
+                    tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+    
+    
+                for index,lab in enumerate(label):
+                    if lab == 1:
+                        res_labels.append(index)
+        else:
+            for input_ids, attention_mask, token_type_ids, label, all_sen in zip(input_idss, attention_masks, token_type_idss, labels, all_sens):
+                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
+                graph_output = self.encoder(sequence_output, None, None, None, None, None, all_sen,output_all_encoded_layers=False)
+                x = self.dropout(graph_output)
+                # x = graph_output
+            
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    # tok_logits.append(self.tok_outputs(x).squeeze(-1))
-                    # x = self.dropout(graph_output)
-                    tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-
-            else:
-                input_ids = input_ids.to('cuda:0')
-                attention_mask = attention_mask.to('cuda:0')
-                token_type_ids = token_type_ids.to('cuda:0')
-                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
-        
-                #sequence_output2, _ = self.bert2(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
-                #print(type(sequence_output),sequence_output.shape)
-                #print(type(sequence_output2),sequence_output2.shape)
-                #exit(0)
-                #print("ALBERT DONE!")
-        #        print("BEFORE GRAPH:",sequence_output.shape)
-                sequence_output = sequence_output.to('cuda:1')
-                st_mask = st_mask.to('cuda:1')
-                edges_src = edges_src.to('cuda:1')
-                edges_tgt = edges_tgt.to('cuda:1')
-                edges_type = edges_type.to('cuda:1')
-                edges_pos = edges_pos.to('cuda:1')
-#                if getattr(self.bert_config, "gradient_checkpointing", False):
-#                    graph_output = torch.utils.checkpoint.checkpoint(
-#                            self.encoder,
-#                            sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos,
-#                            )
-#                else:
-                graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, output_all_encoded_layers=False)
-                
-                x = self.dropout(graph_output.to('cuda:0'))
+                # tok_logits.append(self.tok_outputs(x).squeeze(-1))
+                # x = self.dropout(graph_output)
                 tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-#            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
-#    
-#            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
-#            q_pos = edges_src[q_pos]
-            #print("GRAPH DONE!")
-            # token
-            #tok_output = torch.tanh(self.tok_dense(graph_output[:, :NodePosition.MAX_TOKEN, :]))
-            #tok_output = torch.tanh(self.tok_dense(_))
-    
-    
-            #tok_logits = tok_logits.view(tok_logits.size(0),self.my_config.max_token_len)
-            #tok_logits = self.tok_to_label(tok_logits)
-    #        print(graph_output.shape,self.config.hidden_size)
-#            print(graph_output[:,0])
-#            x = torch.cat((graph_output[:,0],sequence_output[:,0]),-1)
-#            x = graph_output
-#
-    
-#            x = self.dropout(graph_output)
-#            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-#            x = self.dropout(sequence_output)
-#            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x[:,0])))).squeeze(-1))
-#            x = self.dropout(graph_output)
-#            tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-            
-#            tok_logits.append(self.tok_outputs(self.dropout(x)).squeeze(-1))
-            
-            
-#            tok_logits.append(self.tok_outputs2(self.dropout(torch.tanh(self.tok_dense2(x)))).squeeze(-1))
-
-            for index,lab in enumerate(label):
-                if lab == 1:
-                    res_labels.append(index)
-        
+                res_labels.append(label[0])
 
         # token
 #        print(tok_logits)

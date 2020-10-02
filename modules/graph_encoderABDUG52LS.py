@@ -351,39 +351,39 @@ class Encoder(nn.Module):
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
-        
-        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-
-        
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-        
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
-        
-        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
-        
-        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
-        
-        # ex_edge += ex_edge3
-        # ex_edge2 += ex_edge #Use all connect to passage message
-        
-        # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        
-        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-        ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
-        
-        # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        if edges_src is not None:
+            ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+            ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+    
+            
+            # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+            
+            ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+            ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+            
+            # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
+            
+            ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+            ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+            
+            ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
+            
+            # ex_edge += ex_edge3
+            # ex_edge2 += ex_edge #Use all connect to passage message
+            
+            # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+            
+            ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+            ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+            ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
+            
+            # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+            # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
         hidden_statesOut = []
         qas = []
@@ -394,7 +394,7 @@ class Encoder(nn.Module):
         hidden_states3 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
-        for i in range(3):
+        for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             for j in range(2):
                 if j==0:
@@ -535,7 +535,7 @@ class Encoder(nn.Module):
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
-        for i in range(3):
+        for i in range(hidden_states3.size(0)):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
              

@@ -182,7 +182,20 @@ RawResult = collections.namedtuple("RawResult",
                                    ["unique_id", "tok_start_logits", "tok_end_logits", "tok_ref_indexes",
                                     "para_logits", "para_ref_indexes", "doc_logits"])
 
+class InfiniteDataLoader:
+    def __init__(self, data_loader):
+        self.data_loader = data_loader
+        self.data_iter = iter(data_loader)
 
+    def get_next(self):
+        try:
+            data = next(self.data_iter)
+        except StopIteration:
+            # StopIteration is thrown if dataset ends
+            # reinitialize data loader
+            self.data_iter = iter(self.data_loader)
+            data = next(self.data_iter)
+        return data
 
 def main():
     parser = argparse.ArgumentParser()
@@ -371,14 +384,20 @@ def main():
 #    model.load_state_dict(torch.load(output_model_file))
     prefix = "cached_{0}_{1}_{2}_{3}".format(str(args.max_seq_length), str(args.doc_stride), str(args.max_query_length),args.DataName)
     prefix = os.path.join(args.output_dir, prefix)
-    RaceFeatures = pickle.load(prefix)
+    cached_path = os.path.join(prefix, "train.pkl")
+    with open(cached_path, "rb") as reader:
+        RaceFeatures = pickle.load(reader)
+        
     if args.do_train:
         num_train_features = 0
         for data_path in glob(args.train_pattern):
             train_dataset = NqDataset(args, data_path, is_training=True)
             train_features = train_dataset.features
             num_train_features += len(train_dataset.features)
+        num_train_features += len(RaceFeatures)
+        
         print(num_train_features,args.train_batch_size,args.gradient_accumulation_steps)
+        
         num_train_optimization_steps = int(
             (num_train_features / args.train_batch_size) / args.gradient_accumulation_steps) * args.num_train_epochs
         if args.local_rank != -1:
@@ -453,6 +472,9 @@ def main():
         optimizer.zero_grad()
         Err_test = False
         ErrorSelect = open("./Err.txt",'w+');
+
+        sampling_prob = [num_train_features/num_train_optimization_steps,len(RaceFeatures)/num_train_optimization_steps]
+        
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
@@ -467,18 +489,39 @@ def main():
                     train_sampler = DistributedSampler(train_features)
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
+                
+                train_dataloader = InfiniteDataLoader(train_dataloader)
+                
                 train_features = train_dataset.features
-                logging.info("Data ready {} ".format(len(train_features)))
+                logging.info("Dream_Data ready {} ".format(len(train_features)))
+                RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler,batch_size=args.train_batch_size)
+                
+                RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
+                
+                # race_features_num = len(RaceFeatures)
 
-                for step, batch in enumerate(train_dataloader):
-                    if not Err_test:
-                        WrOut = ""
-                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
-                            WrOut+=str(i)
-                        ErrorSelect.write(WrOut)
-                        Err_test = True
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                for step, _ in enumerate(num_train_optimization_steps):
+                    # if not Err_test:
+                    #     WrOut = ""
+                    #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
+                    #         WrOut+=str(i)
+                    #     ErrorSelect.write(WrOut)
+                    #     Err_test = True
+                    task_id = np.argmax(np.random.multinomial(1, sampling_prob))
+                    if task_id==0:
+                        batch = train_dataloader.get_next()
+                        loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
+                    else:
+                        batch = RACE_train_dataloader.get_next()
+                        batch = tuple(t.to(args.device) for t in batch)
+                        inputs = {'input_idss':      batch[0],
+                                  'attention_masks': batch[1],
+                                  'token_type_idss': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
+                                  'labels':         batch[3],
+                                  'all_sen':        batch[4]}
+                        loss = model(**inputs)
+                    
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
