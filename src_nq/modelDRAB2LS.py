@@ -80,7 +80,7 @@ class NqModel(nn.Module):
         tok_logits = []
         res_labels = []
 #        print(input_idss.shape)
-        if edgess==None:
+        if edgess is not None:
             edges_srcs, edges_tgts, edges_types, edges_poss = edgess
             for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
     
