@@ -161,7 +161,7 @@ class NqModel(nn.Module):
                 
                 x = self.dropout(graph_output.to('cuda:0'))
                 tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
-            outer_i+=1
+            # outer_i+=1
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
