@@ -349,7 +349,8 @@ def main():
 
         if args.start_num >= 0 and args.end_num >= 0:
             continue
-        cached_path = os.path.join(prefix, os.path.split(input_path)[1] + ".pkl")
+        cached_path = os.path.join(prefix, args.input_pattern + ".pkl")
+        print("Will Save to:{}".format(cached_path))
         if os.path.exists(cached_path):
             logging.info("{} already exists.".format(cached_path))
             continue
