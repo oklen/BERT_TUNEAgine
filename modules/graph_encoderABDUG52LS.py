@@ -384,18 +384,26 @@ class Encoder(nn.Module):
         qas = []
         sen_ss = []
         
-        # hidden_states2 = torch.zeros_like(hidden_states)
+        hidden_states2 = torch.zeros_like(hidden_states)
+        hidden_states22 = hidden_states2
         hidden_states3 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             for j in range(2):
-                query = hidden_states[i][1:all_sen_now[-1][0]]
-                key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
-                query = query.unsqueeze(0)
-                key = key.unsqueeze(0)
-                value = value.unsqueeze(0)
+                if j==0:
+                    query = hidden_states[i][1:all_sen_now[-1][0]]
+                    key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    query = query.unsqueeze(0)
+                    key = key.unsqueeze(0)
+                    value = value.unsqueeze(0)
+                else:
+                    query = hidden_states2[i][1:all_sen_now[-1][0]]
+                    key = value = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    query = query.unsqueeze(0)
+                    key = key.unsqueeze(0)
+                    value = value.unsqueeze(0)
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs):
@@ -411,10 +419,11 @@ class Encoder(nn.Module):
                     hq1q2 = self.qtoc(query,key,value)
     #            hq1q2 = self.qtoc(query,key,value)
                 
-                hq1q2 = hq1q2.squeeze(0)
+                
                 
                 # hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
-                hidden_states[i][1:all_sen_now[-1][0]] = hq1q2 #Add the part to ori
+                
+                 #Add the part to ori
     
     #            hq1q2 = torch.mean(hq1q2,0)
     
@@ -435,8 +444,16 @@ class Encoder(nn.Module):
                     value,)
                 else:
                     hq2q1 = self.qtoc(query,key,value)
-                hq2q1 = hq2q1.squeeze(0)
-                hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                if j==0:
+                    hq2q1 = hq2q1.squeeze(0)
+                    hq1q2 = hq1q2.squeeze(0)
+                    hidden_states2[i][1:all_sen_now[-1][0]] = hq1q2
+                    hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                else:
+                    hq2q1 = hq2q1.squeeze(0)
+                    hq1q2 = hq1q2.squeeze(0)
+                    hidden_states22[i][1:all_sen_now[-1][0]] = hq1q2
+                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -445,7 +462,7 @@ class Encoder(nn.Module):
             qas.append(qa)
 
             for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states[i][b:e],0)
+                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
