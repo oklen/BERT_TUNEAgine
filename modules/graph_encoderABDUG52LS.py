@@ -416,13 +416,23 @@ class Encoder(nn.Module):
                             return module(*inputs)
     
                         return custom_forward
-                    hq1q2 = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.qtoc),
-                    query,
-                    key,
-                    value,)
+                    if j==0:
+                        hq1q2 = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(self.qtoc),
+                        query,
+                        key,
+                        value,)
+                    else:
+                        hq1q22 = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(self.qtoc),
+                        query,
+                        key,
+                        value,)
                 else:
-                    hq1q2 = self.qtoc(query,key,value)
+                    if j==0:
+                        hq1q2 = self.qtoc(query,key,value)
+                    else:
+                        hq1q22 = self.qtoc(query,key,value)
     #            hq1q2 = self.qtoc(query,key,value)
                 
                 
@@ -443,23 +453,33 @@ class Encoder(nn.Module):
                             return module(*inputs)
                         
                         return custom_forward
-                    hq2q1 = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.qtoc),
-                    query2,
-                    key2,
-                    value2,)
+                    if j==0:
+                        hq2q1 = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(self.qtoc),
+                        query2,
+                        key2,
+                        value2,)
+                    else:
+                        hq2q12 = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(self.qtoc),
+                        query2,
+                        key2,
+                        value2,)
                 else:
-                    hq2q1 = self.qtoc(query2,key2,value2)
+                    if j==0:
+                        hq2q1 = self.qtoc(query2,key2,value2)
+                    else:
+                        hq2q12 = self.qtoc(query2,key2,value2)
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
                     hidden_states2[i][1:all_sen_now[-1][0]] = hq1q2
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                 else:
-                    hq2q1 = hq2q1.squeeze(0)
-                    hq1q2 = hq1q2.squeeze(0)
-                    hidden_states22[i][1:all_sen_now[-1][0]] = hq1q2
-                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                    hq2q12 = hq2q12.squeeze(0)
+                    hq1q22 = hq1q22.squeeze(0)
+                    hidden_states22[i][1:all_sen_now[-1][0]] = hq1q22
+                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
