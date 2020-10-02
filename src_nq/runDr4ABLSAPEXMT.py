@@ -472,8 +472,9 @@ def main():
         optimizer.zero_grad()
         Err_test = False
         ErrorSelect = open("./Err.txt",'w+');
-
-        sampling_prob = [num_train_features/num_train_optimization_steps,len(RaceFeatures)/num_train_optimization_steps]
+        
+        feature_cnt = num_train_features*2+len(RaceFeatures)
+        sampling_prob = [num_train_features*2/feature_cnt,len(RaceFeatures)/feature_cnt]
         
         train_dataset = NqDataset(args, data_path, is_training=True)
         train_features = train_dataset.features
@@ -508,6 +509,7 @@ def main():
                     #         WrOut+=str(i)
                     #     ErrorSelect.write(WrOut)
                     #     Err_test = True
+
                     task_id = np.argmax(np.random.multinomial(1, sampling_prob))
                     if task_id==0:
                         batch = train_dataloader.get_next()
