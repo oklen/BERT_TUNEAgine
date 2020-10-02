@@ -363,4 +363,5 @@ def main():
             random.shuffle(features)
             pickle.dump(features, writer)
         print("Done")
-            
+if __name__ == "__main__":
+    main()
