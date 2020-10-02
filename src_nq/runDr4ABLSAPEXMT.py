@@ -382,7 +382,7 @@ def main():
     
 #    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
 #    model.load_state_dict(torch.load(output_model_file))
-    prefix = "cached_{0}_{1}_{2}_{3}".format(str(args.max_seq_length), str(args.doc_stride), str(args.max_query_length),args.DataName)
+    prefix = "cached_{0}_{1}_{2}_{3}".format(str(args.max_seq_length), str(args.doc_stride), str(args.max_query_length),"RaceA")
     prefix = os.path.join(args.output_dir, prefix)
     cached_path = os.path.join(prefix, "train.pkl")
     with open(cached_path, "rb") as reader:
