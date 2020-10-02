@@ -106,7 +106,7 @@ class NqModel(nn.Module):
                 if input_embs==None:
                     sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 else:
-                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids,input_embs[outer_i])
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids,input_embs)
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
