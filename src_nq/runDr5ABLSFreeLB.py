@@ -501,6 +501,8 @@ def main():
                     for astep in range(args.adv_steps):
 
                         delta.requires_grad_()
+                        print(delta)
+                        print(embeds_init)
                         # inputs['inputs_embeds'] = delta + embeds_init
                         # inputs['dp_masks'] = dp_masks
         
