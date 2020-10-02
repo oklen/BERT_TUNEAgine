@@ -99,15 +99,14 @@ class NqModel(nn.Module):
 #        print(input_idss.shape)
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
-        outer_i = 0
+        # outer_i = 0
         # outer_j = 0
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
             if self.args.run_og:
-                print(input_ids.shape,input_embs.shape)
                 if input_embs==None:
                     sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
                 else:
-                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids,input_embs=input_embs.long())
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids,input_embs=inputs_embs.long())
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
