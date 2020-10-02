@@ -490,7 +490,7 @@ def main():
         
         train_features = train_dataset.features
         logging.info("Dream_Data ready {} ".format(len(train_features)))
-        RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler(RaceFeatures),batch_size=args.train_batch_size)
+        RACE_train_dataloader = DataLoader(RaceFeatures,sampler=RandomSampler(RaceFeatures),batch_size=args.train_batch_size)
         logging.info("RACE_Data ready {} ".format(len(RaceFeatures)))
         RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
         
