@@ -551,7 +551,7 @@ class getMaxScore(nn.Module):
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         # p_attn = torch.softmax(scores, dim = -1)
-        okey = okey * torch.softmax(scores)
+        okey = okey * torch.softmax(scores,-1)
         # topks = []
         # for i in range(self.k):
         #     MaxInd=torch.argmax(scores)

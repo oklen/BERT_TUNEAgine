@@ -398,14 +398,14 @@ class Encoder(nn.Module):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             for j in range(2):
                 if j==0:
-                    query = hidden_states[i][1:all_sen_now[-1][0]]
+                    query = hidden_states[i][1:(all_sen_now[-1][0]-1)]
                     key = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
                     value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
                     query = query.unsqueeze(0)
                     key = key.unsqueeze(0)
                     value = value.unsqueeze(0)
                 else:
-                    query = hidden_states2[i][1:all_sen_now[-1][0]].clone()
+                    query = hidden_states2[i][1:(all_sen_now[-1][0]-1)].clone()
                     key = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]].clone()
                     value = hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]].clone()
                     query = query.unsqueeze(0)
