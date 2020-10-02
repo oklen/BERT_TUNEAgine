@@ -431,7 +431,7 @@ def main():
     global_step = 0
     last_acc = 89.5
     albert_toker = AlbertTokenizer.from_pretrained('albert-base-v2')
-    model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+    model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
 
     
     if args.do_train:

@@ -184,12 +184,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
     #Old classic use dropout 0.2
-    def __init__(self, h, d_model, dropout=0.15):
+    def __init__(self, h, d_model, dropout=0.1):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*2
+        self.hidden_size = d_model
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -280,7 +280,7 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
-        self.att_heads = 64
+        self.att_heads = 32
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
@@ -384,60 +384,59 @@ class Encoder(nn.Module):
         qas = []
         sen_ss = []
         
-        hidden_states2 = torch.zeros_like(hidden_states)
+        # hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(3):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            query = hidden_states[i][1:all_sen_now[-1][0]]
-            key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
-            query = query.unsqueeze(0)
-            key = key.unsqueeze(0)
-            value = value.unsqueeze(0)
-            if getattr(self.config, "Extgradient_checkpointing", False):
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        return module(*inputs)
-
-                    return custom_forward
-                hq1q2 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.qtoc),
-                query,
-                key,
-                value,)
-            else:
-                hq1q2 = self.qtoc(query,key,value)
-#            hq1q2 = self.qtoc(query,key,value)
-            
-            hq1q2 = hq1q2.squeeze(0)
-            
-            # hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
-            hidden_states2[i][1:all_sen_now[-1][0]] = hq1q2 #Add the part to ori
-
-#            hq1q2 = torch.mean(hq1q2,0)
-
-            key = query
-            query = value
-            value = key
-#            hq2q1 = self.ctoq(query,key,value)
-            if getattr(self.config, "Extgradient_checkpointing", False):
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        return module(*inputs)
-                    
-                    return custom_forward
-                hq2q1 = torch.utils.checkpoint.checkpoint(
-                create_custom_forward(self.qtoc),
-                query,
-                key,
-                value,)
-            else:
-                hq2q1 = self.qtoc(query,key,value)
-            hq2q1 = hq2q1.squeeze(0)
-
-            # hidden_states2[i][q2[(q2//512).eq(i)]%512] = hq2q1
-            hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+            for j in range(2):
+                query = hidden_states[i][1:all_sen_now[-1][0]]
+                key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                query = query.unsqueeze(0)
+                key = key.unsqueeze(0)
+                value = value.unsqueeze(0)
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    def create_custom_forward(module):
+                        def custom_forward(*inputs):
+                            return module(*inputs)
+    
+                        return custom_forward
+                    hq1q2 = torch.utils.checkpoint.checkpoint(
+                    create_custom_forward(self.qtoc),
+                    query,
+                    key,
+                    value,)
+                else:
+                    hq1q2 = self.qtoc(query,key,value)
+    #            hq1q2 = self.qtoc(query,key,value)
+                
+                hq1q2 = hq1q2.squeeze(0)
+                
+                # hidden_states2[i][q1[(q1//512).eq(i)]%512] = hq1q2 #Add the part to ori
+                hidden_states[i][1:all_sen_now[-1][0]] = hq1q2 #Add the part to ori
+    
+    #            hq1q2 = torch.mean(hq1q2,0)
+    
+                key = query
+                query = value
+                value = key
+    #            hq2q1 = self.ctoq(query,key,value)
+                if getattr(self.config, "Extgradient_checkpointing", False):
+                    def create_custom_forward(module):
+                        def custom_forward(*inputs):
+                            return module(*inputs)
+                        
+                        return custom_forward
+                    hq2q1 = torch.utils.checkpoint.checkpoint(
+                    create_custom_forward(self.qtoc),
+                    query,
+                    key,
+                    value,)
+                else:
+                    hq2q1 = self.qtoc(query,key,value)
+                hq2q1 = hq2q1.squeeze(0)
+                hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -446,7 +445,7 @@ class Encoder(nn.Module):
             qas.append(qa)
 
             for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
+                hidden_states3[i][b] = torch.mean(hidden_states[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
