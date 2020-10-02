@@ -155,7 +155,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
                                  cls_token_at_end=False, pad_on_left=False,
                                  cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
                                  sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                 cls_token_segment_id=1, pad_token_segment_id=0,
+                                 cls_token_segment_id=0, pad_token_segment_id=0,
                                  mask_padding_with_zero=True,
                                  do_lower_case=False, is_multi_choice=True):
     """ Loads a data file into a list of `InputBatch`s
