@@ -565,21 +565,15 @@ def main():
                                   'token_type_idss': batch[2],  # XLM don't use segment_ids
                                   'labels':         batch[3],
                                   'all_sens':        batch[4]}
-                        print(inputs)
-                        exit(0)
+
                         loss = model(**inputs)
                     
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
                         loss = loss / args.gradient_accumulation_steps
-                    if args.local_rank != -1:
-                        loss = loss + 0 * sum([x.sum() for x in model.parameters()])
-                    if args.fp16:
-                        optimizer.backward(loss)
-                    else:
-                        # loss.backward()
-                        with amp.scale_loss(loss, optimizer) as scaled_loss:
+
+                    with amp.scale_loss(loss, optimizer) as scaled_loss:
                             scaled_loss.backward()
 
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), 50.0)
