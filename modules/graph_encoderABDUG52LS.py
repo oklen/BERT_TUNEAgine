@@ -385,7 +385,7 @@ class Encoder(nn.Module):
         sen_ss = []
         
         hidden_states2 = torch.zeros_like(hidden_states)
-        hidden_states22 = hidden_states2
+        hidden_states22 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
@@ -394,7 +394,8 @@ class Encoder(nn.Module):
             for j in range(2):
                 if j==0:
                     query = hidden_states[i][1:all_sen_now[-1][0]]
-                    key = value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    key = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
+                    value = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
                     query = query.unsqueeze(0)
                     key = key.unsqueeze(0)
                     value = value.unsqueeze(0)
@@ -427,9 +428,9 @@ class Encoder(nn.Module):
     
     #            hq1q2 = torch.mean(hq1q2,0)
     
-                key = query
-                query = value
-                value = key
+                key2 = query
+                query2 = key
+                value2 = query
     #            hq2q1 = self.ctoq(query,key,value)
                 if getattr(self.config, "Extgradient_checkpointing", False):
                     def create_custom_forward(module):
@@ -439,11 +440,11 @@ class Encoder(nn.Module):
                         return custom_forward
                     hq2q1 = torch.utils.checkpoint.checkpoint(
                     create_custom_forward(self.qtoc),
-                    query,
-                    key,
-                    value,)
+                    query2,
+                    key2,
+                    value2,)
                 else:
-                    hq2q1 = self.qtoc(query,key,value)
+                    hq2q1 = self.qtoc(query2,key2,value2)
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
