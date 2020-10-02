@@ -488,9 +488,9 @@ def main():
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), 50.0)
                     
                     if (step + 1) % args.gradient_accumulation_steps == 0:
-#                        gc.collect() 
+#                        gc.collect() s
 #                        torch.cuda.empty_cache()
-                        torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1.5)
+                        # torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), 1.5)
                         optimizer.step()
                         scheduler.step()
                         optimizer.zero_grad()
@@ -522,7 +522,7 @@ def main():
                 train_sampler = DistributedSampler(train_features)
             if args.local_rank == -1:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
+                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True)
             else:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
