@@ -210,18 +210,18 @@ class MultiHeadedAttention(nn.Module):
         #     [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
         #      for l, x in zip(self.linears, (query, key, value))]
         
-        query2 = self.linears[0](query.view(nbatches,-1,self.h,self.d_k))
-        key2  = self.linears[1](key.view(nbatches,-1,self.h,self.d_k))
-        value2 = self.linears[2](value.view(nbatches,-1,self.h,self.d_k))
+        query2 = self.linears[0](query.view(nbatches,-1,self.h,self.d_k).transpose(1, 2))
+        key2  = self.linears[1](key.view(nbatches,-1,self.h,self.d_k).transpose(1, 2))
+        value2 = self.linears[2](value.view(nbatches,-1,self.h,self.d_k).transpose(1, 2))
 
         # 2) Apply attention on all the projected vectors in batch. 
         x, self.attn = attention(query2, key2, value2, mask=mask, 
                                  dropout=self.dropout)
         
         # 3) "Concat" using a view and apply a final linear. 
-        x = x.transpose(1, 2).contiguous() \
+        x2 = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
-        return self.output(x)
+        return self.output(x2)
     
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
