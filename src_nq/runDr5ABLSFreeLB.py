@@ -256,9 +256,9 @@ def main():
 
     # parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     # parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
-    parser.add_argument('--adv-lr', type=float, default=0)
-    parser.add_argument('--adv-steps', type=int, default=1, help="should be at least 1")
-    parser.add_argument('--adv-init-mag', type=float, default=0)
+    parser.add_argument('--adv-lr', type=float, default=5e-5)
+    parser.add_argument('--adv-steps', type=int, default=3, help="should be at least 1")
+    parser.add_argument('--adv-init-mag', type=float, default=1e-5)
     parser.add_argument('--norm-type', type=str, default="l2", choices=["l2", "linf"])
     parser.add_argument('--adv-max-norm', type=float, default=0, help="set to 0 to be unlimited")
     # parser.add_argument('--gpu', type=str, default="0")
@@ -495,9 +495,9 @@ def main():
                         delta = torch.zeros_like(embeds_init)
         
                     # the main loop
-                    dp_masks = None
+                    # dp_masks = None
                     for astep in range(args.adv_steps):
-                        # (0) forward
+
                         delta.requires_grad_()
                         # inputs['inputs_embeds'] = delta + embeds_init
                         # inputs['dp_masks'] = dp_masks
