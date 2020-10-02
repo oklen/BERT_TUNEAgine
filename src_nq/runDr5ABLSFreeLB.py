@@ -252,6 +252,22 @@ def main():
     parser.add_argument('--run_og',
                         action='store_true',
                         help="Whether to use 16-bit float precision instead of 32-bit")
+    
+
+    # parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
+    # parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
+    parser.add_argument('--adv-lr', type=float, default=0)
+    parser.add_argument('--adv-steps', type=int, default=1, help="should be at least 1")
+    parser.add_argument('--adv-init-mag', type=float, default=0)
+    parser.add_argument('--norm-type', type=str, default="l2", choices=["l2", "linf"])
+    parser.add_argument('--adv-max-norm', type=float, default=0, help="set to 0 to be unlimited")
+    # parser.add_argument('--gpu', type=str, default="0")
+    # parser.add_argument('--expname', type=str, default="default")
+    # parser.add_argument('--comet', default=False, action="store_true")
+    # parser.add_argument('--comet_key', default="", type=str)
+    parser.add_argument('--hidden_dropout_prob', type=float, default=0.1)
+    parser.add_argument('--attention_probs_dropout_prob', type=float, default=0)
+    
     args = parser.parse_args()
     #print(args)
 
@@ -453,21 +469,105 @@ def main():
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
-
+                
                 for step, batch in enumerate(train_dataloader):
-                    
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
-                    if n_gpu > 1:
-                        loss = loss.mean()  # mean() to average on multi-gpu.
-                    if args.gradient_accumulation_steps > 1:
-                        loss = loss / args.gradient_accumulation_steps
-                    if args.local_rank != -1:
-                        loss = loss + 0 * sum([x.sum() for x in model.parameters()])
-                    if args.fp16:
-                        optimizer.backward(loss)
+                # ============================ Code for adversarial training=============
+                    # initialize delta
+
+                    embeds_init = model.embeddings.word_embeddings(batch.input_ids)
+                    # embeds_init = model.embeddings.word_embeddings(batch[0])
+
+                    if args.adv_init_mag > 0:
+                        input_mask = batch.input_mask.to(embeds_init)
+                        input_lengths = torch.sum(input_mask, 1)
+                        # check the shape of the mask here..
+        
+                        if args.norm_type == "l2":
+                            delta = torch.zeros_like(embeds_init).uniform_(-1,1) * input_mask.unsqueeze(2)
+                            dims = input_lengths * embeds_init.size(-1)
+                            mag = args.adv_init_mag / torch.sqrt(dims)
+                            delta = (delta * mag.view(-1, 1, 1)).detach()
+                        elif args.norm_type == "linf":
+                            delta = torch.zeros_like(embeds_init).uniform_(-args.adv_init_mag,
+                                                                           args.adv_init_mag) * input_mask.unsqueeze(2)
+        
                     else:
-                        loss.backward()
+                        delta = torch.zeros_like(embeds_init)
+        
+                    # the main loop
+                    dp_masks = None
+                    for astep in range(args.adv_steps):
+                        # (0) forward
+                        delta.requires_grad_()
+                        # inputs['inputs_embeds'] = delta + embeds_init
+                        # inputs['dp_masks'] = dp_masks
+        
+
+                        loss = model(batch.input_ids,batch.input_mask, batch.segment_ids, batch.st_mask,
+                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen,delta + embeds_init) # model outputs are always tuple in transformers (see doc)
+                        # (1) backward
+                        if args.n_gpu > 1:
+                            loss = loss.mean()  # mean() to average on multi-gpu parallel training
+                        if args.gradient_accumulation_steps > 1:
+                            loss = loss / args.gradient_accumulation_steps
+        
+                        loss = loss / args.adv_steps
+        
+                        tr_loss += loss.item()
+        
+                        if args.fp16:
+                            with amp.scale_loss(loss, optimizer) as scaled_loss:
+                                scaled_loss.backward()
+                        else:
+                            loss.backward()
+        
+                        if astep == args.adv_steps - 1:
+                            # further updates on delta
+                            break
+        
+                        # (2) get gradient on delta
+                        delta_grad = delta.grad.clone().detach()
+        
+                        # (3) update and clip
+                        if args.norm_type == "l2":
+                            denorm = torch.norm(delta_grad.view(delta_grad.size(0), -1), dim=1).view(-1, 1, 1)
+                            denorm = torch.clamp(denorm, min=1e-8)
+                            delta = (delta + args.adv_lr * delta_grad / denorm).detach()
+                            if args.adv_max_norm > 0:
+                                delta_norm = torch.norm(delta.view(delta.size(0), -1).float(), p=2, dim=1).detach()
+                                exceed_mask = (delta_norm > args.adv_max_norm).to(embeds_init)
+                                reweights = (args.adv_max_norm / delta_norm * exceed_mask \
+                                             + (1-exceed_mask)).view(-1, 1, 1)
+                                delta = (delta * reweights).detach()
+                        elif args.norm_type == "linf":
+                            denorm = torch.norm(delta_grad.view(delta_grad.size(0), -1), dim=1, p=float("inf")).view(-1, 1, 1)
+                            denorm = torch.clamp(denorm, min=1e-8)
+                            delta = (delta + args.adv_lr * delta_grad / denorm).detach()
+                            if args.adv_max_norm > 0:
+                                delta = torch.clamp(delta, -args.adv_max_norm, args.adv_max_norm).detach()
+                        else:
+                            print("Norm type {} not specified.".format(args.norm_type))
+                            exit()
+        
+                        if isinstance(model, torch.nn.DataParallel):
+                            embeds_init = model.module.embeddings.word_embeddings(batch.input_ids)
+                        else:
+                            embeds_init = model.embeddings.word_embeddings(batch.input_ids)
+
+            # ============================ End (2) ==================
+            
+                    # loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
+                    #              (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
+                    # if n_gpu > 1:
+                    #     loss = loss.mean()  # mean() to average on multi-gpu.
+                    # if args.gradient_accumulation_steps > 1:
+                    #     loss = loss / args.gradient_accumulation_steps
+                    # if args.local_rank != -1:
+                    #     loss = loss + 0 * sum([x.sum() for x in model.parameters()])
+                    # if args.fp16:
+                    #     optimizer.backward(loss)
+                    # else:
+                    #     loss.backward()
                     
                     # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     

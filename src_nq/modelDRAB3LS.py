@@ -86,7 +86,7 @@ class NqModel(nn.Module):
         
         #self.apply(self.init_bert_weights)
 
-    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens):
+    def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens,input_embs=None):
 
 #model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask, batch.st_index,
 #                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),
@@ -99,9 +99,14 @@ class NqModel(nn.Module):
 #        print(input_idss.shape)
 
         edges_srcs, edges_tgts, edges_types, edges_poss = edgess
+        outer_i = 0
+        # outer_j = 0
         for input_ids, attention_mask, token_type_ids, st_mask, label,edges_src, edges_tgt, edges_type, edges_pos,all_sen in zip(input_idss, attention_masks, token_type_idss, st_masks, labels,edges_srcs, edges_tgts, edges_types, edges_poss,all_sens):
             if self.args.run_og:
-                sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids) 
+                if input_embs==None:
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids)
+                else:
+                    sequence_output,_ = self.bert(input_ids,  attention_mask,token_type_ids,input_embs[outer_i])
                 if getattr(self.bert_config, "gradient_checkpointingNot", False):
                     def create_custom_forward(module):
                         def custom_forward(*inputs,output_all_encoded_layers=False):
@@ -156,6 +161,7 @@ class NqModel(nn.Module):
                 
                 x = self.dropout(graph_output.to('cuda:0'))
                 tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(x)))).squeeze(-1))
+            outer_i+=1
 #            graph_output = self.encoder2(graph_output, st_mask, (edges_src, edges_tgt, edges_type, edges_pos), output_all_encoded_layers=False)
 #    
 #            q_pos = edges_type.eq(EdgeType.QA_TO_SENTENCE).nonzero().view(-1).tolist()[0]
