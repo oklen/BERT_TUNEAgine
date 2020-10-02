@@ -474,7 +474,7 @@ def main():
                 # ============================ Code for adversarial training=============
                     # initialize delta
                     print("Give inputs shape and input_mask shape")
-                    print(batch.inputs.shape)
+                    print(batch.input_ids.shape)
                     print(batch.input_mask.shape)
                     embeds_init = model.bert.embeddings.word_embeddings(batch.input_ids)
                     # embeds_init = model.embeddings.word_embeddings(batch[0])
