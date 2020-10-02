@@ -239,7 +239,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
         if tokens_b:
             nb = len(tokens)+2
             tokens += tokens_b + [sep_token]
-            all_sen.append(nb,len(tokens))
+            all_sen.append([nb,len(tokens)])
             segment_ids += [sequence_b_segment_id] * (len(tokens_b) + 1)
 
         if cls_token_at_end:
