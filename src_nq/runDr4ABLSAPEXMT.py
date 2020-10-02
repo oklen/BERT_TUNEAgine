@@ -535,7 +535,7 @@ def main():
         RACE_train_dataloader = DataLoader(RaceFeatures,sampler=RandomSampler(RaceFeatures),batch_size=args.train_batch_size)
         logging.info("RACE_Data ready {} ".format(len(RaceFeatures)))
         RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
-        
+        Epoch_cnt=0
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
@@ -565,7 +565,7 @@ def main():
                                   'token_type_idss': batch[2],  # XLM don't use segment_ids
                                   'labels':         batch[3],
                                   'all_sens':        batch[4]}
-                        print(batch)
+                        print(inputs)
                         exit(0)
                         loss = model(**inputs)
                     
@@ -603,7 +603,7 @@ def main():
                         lr_this_step = get_lr(optimizer)
                         logging.info("Epoch={} iter={} lr={:.12f} train_ave_loss={:.6f} .".format(
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
-                            _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
+                            Epoch_cnt, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
                         
             model.eval()
@@ -655,6 +655,7 @@ def main():
                 # If we save using the predefined names, we can load using `from_pretrained`
                 output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
                 torch.save(model_to_save.state_dict(), output_model_file)
+            Epoch_cnt+=1
         ErrorSelect.close();
                 
 
