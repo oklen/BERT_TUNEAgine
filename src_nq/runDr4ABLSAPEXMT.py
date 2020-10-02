@@ -475,32 +475,33 @@ def main():
 
         sampling_prob = [num_train_features/num_train_optimization_steps,len(RaceFeatures)/num_train_optimization_steps]
         
+        train_dataset = NqDataset(args, data_path, is_training=True)
+        train_features = train_dataset.features
+        #logging.info("Data Load Done!")
+        if args.local_rank == -1:
+            train_sampler = RandomSampler(train_features)
+        else:
+            train_sampler = DistributedSampler(train_features)
+        train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                      collate_fn=batcher(device, is_training=True), num_workers=0)
+        
+        train_dataloader = InfiniteDataLoader(train_dataloader)
+        
+        train_features = train_dataset.features
+        logging.info("Dream_Data ready {} ".format(len(train_features)))
+        RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler,batch_size=args.train_batch_size)
+        logging.info("RACE_Data ready {} ".format(len(RaceFeatures)))
+        RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
+        
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
                 #logging.info("Reading data from {}.".format(data_path))
                 model.train()
-                train_dataset = NqDataset(args, data_path, is_training=True)
-                train_features = train_dataset.features
-                #logging.info("Data Load Done!")
-                if args.local_rank == -1:
-                    train_sampler = RandomSampler(train_features)
-                else:
-                    train_sampler = DistributedSampler(train_features)
-                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
-                
-                train_dataloader = InfiniteDataLoader(train_dataloader)
-                
-                train_features = train_dataset.features
-                logging.info("Dream_Data ready {} ".format(len(train_features)))
-                RACE_train_dataloader = DataLoader(RaceFeatures,sampler=train_sampler,batch_size=args.train_batch_size)
-                
-                RACE_train_dataloader = InfiniteDataLoader(RACE_train_dataloader)
                 
                 # race_features_num = len(RaceFeatures)
 
-                for step, _ in enumerate(num_train_optimization_steps):
+                for step, _ in enumerate(range(int(num_train_optimization_steps))):
                     # if not Err_test:
                     #     WrOut = ""
                     #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
