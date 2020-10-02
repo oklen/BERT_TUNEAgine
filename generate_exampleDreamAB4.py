@@ -443,6 +443,7 @@ def run_convert_examples_to_features(args, examples, tokenizer, is_training, cac
 def main():
     parser = argparse.ArgumentParser()
 
+
     parser.add_argument("--input_pattern", default=None, type=str, required=True)
     parser.add_argument("--output_dir", default=None, type=str, required=True)
     parser.add_argument("--vocab_file", default=None, type=str, required=True)
