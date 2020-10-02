@@ -50,6 +50,11 @@ from torch.optim import AdamW
 
 from transformers import AlbertTokenizer
 from apex import amp
+if sys.version_info[0] == 2:
+    import cPickle as pickle
+else:
+    import pickle
+
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
@@ -364,7 +369,9 @@ def main():
     
 #    output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
 #    model.load_state_dict(torch.load(output_model_file))
-    
+    prefix = "cached_{0}_{1}_{2}_{3}".format(str(args.max_seq_length), str(args.doc_stride), str(args.max_query_length),args.DataName)
+    prefix = os.path.join(args.output_dir, prefix)
+    RaceFeatures = pickle.load(prefix)
     if args.do_train:
         num_train_features = 0
         for data_path in glob(args.train_pattern):
