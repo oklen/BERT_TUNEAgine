@@ -444,12 +444,12 @@ class Encoder(nn.Module):
                         
                         return custom_forward
                     hq2q1 = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(self.qtoc),
+                    create_custom_forward(self.ctoq),
                     query2,
                     key2,
                     value2,)
                 else:
-                    hq2q1 = self.qtoc(query2,key2,value2)
+                    hq2q1 = self.ctoq(query2,key2,value2)
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
