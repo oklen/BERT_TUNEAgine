@@ -184,12 +184,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
     #Old classic use dropout 0.2
-    def __init__(self, h, d_model, dropout=0.2):
+    def __init__(self, h, d_model, dropout=0.15):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*4
+        self.hidden_size = d_model*2
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -223,6 +223,28 @@ class MultiHeadedAttention(nn.Module):
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x2)
     
+# class getMaxScore(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScore, self).__init__()
+#         self.hidden_size = d_model
+#         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+#         self.dropout = nn.Dropout(dropout)
+
+#         self.k = 6
+    
+#     def forward(self,query,key):
+#         okey = key
+#         query,key = self.linears[0](query),self.linears[1](key)
+#         scores = torch.matmul(query, key.transpose(-2, -1))
+#         # p_attn = torch.softmax(scores, dim = -1)
+#         topks = []
+#         for i in range(self.k):
+#             MaxInd=torch.argmax(scores)
+#             if scores[MaxInd] == -100000: break
+#             scores[MaxInd] = -100000
+#             topks.append(okey[MaxInd])
+#         return torch.mean(torch.stack(topks),0)
+
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
         super(getMaxScore, self).__init__()
@@ -236,33 +258,28 @@ class getMaxScore(nn.Module):
         okey = key
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
-    
-    
-class getMaxScoreSimple(nn.Module):
-    def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScoreSimple, self).__init__()
+        p_attn = torch.softmax(scores, dim = -1).unsqueeze(-1)
+        okey = okey * p_attn
 
-        self.k = 6
+        return torch.mean(okey,0)
     
-    def forward(self,query,key):
-        okey = key
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
+# class getMaxScoreSimple(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScoreSimple, self).__init__()
+
+#         self.k = 6
+    
+#     def forward(self,query,key):
+#         okey = key
+#         scores = torch.matmul(query, key.transpose(-2, -1))
+#         # p_attn = torch.softmax(scores, dim = -1)
+#         topks = []
+#         for i in range(self.k):
+#             MaxInd=torch.argmax(scores)
+#             if scores[MaxInd] == -100000: break
+#             scores[MaxInd] = -100000
+#             topks.append(okey[MaxInd])
+#         return torch.mean(torch.stack(topks),0)
 
     
 class getThresScore(nn.Module):
@@ -300,17 +317,17 @@ class Encoder(nn.Module):
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
-        # self.conv2 = torch.nn.ModuleList()
-        # for i in range(4):
-        #     self.conv2.append(
-        #             DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        # self.conv3 = torch.nn.ModuleList()
-        # for i in range(4):
-        #     self.conv3.append(
-        #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
-        # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
+        self.conv2 = torch.nn.ModuleList()
+        for i in range(4):
+            self.conv2.append(
+                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
+        self.conv3 = torch.nn.ModuleList()
+        for i in range(4):
+            self.conv3.append(
+                DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
+        self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
+        self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
@@ -318,7 +335,7 @@ class Encoder(nn.Module):
         # self.dropout = nn.Dropout(0.3) seems to high
         
         # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        self.TopNet = nn.ModuleList([getMaxScoreSimple(self.hidden_size) for _ in range(2)])
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(1)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
@@ -502,34 +519,34 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-#         x_all = hidden_states3.view(-1,1,self.hidden_size)
-#         x_all2 = hidden_states3.view(-1,1,self.hidden_size)
+        x_all = hidden_states3.clone().view(-1,1,self.hidden_size)
+        x_all2 = hidden_states3.clone().view(-1,1,self.hidden_size)
 # #        print(x_all.shape)
         
-#         for i,conv in enumerate(self.conv2):
-#             if i%2==0:
-#                 x = self.dnaAct(conv(x_all,ex_edge2))
-#             elif i%2==1:
-#                 x = self.dnaAct(conv(x_all,ex_edge))
-#             # else: 
-#             #     x = torch.tanh(conv(x_all,ex_edge3))
+        for i,conv in enumerate(self.conv2):
+            if i%2==0:
+                x = self.dnaAct(conv(x_all,ex_edge2))
+            elif i%2==1:
+                x = self.dnaAct(conv(x_all,ex_edge))
+            # else: 
+            #     x = torch.tanh(conv(x_all,ex_edge3))
                 
-#             x = x.view(-1,1,self.hidden_size)
-#             x_all = torch.cat([x_all, x], dim=1)
-#         x = x_all[:, -1]
+            x = x.view(-1,1,self.hidden_size)
+            x_all = torch.cat([x_all, x], dim=1)
+        x = x_all[:, -1]
         
-#         for i,conv in enumerate(self.conv3):
-#             if i%2==0:
-#                 x2 = self.dnaAct(conv(x_all2,ex_edge2))
-#             elif i%2==1:
-#                 x2 = self.dnaAct(conv(x_all2,ex_edge3))
-#             x2 = x2.view(-1,1,self.hidden_size)
-#             x_all2 = torch.cat([x_all2,x2],dim=1)
-#         x2 = x_all2[:,-1]
+        for i,conv in enumerate(self.conv3):
+            if i%2==0:
+                x2 = self.dnaAct(conv(x_all2,ex_edge2))
+            elif i%2==1:
+                x2 = self.dnaAct(conv(x_all2,ex_edge3))
+            x2 = x2.view(-1,1,self.hidden_size)
+            x_all2 = torch.cat([x_all2,x2],dim=1)
+        x2 = x_all2[:,-1]
         
 #         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-#         hidden_states4 = x.view(hidden_states3.shape)
-#         hidden_states6 = x2.view(hidden_states3.shape)
+        hidden_states4 = x.view(hidden_states3.shape)
+        hidden_states6 = x2.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
@@ -540,26 +557,26 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
             V21 = hidden_states3[i][qas[i]]
-            # V22 = hidden_states4[i][qas[i]]
-            # V23 = hidden_states6[i][qas[i]]
+            V22 = hidden_states4[i][qas[i]]
+            V23 = hidden_states6[i][qas[i]]
             
             V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             #V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            #V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
-            # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
+            V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
+            V12 = self.TopNet[0](V22, hidden_states4[i][sen_ss[i][:-1,0]])
             # print("shape:")
             # print(V11.shape,V12.shape,V13.shape)
-            TV1 = torch.cat([V11],-1)
-            TV2 = torch.cat([V21],-1)
+            TV1 = torch.cat([V11,V12,V13],-1)
+            TV2 = torch.cat([V21,V22,V23],-1)
             
-            # TV1 = self.dropout(TV1)
-            # TV2 = self.dropout(TV2)
+            TV1 = self.dropout(TV1)
+            TV2 = self.dropout(TV2)
 
             
-            # V1 = self.lineSub(TV1)
-            # V2 = self.lineSub(TV2)
+            V1 = self.lineSub(TV1)
+            V2 = self.lineSub(TV2)
             
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
@@ -567,9 +584,9 @@ class Encoder(nn.Module):
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
             # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
-            hidden_statesOut.append(torch.cat([TV1,TV2]))
+            # hidden_statesOut.append(torch.cat([TV1,TV2]))
 
-            # hidden_statesOut.append(torch.cat([V1,V2]))
+            hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
 

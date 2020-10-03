@@ -438,12 +438,10 @@ def main():
             num_train_features += len(train_dataset.features)
         num_train_features += num_train_features
         
+        
         print(num_train_features,args.train_batch_size,args.gradient_accumulation_steps)
         
-        num_train_optimization_steps = int(
-            (num_train_features / args.train_batch_size) / args.gradient_accumulation_steps) * args.num_train_epochs
-        if args.local_rank != -1:
-            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
+
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
@@ -483,6 +481,15 @@ def main():
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
+
+        feature_cnt = num_train_features*2+num_race
+        sampling_prob = [num_train_features*2/feature_cnt,num_race/feature_cnt]
+        feature_cnt-=num_train_features
+        num_train_optimization_steps = int(
+            (feature_cnt / args.train_batch_size) / args.gradient_accumulation_steps) * args.num_train_epochs
+        if args.local_rank != -1:
+            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
+            
         optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
         
@@ -515,9 +522,7 @@ def main():
         Err_test = False
         ErrorSelect = open("./Err.txt",'w+');
         
-        feature_cnt = num_train_features*2+num_race
-        sampling_prob = [num_train_features*2/feature_cnt,num_race/feature_cnt]
-        feature_cnt-=num_train_features
+
         
         train_dataset = NqDataset(args, data_path, is_training=True)
         train_features = train_dataset.features
