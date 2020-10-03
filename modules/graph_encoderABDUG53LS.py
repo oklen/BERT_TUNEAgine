@@ -184,7 +184,7 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
     #Old classic use dropout 0.2
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.15):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
@@ -516,7 +516,7 @@ class Encoder(nn.Module):
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
         x_all = hidden_states3.clone().view(-1,1,self.hidden_size)
-        x_all2 = hidden_states3.clone().view(-1,1,self.hidden_size)
+        # x_all2 = hidden_states3.clone().view(-1,1,self.hidden_size)
 # #        print(x_all.shape)
         
         for i,conv in enumerate(self.conv2):
