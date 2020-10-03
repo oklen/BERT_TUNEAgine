@@ -436,7 +436,7 @@ def main():
             train_dataset = NqDataset(args, data_path, is_training=True)
             train_features = train_dataset.features
             num_train_features += len(train_dataset.features)
-        num_train_features += num_race
+        num_train_features += num_train_features
         
         print(num_train_features,args.train_batch_size,args.gradient_accumulation_steps)
         
