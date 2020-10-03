@@ -554,8 +554,8 @@ class Encoder(nn.Module):
             TV1 = torch.cat([V11],-1)
             TV2 = torch.cat([V21],-1)
             
-            # TV1 = self.dropout(TV1)
-            # TV2 = self.dropout(TV2)
+            TV1 = self.dropout(TV1)
+            TV2 = self.dropout(TV2)
 
             
             # V1 = self.lineSub(TV1)
