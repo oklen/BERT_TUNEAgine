@@ -223,6 +223,28 @@ class MultiHeadedAttention(nn.Module):
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x2)
     
+# class getMaxScore(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScore, self).__init__()
+#         self.hidden_size = d_model
+#         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+#         self.dropout = nn.Dropout(dropout)
+
+#         self.k = 6
+    
+#     def forward(self,query,key):
+#         okey = key
+#         query,key = self.linears[0](query),self.linears[1](key)
+#         scores = torch.matmul(query, key.transpose(-2, -1))
+#         # p_attn = torch.softmax(scores, dim = -1)
+#         topks = []
+#         for i in range(self.k):
+#             MaxInd=torch.argmax(scores)
+#             if scores[MaxInd] == -100000: break
+#             scores[MaxInd] = -100000
+#             topks.append(okey[MaxInd])
+#         return torch.mean(torch.stack(topks),0)
+
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
         super(getMaxScore, self).__init__()
@@ -236,33 +258,10 @@ class getMaxScore(nn.Module):
         okey = key
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
+        p_attn = torch.softmax(scores, dim = -1).unsqueeze(-1)
+        okey = okey * p_attn
 
-class getMaxScoreSimple(nn.Module):
-    def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
-
-        self.k = 6
-    
-    def forward(self,query,key):
-        okey = key
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
-    
+        return torch.mean(okey,0)
     
 # class getMaxScoreSimple(nn.Module):
 #     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -336,7 +335,7 @@ class Encoder(nn.Module):
         # self.dropout = nn.Dropout(0.3) seems to high
         
         # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
-        self.TopNet = nn.ModuleList([getMaxScoreSimple(self.hidden_size) for _ in range(1)])
+        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(1)])
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
