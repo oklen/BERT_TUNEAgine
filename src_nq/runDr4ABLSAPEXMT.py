@@ -475,8 +475,7 @@ def main():
         else:
             optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
     else:
-        if args.warmup_steps > 0:
-            args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
+        
 #        optimizer = BertAdam(optimizer_grouped_parameters,
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
@@ -487,6 +486,8 @@ def main():
         feature_cnt-=num_train_features
         num_train_optimization_steps = int(
             (feature_cnt / args.train_batch_size) / args.gradient_accumulation_steps) * args.num_train_epochs
+        if args.warmup_steps > 0:
+            args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
         if args.local_rank != -1:
             num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
             
