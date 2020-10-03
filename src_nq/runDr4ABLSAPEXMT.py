@@ -517,6 +517,7 @@ def main():
         
         feature_cnt = num_train_features*2+num_race
         sampling_prob = [num_train_features*2/feature_cnt,num_race/feature_cnt]
+        feature_cnt-=num_train_features
         
         train_dataset = NqDataset(args, data_path, is_training=True)
         train_features = train_dataset.features
@@ -539,10 +540,8 @@ def main():
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
-                #logging.info("Reading data from {}.".format(data_path))
                 model.train()
                 
-                # race_features_num = len(RaceFeatures)
                 logging.info("Step Pre Epoch: {} ".format(int(feature_cnt)//args.gradient_accumulation_steps))
                 for step, _ in enumerate(range(int(feature_cnt)//args.gradient_accumulation_steps)):
                     # if not Err_test:
