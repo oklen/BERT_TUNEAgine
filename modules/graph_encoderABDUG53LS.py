@@ -249,13 +249,13 @@ class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
         super(getMaxScore, self).__init__()
         self.hidden_size = d_model
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+        # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
 
         self.k = 6
     
     def forward(self,query,key):
-        scores = torch.matmul(self.linears[0](query), self.linears[1](key).transpose(-2, -1))
+        scores = torch.matmul(query, key.transpose(-2,-1))
         p_attn = torch.sigmoid(scores).unsqueeze(-1)
         return torch.mean(key * p_attn,0)
     
@@ -306,7 +306,7 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
@@ -317,13 +317,13 @@ class Encoder(nn.Module):
         for i in range(4):
             self.conv2.append(
                     DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        self.conv3 = torch.nn.ModuleList()
-        for i in range(4):
-            self.conv3.append(
-                DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
+        # self.conv3 = torch.nn.ModuleList()
+        # for i in range(4):
+        #     self.conv3.append(
+        #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
+        self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
@@ -531,18 +531,18 @@ class Encoder(nn.Module):
             x_all = torch.cat([x_all, x], dim=1)
         x = x_all[:, -1]
         
-        for i,conv in enumerate(self.conv3):
-            if i%2==0:
-                x2 = self.dnaAct(conv(x_all2,ex_edge2))
-            elif i%2==1:
-                x2 = self.dnaAct(conv(x_all2,ex_edge3))
-            x2 = x2.view(-1,1,self.hidden_size)
-            x_all2 = torch.cat([x_all2,x2],dim=1)
-        x2 = x_all2[:,-1]
+        # for i,conv in enumerate(self.conv3):
+        #     if i%2==0:
+        #         x2 = self.dnaAct(conv(x_all2,ex_edge2))
+        #     elif i%2==1:
+        #         x2 = self.dnaAct(conv(x_all2,ex_edge3))
+        #     x2 = x2.view(-1,1,self.hidden_size)
+        #     x_all2 = torch.cat([x_all2,x2],dim=1)
+        # x2 = x_all2[:,-1]
         
 #         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
         hidden_states4 = x.view(hidden_states3.shape)
-        hidden_states6 = x2.view(hidden_states3.shape)
+        # hidden_states6 = x2.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
@@ -554,19 +554,21 @@ class Encoder(nn.Module):
              
             V21 = hidden_states3[i][qas[i]]
             V22 = hidden_states4[i][qas[i]]
-            V23 = hidden_states6[i][qas[i]]
+            # V23 = hidden_states6[i][qas[i]]
             
             V11 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             #V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
+            # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             V12 = self.TopNet[0](V22, hidden_states3[i][sen_ss[i][:-1,0]])
             # print("shape:")
             # print(V11.shape,V12.shape,V13.shape)
-            TV1 = torch.cat([V11,V12,V13],-1)
-            TV2 = torch.cat([V21,V22,V23],-1)
-
+            TV1 = torch.cat([V11,V12],-1)
+            TV2 = torch.cat([V21,V22],-1)
+            
+            # TV1 = torch.cat([V11,V12,V13],-1)
+            # TV2 = torch.cat([V21,V22,V23],-1)
             
             V1 = self.lineSub(TV1)
             V2 = self.lineSub(TV2)
