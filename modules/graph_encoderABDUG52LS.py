@@ -327,7 +327,7 @@ class Encoder(nn.Module):
                 DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
         self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
+        self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
