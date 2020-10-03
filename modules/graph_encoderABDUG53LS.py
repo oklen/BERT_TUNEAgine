@@ -256,7 +256,7 @@ class getMaxScore(nn.Module):
     
     def forward(self,query,key):
         scores = torch.matmul(self.linears[0](query), self.linears[1](key).transpose(-2, -1))
-        p_attn = torch.sigmoid(scores)
+        p_attn = torch.sigmoid(scores).unsqueeze(-1)
         return torch.mean(key * p_attn,0)
     
 # class getMaxScoreSimple(nn.Module):
