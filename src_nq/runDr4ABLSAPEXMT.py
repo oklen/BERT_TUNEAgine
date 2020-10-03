@@ -563,7 +563,7 @@ def main():
                         inputs = {'input_idss':      batch[0],
                                   'attention_masks': batch[1],
                                   'token_type_idss': batch[2],  # XLM don't use segment_ids
-                                  'labels':         batch[3],
+                                  'labels':          batch[3],
                                   'all_sens':        batch[4]}
 
                         loss = model(**inputs)
