@@ -18,7 +18,7 @@ class NqModel(nn.Module):
         self.args = args
         #mfeb/albert-xxlarge-v2-squad2
         self.bert_config = AlbertConfig.from_pretrained("albert-xxlarge-v2")
-        # self.bert_config.gradient_checkpointing = True
+        self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
