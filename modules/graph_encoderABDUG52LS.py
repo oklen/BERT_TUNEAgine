@@ -554,8 +554,8 @@ class Encoder(nn.Module):
             TV1 = torch.cat([V11],-1)
             TV2 = torch.cat([V21],-1)
             
-            TV1 = self.dropout(TV1)
-            TV2 = self.dropout(TV2)
+            # TV1 = self.dropout(TV1)
+            # TV2 = self.dropout(TV2)
 
             
             # V1 = self.lineSub(TV1)
@@ -571,7 +571,7 @@ class Encoder(nn.Module):
 
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
-        return torch.stack(hidden_statesOut)
+        return self.dropout(torch.stack(hidden_statesOut))
 
 #        return [self.norm(x.view(hidden_states.size())+hidden_states)]
 
