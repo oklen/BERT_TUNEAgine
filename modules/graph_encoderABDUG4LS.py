@@ -550,7 +550,7 @@ class getMaxScore(nn.Module):
         okey = key.clone()
         query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
-        return torch.mean(okey[scores.topk(min(len(scores),self.k).indices,-1,sorted=False)],0)
+        return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     
 # class getMaxScore(nn.Module):
 #     def __init__(self,d_model,dropout = 0.1,att_size = 4):
