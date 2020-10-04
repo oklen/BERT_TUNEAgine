@@ -263,14 +263,14 @@ class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
         super(getMaxScore, self).__init__()
         self.hidden_size = d_model
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+        # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
 
         self.k = 6
     
     def forward(self,query,key):
         okey = key.clone()
-        query,key = self.linears[0](query),self.linears[1](key)
+        # query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     
