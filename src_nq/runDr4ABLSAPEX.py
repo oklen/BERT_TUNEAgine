@@ -500,44 +500,44 @@ def main():
                         if _ >=1 and global_step > last_STP+100:
                             last_STP = global_step
                             model.eval()
-                            model.zero_grad()
+                            # model.zero_grad()
+                            # optimizer.zero_grad()
                             model.ACC = model.ALL = 0
                             test_dataset = NqDataset(args, "test.json", is_training=True)
                             test_features = test_dataset.features
                             #logging.info("Data Load Done!")
                             
                             if args.local_rank == -1:
-                                train_sampler = RandomSampler(test_features)
+                                test_sampler = RandomSampler(test_features)
                             else:
-                                train_sampler = DistributedSampler(test_features)
+                                test_sampler = DistributedSampler(test_features)
                             if args.local_rank == -1:
-                                test_dataloader = DataLoader(test_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                test_dataloader = DataLoader(test_features, sampler=test_sampler, batch_size=args.train_batch_size,
                                                               collate_fn=batcher(device, is_training=True), num_workers=0)
                             else:
-                                test_dataloader = DataLoader(test_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                                test_dataloader = DataLoader(test_features, sampler=test_sampler, batch_size=args.train_batch_size,
                                                               collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
                             
                             test_features = test_dataset.features
                             logging.info("Data ready {} ".format(len(test_features)))
                             tgobal_step = 0
                             ttr_loss = 0
-                            optimizer.zero_grad()
                             logging.info("***** Running evalating *****")
                             
                             with torch.no_grad():
-                                for step, batch in enumerate(test_dataloader):
+                                for mstep, tbatch in enumerate(test_dataloader):
                                     tgobal_step+=1
-                                    tmp_acc = model.ACC
-                                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
-                                    if model.ACC == tmp_acc:
-                                        WrOut = ""
-                                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
-                                            WrOut+=str(i)
-                                        ErrorSelect.write(WrOut)
+                                    # tmp_acc = model.ACC
+                                    loss = model(tbatch.input_ids, tbatch.input_mask, tbatch.segment_ids, tbatch.st_mask,
+                                                 (tbatch.edges_src, tbatch.edges_tgt, tbatch.edges_type, tbatch.edges_pos),tbatch.label,tbatch.all_sen)
+                                    # if model.ACC == tmp_acc:
+                                    #     WrOut = ""
+                                    #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
+                                    #         WrOut+=str(i)
+                                    #     ErrorSelect.write(WrOut)
                                     ttr_loss+=loss.item()
                             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
-                            model.zero_grad()
+                            # model.zero_grad()
                             optimizer.zero_grad()
                             model.train()
 
@@ -552,7 +552,7 @@ def main():
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
                             _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
-            if _ == 0:continue #Add this to skip unnessary test run
+            continue #Add this to skip unnessary test run
             model.eval()
             model.zero_grad()
             model.ACC = model.ALL = 0
