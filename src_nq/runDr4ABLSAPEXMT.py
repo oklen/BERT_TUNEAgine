@@ -550,7 +550,7 @@ def main():
                 model.train()
                 
                 logging.info("Step Pre Epoch: {} ".format(int(feature_cnt)//args.gradient_accumulation_steps))
-                for step, _ in enumerate(range(int(feature_cnt)//args.gradient_accumulation_steps)):
+                for step, _ in enumerate(range(int(feature_cnt))):
                     # if not Err_test:
                     #     WrOut = ""
                     #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
