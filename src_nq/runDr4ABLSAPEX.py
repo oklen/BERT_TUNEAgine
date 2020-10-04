@@ -528,14 +528,14 @@ def main():
                                 for mstep, tbatch in enumerate(test_dataloader):
                                     tgobal_step+=1
                                     # tmp_acc = model.ACC
-                                    loss = model(tbatch.input_ids, tbatch.input_mask, tbatch.segment_ids, tbatch.st_mask,
+                                    tloss = model(tbatch.input_ids, tbatch.input_mask, tbatch.segment_ids, tbatch.st_mask,
                                                  (tbatch.edges_src, tbatch.edges_tgt, tbatch.edges_type, tbatch.edges_pos),tbatch.label,tbatch.all_sen)
                                     # if model.ACC == tmp_acc:
                                     #     WrOut = ""
                                     #     for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
                                     #         WrOut+=str(i)
                                     #     ErrorSelect.write(WrOut)
-                                    ttr_loss+=loss.item()
+                                    ttr_loss+=tloss.item()
                             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
                             # model.zero_grad()
                             optimizer.zero_grad()
