@@ -316,7 +316,7 @@ class Encoder(nn.Module):
         self.conv2 = torch.nn.ModuleList()
         for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads/2,1,0.4))
+                    DNAConv(config.hidden_size,self.att_heads//2,1,0.4))
         # self.conv3 = torch.nn.ModuleList()
         # for i in range(4):
         #     self.conv3.append(
