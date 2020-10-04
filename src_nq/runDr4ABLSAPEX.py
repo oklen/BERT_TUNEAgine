@@ -43,7 +43,7 @@ from glob import glob
 from modules.graph_encoderABDUG5LS import Config, EdgeType, NodeType, EdgePosition
 from generate_exampleDreamAB import InputFeatures
 
-from src_nq.modelDRAB2LS import NqModel
+from src_nq.modelDRAB2LSM import NqModel
 from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import WarmupLinearSchedule,WarmupConstantSchedule,AdamW
 from torch.optim import AdamW
@@ -417,7 +417,7 @@ def main():
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
         # optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-        optimizer = amp.optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
         
         scheduler = WarmupLinearSchedule(optimizer,
