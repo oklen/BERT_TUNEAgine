@@ -50,7 +50,7 @@ from torch.optim import AdamW
 
 from transformers import AlbertTokenizer
 from apex import amp
-from apex import optim as apex_optim
+from apex import optimizers as apex_optim
 if sys.version_info[0] == 2:
     import cPickle as pickle
 else:
