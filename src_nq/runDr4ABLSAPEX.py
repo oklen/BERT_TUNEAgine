@@ -464,7 +464,7 @@ def main():
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
-                last_STP = 800
+                last_STP = 600
                 for step, batch in enumerate(train_dataloader):
                     if not Err_test:
                         WrOut = ""
