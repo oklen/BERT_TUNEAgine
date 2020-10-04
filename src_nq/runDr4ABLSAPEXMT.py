@@ -50,6 +50,7 @@ from torch.optim import AdamW
 
 from transformers import AlbertTokenizer
 from apex import amp
+from apex import optim as apex_optim
 if sys.version_info[0] == 2:
     import cPickle as pickle
 else:
@@ -490,8 +491,8 @@ def main():
             args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
         if args.local_rank != -1:
             num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
-            
-        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        # optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
         
         scheduler = WarmupLinearSchedule(optimizer,
@@ -608,30 +609,30 @@ def main():
             model.eval()
             model.zero_grad()
             model.ACC = model.ALL = 0
-            train_dataset = NqDataset(args, "test.json", is_training=True)
-            train_features = train_dataset.features
+            test_dataset = NqDataset(args, "test.json", is_training=True)
+            test_features = test_dataset.features
             #logging.info("Data Load Done!")
             
             if args.local_rank == -1:
-                train_sampler = RandomSampler(train_features)
+                train_sampler = RandomSampler(test_features)
             else:
-                train_sampler = DistributedSampler(train_features)
+                train_sampler = DistributedSampler(test_features)
             if args.local_rank == -1:
-                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                test_dataloader = DataLoader(test_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0)
             else:
-                train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
+                test_dataloader = DataLoader(test_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
             
-            train_features = train_dataset.features
-            logging.info("Data ready {} ".format(len(train_features)))
+            test_features = test_dataset.features
+            logging.info("Data ready {} ".format(len(test_features)))
             tgobal_step = 0
             ttr_loss = 0
             optimizer.zero_grad()
             logging.info("***** Running evalating *****")
             
             with torch.no_grad():
-                for step, batch in enumerate(train_dataloader):
+                for step, batch in enumerate(test_dataloader):
                     tgobal_step+=1
                     tmp_acc = model.ACC
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
