@@ -454,28 +454,7 @@ class DGraphAttention(nn.Module):
 #        exit(0)
         # (n_edges, n_heads)
         attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size),0)
-
-#        sum_attention_scores = hidden_states.data.new(batch_size * seq_len, self.num_attention_heads).fill_(0)
-#        indices = edges_tgt.view(-1, 1).expand(-1, self.num_attention_heads)
-#        sum_attention_scores.scatter_add_(dim=0, index=indices, src=attention_scores)
-
-        # print("before", attention_scores)
-#        attention_scores = attention_scores / sum_attention_scores[edges_tgt]
-        # print("after", attention_scores)
-
-        # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
-#        print(attention_scores.shape)
-#        print(value_layer[edges_src].shape)
         value_layer[edges_tgt] = torch.matmul(attention_scores,value_layer[edges_src])
-#        value_layer[edges_tgt] *= attention_scores
-        hidden_states = value_layer.view(hidden_states.shape)
-#        output = hidden_states.data.new(
-#            batch_size * seq_len, self.num_attention_heads, self.attention_head_size).fill_(0)
-#        indices = edges_tgt.view(-1, 1, 1).expand(-1, self.num_attention_heads, self.attention_head_size)
-#        output.scatter_add_(dim=0, index=indices, src=src_value_tensor)
-#        output = output.view(batch_size, seq_len, -1)
-
-        # print(hidden_states.shape, output.shape)
         return hidden_states
 
 from enum import Enum
@@ -503,12 +482,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.15):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*2
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
