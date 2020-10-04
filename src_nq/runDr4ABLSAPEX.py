@@ -50,6 +50,7 @@ from torch.optim import AdamW
 
 from transformers import AlbertTokenizer
 from apex import amp
+from apex import optimizers as apex_optim
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
