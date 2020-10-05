@@ -536,7 +536,7 @@ class getMaxScore(nn.Module):
 
 class getMaxScore2(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScore, self).__init__()
+        super(getMaxScore2, self).__init__()
         self.hidden_size = d_model
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
