@@ -618,7 +618,7 @@ class Encoder(nn.Module):
         
         self.hidden_size = config.hidden_size
         self.config = config
-        self.dropout = nn.Dropout(0.1)
+        self.dropout = nn.Dropout(0.5)
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
