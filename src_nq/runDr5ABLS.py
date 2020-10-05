@@ -147,16 +147,26 @@ def batcher(device, is_training=False):
         
 #        print(edges_tgts)
         if run_og:
-            return NqBatch(input_ids=input_idss.to(device),
-                           input_mask=input_masks.to(device),
-                           segment_ids=segment_idss.to(device),
-                           st_mask=st_masks.to(device),
-                           edges_src=edges_srcs.to(device),
-                           edges_tgt=edges_tgts.to(device),
-                           edges_type=edges_types.to(device),
-                           edges_pos=edges_poss.to(device),
-                           label=labels.to(device),
-                           all_sen=sen_bes.to(device))
+            # return NqBatch(input_ids=input_idss.to(device),
+            #                input_mask=input_masks.to(device),
+            #                segment_ids=segment_idss.to(device),
+            #                st_mask=st_masks.to(device),
+            #                edges_src=edges_srcs.to(device),
+            #                edges_tgt=edges_tgts.to(device),
+            #                edges_type=edges_types.to(device),
+            #                edges_pos=edges_poss.to(device),
+            #                label=labels.to(device),
+            #                all_sen=sen_bes.to(device))
+            return NqBatch(input_ids=input_idss,
+                            input_mask=input_masks,
+                            segment_ids=segment_idss,
+                            st_mask=st_masks,
+                            edges_src=edges_srcs,
+                            edges_tgt=edges_tgts,
+                            edges_type=edges_types,
+                            edges_pos=edges_poss,
+                            label=labels,
+                            all_sen=sen_bes)
         else:
             return NqBatch(
                    input_ids=input_idss,
@@ -442,12 +452,12 @@ def main():
                 else:
                     train_sampler = DistributedSampler(train_features)
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
+                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True)
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-                    
+                    batch.to(device,non_blocking=True)
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     if n_gpu > 1:
