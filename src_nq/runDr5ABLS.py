@@ -519,6 +519,7 @@ def main():
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
             optimizer.zero_grad()
+            model.encoder.TopNet[0].improveit() #Use decreased K
 
             if model.ACC/model.ALL*100>last_acc:
                 logging.info("Save Model")
