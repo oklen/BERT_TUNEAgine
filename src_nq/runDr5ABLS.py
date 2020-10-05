@@ -115,6 +115,7 @@ def batcher(device, is_training=False):
             for sen in sen_be:
                 while len(sen) < 64: 
                     sen.append((-1,-1))
+            
 #            unique_idss.append(unique_ids)
             input_idss.append(input_ids)
             input_masks.append(input_mask)
@@ -207,7 +208,7 @@ def main():
     parser.add_argument("--learning_rate", default=2e-5, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs", default=3.0, type=float,
                         help="Total number of training epochs to perform.")
-    parser.add_argument("--warmup_steps", default=100, type=int)
+    parser.add_argument("--warmup_steps", default=200, type=int)
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10%% "
                              "of training.")
@@ -395,8 +396,7 @@ def main():
         model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
         
     else:
-        if args.warmup_steps > 0:
-            args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
+        
 #        optimizer = BertAdam(optimizer_grouped_parameters,
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
@@ -405,7 +405,8 @@ def main():
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
 
 
-
+    if args.warmup_steps > 0:
+                args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
     scheduler = WarmupLinearSchedule(optimizer,
                                   warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
                                   if args.warmup_proportion > 0 else args.warmup_steps,
