@@ -523,7 +523,7 @@ class getMaxScore(nn.Module):
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
         self.k = 64
-        self.sub = 4
+        self.sub = 16
     
     def forward(self,query,key):
         okey = key.clone()
@@ -587,7 +587,7 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
-        self.att_heads = 8
+        self.att_heads = 16
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
