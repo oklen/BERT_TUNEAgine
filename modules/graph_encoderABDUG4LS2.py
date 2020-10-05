@@ -534,19 +534,24 @@ class getMaxScore(nn.Module):
         self.k = max(self.k -self.sub,6)
         self.sub*=2
 
-# class getMaxScore(nn.Module):
-#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
-#         super(getMaxScore, self).__init__()
-#         self.hidden_size = d_model
-#         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
-#         self.dropout = nn.Dropout(dropout)
-
-#         self.k = 6
+class getMaxScore2(nn.Module):
+    def __init__(self,d_model,dropout = 0.1,att_size = 4):
+        super(getMaxScore, self).__init__()
+        self.hidden_size = d_model
+        # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+        self.dropout = nn.Dropout(dropout)
+        self.k = 64
+        self.sub = 8
+        self.kl = None
+        self.ql = None
     
-#     def forward(self,query,key):
-#         scores = torch.matmul(query, key.transpose(-2,-1))
-#         p_attn = torch.sigmoid(scores).unsqueeze(-1)
-#         return torch.mean(key * p_attn,0)
+    def forward(self,query,key):
+        okey = key.clone()
+        scores = torch.matmul(self.ql(query), self.kl(key).transpose(-2, -1))
+        return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
+    def improveit(self):
+        self.k = max(self.k -self.sub,6)
+        self.sub*=2
     
 class getMaxScoreSimple(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -610,6 +615,7 @@ class Encoder(nn.Module):
         for i in range(4):
             self.conv3.append(
                 DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
+            
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
@@ -622,7 +628,10 @@ class Encoder(nn.Module):
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
-        self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(1)])
+        self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
+        self.TopNet.ql = self.qtoc.linears[0]
+        self.TopNet.kl = self.qtoc.linears[1]
+        
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)

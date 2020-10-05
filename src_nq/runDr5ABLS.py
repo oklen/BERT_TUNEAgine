@@ -416,7 +416,7 @@ def main():
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
 
     global_step = 0
-    last_acc = 85.0
+    last_acc = 87.0
     
     if args.do_train:
         logger.info("***** Running training *****")
