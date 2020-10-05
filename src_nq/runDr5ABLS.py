@@ -457,9 +457,8 @@ def main():
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-                    batch.cuda(non_blocking=True)
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
+                    loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
+                                 (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
