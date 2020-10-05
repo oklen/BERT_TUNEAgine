@@ -508,7 +508,7 @@ def main():
                 train_sampler = DistributedSampler(train_features)
             if args.local_rank == -1:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0)
+                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True)
             else:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
                                               collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
@@ -522,8 +522,8 @@ def main():
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
-                    loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
-                                 (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
+                    loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
+                                 (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
