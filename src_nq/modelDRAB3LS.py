@@ -37,7 +37,7 @@ class NqModel(nn.Module):
         # self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
-        self.bert =  AlbertModel.from_pretrained("roberta-large-mnli",config = self.bert_config)
+        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
 
