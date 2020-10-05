@@ -28,13 +28,13 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        self.bert_config = AlbertConfig.from_pretrained("roberta-large-mnli")
+        self.bert_config = RobertaConfig.from_pretrained("roberta-large-mnli")
         # self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
         
         # self.bert_config.hidden_dropout_prob = 0.1
         # self.bert_config.attention_probs_dropout_prob = 0.1
         
-        # self.bert_config.gradient_checkpointing = True
+        self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
         self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config = self.bert_config)
