@@ -36,7 +36,7 @@ from io import open
 
 import numpy as np
 import torch
-from tqdm import tqdm
+
 
 from glob import glob
 import multiprocessing
@@ -47,13 +47,13 @@ else:
     import pickle
 
 
-from spacy.lang.en import English
-from modules.graph_encoderDr4 import NodePosition, Graph, EdgeType, get_edge_position
+#from spacy.lang.en import English
+from modules.graph_encoderABDUG2LS import NodePosition, Graph, EdgeType, get_edge_position
 
 
-nlp = English()
-sentencizer = nlp.create_pipe("sentencizer")
-nlp.add_pipe(sentencizer)
+# nlp = English()
+# sentencizer = nlp.create_pipe("sentencizer")
+# nlp.add_pipe(sentencizer)
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -69,6 +69,9 @@ class AnswerType(enum.IntEnum):
     SHORT = 3
     LONG = 4
     
+"""
+This version remove edge from token to sentence and sentence to token
+"""    
 
 class DrExample(object):
     """
@@ -120,6 +123,8 @@ class InputFeatures(object):
         self.segment_ids = segment_ids
         self.graph = graph
         self.label = label
+        self.label_id = None
+
         #self.show()
 
         #exit(0)
@@ -213,11 +218,6 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 
             
 #        tok_is_question_begin = len(tokens)
-#
-#        tokens += tokenizer.tokenize('Q:'+example.question[:-1]) #"ADD Q: for classification"
-#        tok_is_question_end=len(tokens)
-#        print(example.question[:-1])
-#        tokens.append('[SEP]') for merge QA 1/2
 
         label = 0
 #        print(example.choice)
@@ -226,11 +226,11 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         
         for choice in example.choice:
 
-            toPut=tokenizer.tokenize(example.question) + ['[SPE]']+ tokenizer.tokenize(choice)
+            toPut=tokenizer.tokenize(example.question) + tokenizer.tokenize(choice)
             toPut.append('[SEP]')
             #Delect from end
             mtokens = copy.deepcopy(tokens)
-            while len(mtokens)+len(toPut) +1> args.max_seq_length:
+            while len(mtokens)+len(toPut)+1> args.max_seq_length:
                 mtokens.pop()
                 tok_is_sentence_end[-1] = len(mtokens)
                 if tok_is_sentence_end[-1] == tok_is_sentence_begin[-1]:
@@ -238,6 +238,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                     tok_is_sentence_end.pop()
 
             mtokens.append('[SEP]')
+            
             tok_is_question_begin = len(mtokens)
 
             tok_is_question_end = len(mtokens)  + len(tokenizer.tokenize(example.question))
@@ -251,25 +252,6 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 label = 1
 
             tok_is_choice_end = len(mtokens) - 1
-            
-            #Delete From begin to fit max_seq_length
-#            while len(tokens) > args.max_seq_length:
-#                bp = tok_is_sentence_end[0]-1
-#                tokens = tokens[tok_is_sentence_end[0]:]
-#                tokens = ['[CLS]']+tokens #recover [CLS]
-#                tok_is_sentence_begin = tok_is_sentence_begin[1:]
-#                tok_is_sentence_end = tok_is_sentence_end[1:]
-#                for i in range(len(tok_is_sentence_begin)):
-#                    tok_is_sentence_begin[i]-=bp
-#                    tok_is_sentence_end[i]-=bp
-#                
-##                tok_is_sentence_begin[0]-=1 
-#                
-#                tok_is_question_begin-=bp
-#                tok_is_question_end-=bp
-#                tok_is_choice_begin-=bp
-#                tok_is_choice_end-=bp
-            
 
 
             input_ids = tokenizer.convert_tokens_to_ids(mtokens)
@@ -289,93 +271,73 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             graph = Graph()
 
 #            edge_index_now = -1
-            
-##            print(len(tokens),tok_is_choice_end,tok_is_question_begin)
-#
-#    TOKEN_TO_SENTENCE = 0
-#
-#
-#    SENTENCE_TO_TOKEN = 1
-#    SENTENCE_TO_QA = 2
-#    QA_TO_SENTENC = 3
-#    
-#    QA_TO_CLS = 4
-#    SENTENCE_TO_CLS = 5
-#    SENTENCE_TO_NEXT = 6
-#    SENTENCE_TO_BEFORE = 7
-#    
-#    A_TO_B = 8
-#    B_TO_A = 9
-#    
-#    QUESTION_TOKEN_TO_SENTENCE = 10
-#    CHOICE_TOKEN_TO_SENTENCE = 11
-#    QA_TO_A = 12
-#    QA_TO_B = 13
-#    
-#    
-#    
+
             for node_i in range(len(mtokens)):
                 graph.add_node(node_i)
             ALL_SEN = []
             AB = [[],[]]
 #            if len(names) > 2: print(name)
 #            continue 
+            # names = set()
+            # last_size = len(name)
+            speakers = set()
             
             for i,(tok_begin,tok_end) in enumerate(zip(tok_is_sentence_begin,tok_is_sentence_end)):
                 AB[names.index(tokens[tok_begin])%2].append(tok_begin)
+                speakers.add(tokens[tok_begin])
 #                if len(ALL_SEN) != 0:
 #                    graph.add_edge(ALL_SEN[-1][0],tok_begin,EdgeType.SENTENCE_TO_NEXT)
 #                    graph.add_edge(tok_begin,ALL_SEN[-1][0],EdgeType.SENTENCE_TO_BEFORE)
                 ALL_SEN.append((tok_begin,tok_end))
 
-                for index in range(tok_begin+1,tok_end):
-                    graph.add_edge(index,tok_begin,EdgeType.TOKEN_TO_SENTENCE)
-                    graph.add_edge(tok_begin,index,EdgeType.SENTENCE_TO_TOKEN)
+                # for index in range(tok_begin+1,tok_end):
+                #     graph.add_edge(index,tok_begin,EdgeType.TOKEN_TO_SENTENCE)
+                #     graph.add_edge(tok_begin,index,EdgeType.SENTENCE_TO_TOKEN)
 #                graph.add_edge(tok_begin,tok_is_question_begin,EdgeType.SENTENCE_TO_QA)
 #                graph.add_edge(tok_is_question_begin,tok_begin,EdgeType.QA_TO_SENTENCE)
 #                graph.add_edge(tok_begin,0,EdgeType.SENTENCE_TO_CLS)
                 
             for tok_index in range(tok_is_question_begin,tok_is_question_end):
                 graph.add_edge(tok_index,tok_is_question_begin,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
-                for tindex in range(tok_is_question_begin-1):
-                    graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
-                    graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
+                # for tindex in range(tok_is_question_begin-1):
+                #     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
+                #     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
                     
             for tok_index in range(tok_is_choice_begin,tok_is_choice_end):
                 graph.add_edge(tok_index,tok_is_choice_begin,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
-                for tindex in range(tok_is_question_begin-1):
-                    graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
-                    graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
+                # for tindex in range(tok_is_question_begin-1):
+                #     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
+                #     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
             
-            graph.add_edge(tok_is_question_begin,0,EdgeType.QUESTION_TO_CLS)
-            graph.add_edge(tok_is_choice_begin,0,EdgeType.CHOICE_TO_CLS)
+            # graph.add_edge(tok_is_question_begin,0,EdgeType.QUESTION_TO_CLS)
+            # graph.add_edge(tok_is_choice_begin,0,EdgeType.CHOICE_TO_CLS)
             
             
             A = AB[0]
             B = AB[1]
-            
-            for anode in A:
-                NEXT_B = 100000
-                BEFORE_B = -1
-                for bnode in B:
-                    if bnode < anode and bnode>BEFORE_B:
-                        BEFORE_B = bnode
-                    if bnode > anode and bnode<NEXT_B:
-                        NEXT_B = bnode
-#                    graph.add_edge(anode,bnode,EdgeType.A_TO_B)
-#                    graph.add_edge(anode,bnode,EdgeType.B_TO_A)
-                if NEXT_B != 100000:
-                    graph.add_edge(anode,NEXT_B,EdgeType.A_TO_NB)
-                    graph.add_edge(NEXT_B,anode,EdgeType.B_TO_BA)
-                if BEFORE_B != -1:
-                    graph.add_edge(anode,BEFORE_B,EdgeType.A_TO_BB)
-                    graph.add_edge(BEFORE_B,anode,EdgeType.B_TO_NA)
-                
-                for bonde in B:
-                    if bnode != NEXT_B and bnode != BEFORE_B:
-                        graph.add_edge(anode,bnode,EdgeType.A_TO_B)
-                        graph.add_edge(anode,bnode,EdgeType.B_TO_A)
 
+            for speaker in speakers:
+                last = -1
+                for i in range(len(ALL_SEN)):
+                    if mtokens[ALL_SEN[i][0]] == speaker:
+                        if last !=-1:
+                            graph.add_edge(last,ALL_SEN[i][0],EdgeType.A_TO_A)
+                            graph.add_edge(ALL_SEN[i][0],last,EdgeType.A_TO_A)
+                        last = ALL_SEN[i][0]
+            
+            
+            for i in range(len(ALL_SEN)):
+                if i != 0:
+                    if mtokens[ALL_SEN[i][0]]==mtokens[ALL_SEN[i-1][0]]:
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BB)
+                    else:
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i-1][0],EdgeType.A_TO_BA)
+                if i+1 != len(ALL_SEN):
+                    if mtokens[ALL_SEN[i][0]] == mtokens[ALL_SEN[i+1][0]]:
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NB)
+                    else:
+                        graph.add_edge(ALL_SEN[i][0],ALL_SEN[i+1][0],EdgeType.A_TO_NA)
+            
             for anode in A:
                 graph.add_edge(tok_is_question_begin,anode,EdgeType.QUESTION_TO_A)
                 graph.add_edge(anode,tok_is_question_begin,EdgeType.A_TO_QUESTION)
@@ -434,6 +396,7 @@ def _check_is_max_context(doc_spans, cur_span_index, position):
     # In the example the maximum context for 'bought' would be span C since
     # it has 1 left context and 3 right context, while span B has 4 left context
     # and 0 right context.
+    
     best_score = None
     best_span_index = None
     for (span_index, doc_span) in enumerate(doc_spans):
@@ -482,6 +445,7 @@ def run_convert_examples_to_features(args, examples, tokenizer, is_training, cac
 def main():
     parser = argparse.ArgumentParser()
 
+
     parser.add_argument("--input_pattern", default=None, type=str, required=True)
     parser.add_argument("--output_dir", default=None, type=str, required=True)
     parser.add_argument("--vocab_file", default=None, type=str, required=True)
@@ -503,7 +467,7 @@ def main():
     args = parser.parse_args()
 
     #tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
-    tokenizer = AutoTokenizer.from_pretrained("roberta-large-mnli")
+    tokenizer = AutoTokenizer.from_pretrained("roberta-larget-mnli")
     print("Vocab SIze!",tokenizer.vocab_size)
     
 
