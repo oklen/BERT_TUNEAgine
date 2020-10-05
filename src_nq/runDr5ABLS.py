@@ -47,7 +47,8 @@ from generate_exampleDreamAB import InputFeatures
 from src_nq.modelDRAB3LS import NqModel
 from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import WarmupLinearSchedule,WarmupConstantSchedule,AdamW
-
+from apex import amp
+from apex import optimizer as apex_optim
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
@@ -323,8 +324,8 @@ def main():
 #        pretrained_model_file = os.path.join(args.model_dir, WEIGHTS_NAME)
 #        model.load_state_dict(torch.load(pretrained_model_file))
 
-    if args.fp16:
-        model.half()
+    # if args.fp16:
+    #     model.half()
     global run_og 
     run_og = args.run_og
     if args.run_og:
@@ -390,21 +391,8 @@ def main():
     ]
 
     if args.fp16:
-        try:
-            from apex.optimizers import FP16_Optimizer
-            from apex.optimizers import FusedAdam
-        except ImportError:
-            raise ImportError(
-                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
-
-        optimizer = FusedAdam(optimizer_grouped_parameters,
-                              lr=args.learning_rate,
-                              bias_correction=False,
-                              max_grad_norm=1.0)
-        if args.loss_scale == 0:
-            optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
-        else:
-            optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
+        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
     else:
         if args.warmup_steps > 0:
             args.warmup_proportion = min(args.warmup_proportion, args.warmup_steps / num_train_optimization_steps)
@@ -465,7 +453,8 @@ def main():
                     if args.local_rank != -1:
                         loss = loss + 0 * sum([x.sum() for x in model.parameters()])
                     if args.fp16:
-                        optimizer.backward(loss)
+                        with amp.scale_loss(loss, optimizer) as scaled_loss:
+                            scaled_loss.backward()
                     else:
                         loss.backward()
                     
@@ -474,6 +463,7 @@ def main():
                     if (step + 1) % args.gradient_accumulation_steps == 0:
 #                        gc.collect() 
 #                        torch.cuda.empty_cache()
+                        # torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer),5.0)
                         optimizer.step()
                         scheduler.step()
                         optimizer.zero_grad()
