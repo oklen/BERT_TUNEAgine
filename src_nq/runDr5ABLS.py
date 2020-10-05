@@ -520,7 +520,7 @@ def main():
             model.zero_grad()
             optimizer.zero_grad()
             model.encoder.TopNet[0].improveit() #Use decreased K
-
+            logging.info("Next K use:{}".format(model.encoder.TopNet[0].k))
             if model.ACC/model.ALL*100>last_acc:
                 logging.info("Save Model")
                 last_acc = model.ACC/model.ALL*100
