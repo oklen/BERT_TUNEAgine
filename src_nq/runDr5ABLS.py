@@ -452,7 +452,7 @@ def main():
                 else:
                     train_sampler = DistributedSampler(train_features)
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True)
+                                              collate_fn=batcher(device, is_training=True), num_workers=4,pin_memory=True)
                 train_features = train_dataset.features
                 logging.info("Data ready {} ".format(len(train_features)))
 
@@ -508,10 +508,10 @@ def main():
                 train_sampler = DistributedSampler(train_features)
             if args.local_rank == -1:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0,pin_memory=True)
+                                              collate_fn=batcher(device, is_training=True), num_workers=4,pin_memory=True)
             else:
                 train_dataloader = DataLoader(train_features, sampler=train_sampler, batch_size=args.train_batch_size,
-                                              collate_fn=batcher(device, is_training=True), num_workers=0,drop_last=True)
+                                              collate_fn=batcher(device, is_training=True), num_workers=4,drop_last=True)
             
             train_features = train_dataset.features
             logging.info("Data ready {} ".format(len(train_features)))
