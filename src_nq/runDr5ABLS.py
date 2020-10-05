@@ -48,7 +48,7 @@ from src_nq.modelDRAB3LS import NqModel
 from src_nq.datasetRov3 import NqDataset
 from src_nq.optimization import WarmupLinearSchedule,WarmupConstantSchedule,AdamW
 from apex import amp
-from apex import optimizer as apex_optim
+from apex import optimizers as apex_optim
 
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
