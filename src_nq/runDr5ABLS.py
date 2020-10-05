@@ -457,7 +457,7 @@ def main():
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-                    batch.to(device,non_blocking=True)
+                    batch.cuda(non_blocking=True)
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     if n_gpu > 1:
