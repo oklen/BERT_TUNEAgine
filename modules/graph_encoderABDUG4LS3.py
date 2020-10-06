@@ -602,7 +602,7 @@ class Encoder(nn.Module):
         
         # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
-        # self.NeV = MultiHeadedAttention(self.att_heads, config.hidden_size)
+        self.NeV = MultiHeadedAttention(self.att_heads, config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
