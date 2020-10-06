@@ -62,7 +62,7 @@ class NqModel(nn.Module):
         
         self.dropout = nn.Dropout(my_config.hidden_dropout_prob)
 
-        self.tok_outputs = nn.Linear(my_config.hidden_size*4, 1) # tune to avoid fell into bad places
+        self.tok_outputs = nn.Linear(my_config.hidden_size*2, 1) # tune to avoid fell into bad places
         
 #        self.tok_outputs2 = nn.Linear(my_config.hidden_size, 1)
 #        config.max_token_len, config.max_token_relative
