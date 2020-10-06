@@ -600,19 +600,18 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
-        self.NeV = MultiHeadedAttention(self.att_heads, config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
-        # self.conv2 = torch.nn.ModuleList()
-        # for i in range(2):
-        #     self.conv2.append(
-        #             DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        # self.conv3 = torch.nn.ModuleList()
+        self.conv2 = torch.nn.ModuleList()
+        for i in range(2):
+            self.conv2.append(
+                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
+        self.conv3 = torch.nn.ModuleList()
         # for i in range(2):
         #     self.conv3.append(
         #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
@@ -629,9 +628,9 @@ class Encoder(nn.Module):
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
-        # self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
-        # self.TopNet[0].ql = self.qtoc.linears[0]
-        # self.TopNet[0].kl = self.qtoc.linears[1]
+        self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
+        self.TopNet[0].ql = self.qtoc.linears[0]
+        self.TopNet[0].kl = self.qtoc.linears[1]
         
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
@@ -666,25 +665,25 @@ class Encoder(nn.Module):
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
         
-        # ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        # ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
         
-        # ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        # ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
         # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
         
-        # ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
         
-        # ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
+        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
         
         # ex_edge += ex_edge3
         # ex_edge2 += ex_edge #Use all connect to passage message
@@ -692,9 +691,9 @@ class Encoder(nn.Module):
         # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
         
-        # ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        # ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-        # ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
+        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+        ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
         
         # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
@@ -706,9 +705,6 @@ class Encoder(nn.Module):
         hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states22 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
-        
-        # hidden_statesT2 = torch.zeros_like(hidden_states)
-        # hidden_statesT22 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(hidden_states.size(0)):
@@ -791,37 +787,13 @@ class Encoder(nn.Module):
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
-                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q2,hq1q2,hq1q2)
-                    # hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
-
+                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.ctoq(hq1q2,hq1q2,hq1q2)
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
-                    #hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
-                    # for k in range(len(all_sen_now)-1):
-                    #     if k+1==len(all_sen_now)-1:
-                    #         hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                    #         continue
-                    #     tq = hidden_statesT2[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
-                    #     tk = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                    #     NS = self.NeV(tk,tq,tq)
-                    #     hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
-                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q22,hq1q22,hq1q22)
-                    # hidden_states22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
+                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.ctoq(hq1q22,hq1q22,hq1q22)
                     hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
-                    
-                    # for k in range(len(all_sen_now)-1):
-                    #     if k+1==len(all_sen_now)-1:
-                    #         hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                    #         continue
-                    #     tq = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
-                    #     tk = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                    #     NS = self.NeV(tk,tq,tq)
-                    #     hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
-
-                    
-
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -843,22 +815,22 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-        # x_all = hidden_states3.view(-1,1,self.hidden_size)
-        # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
-#        print(x_all.shape)
+#         x_all = hidden_states3.view(-1,1,self.hidden_size)
+#         # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
+# #        print(x_all.shape)
         
-        # for i in range(4):
-        #     conv = self.conv2[i%2]
-        #     if i%2==0:
-        #         x = self.dnaAct(conv(x_all,ex_edge2))
-        #     elif i%2==1:
-        #         x = self.dnaAct(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge3))
+#         for i in range(4):
+#             conv = self.conv2[i%2]
+#             if i%2==0:
+#                 x = self.dnaAct(conv(x_all,ex_edge2))
+#             elif i%2==1:
+#                 x = self.dnaAct(conv(x_all,ex_edge))
+#             # else: 
+#             #     x = torch.tanh(conv(x_all,ex_edge3))
                 
-        #     x = x.view(-1,1,self.hidden_size)
-        #     x_all = torch.cat([x_all, x], dim=1)
-        # x = x_all[:, -1]
+#             x = x.view(-1,1,self.hidden_size)
+#             x_all = torch.cat([x_all, x], dim=1)
+#         x = x_all[:, -1]
         
         # for i,conv in enumerate(self.conv3):
         #     if i%2==0:
@@ -881,25 +853,17 @@ class Encoder(nn.Module):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
              
- #           V21 = hidden_states3[i][qas[i]]
-            if getattr(self.config, "Extgradient_checkpointing", False):
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        return module(*inputs)
-                    
-                    return custom_forward
-                V21 = torch.utils.checkpoint.checkpoint(
-                        create_custom_forward(torch.mean),
-                        hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],
-                        0,)
-            else: V21 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
+            V21 =  torch.mean(hidden_states3[i][sen_ss[-1][0]:sen_ss[-1][1]],0)
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = torch.mean(hidden_states3[i][1:(sen_ss[i][-1][0]-1)],0)
+            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            V11 = torch.mean(hidden_states3[i][1:(sen_ss[-1][0]-1)],0)
+
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
@@ -913,7 +877,8 @@ class Encoder(nn.Module):
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
 
-            TVF = self.dropout(self.dnaAct(torch.cat([V21,V11],-1)))
+            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21],-1)))
+            # TVF = self.dropout(self.dnaAct(torch.cat([TV1,TV2],-1)))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
