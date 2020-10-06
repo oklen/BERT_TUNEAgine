@@ -878,14 +878,15 @@ class Encoder(nn.Module):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
              
-            V21 = hidden_states3[i][qas[i]]
+ #           V21 = hidden_states3[i][qas[i]]
+            V11 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = torch.mean(V21,hidden_states3[i][1:sen_ss[i][-1][1]],0)
+            V11 = torch.mean(hidden_states3[i][1:sen_ss[i][-1][0]],0)
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
