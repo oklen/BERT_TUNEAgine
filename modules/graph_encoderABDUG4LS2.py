@@ -570,7 +570,17 @@ class getMaxScoreSimple(nn.Module):
             scores[MaxInd] = -100000
             topks.append(okey[MaxInd])
         return torch.mean(torch.stack(topks),0)
-
+class VKnet(nn.Module):
+    def __init__(self):
+        super(VKnet,self).__init__()
+        self.k = self.nn.Linear(1,1)
+    def forward(self,query,key):
+        scores = torch.matmul(query, key.transpose(-2, -1))
+        avg = torch.mean(scores,-1)
+        var = torch.mean(torch.pow(scores-avg,2))
+        Mvar = var/torch.abs(avg)
+        return torch.mean(key[scores.topk(min(len(scores),max(int(self.k(Mvar).tolist[0]),2)),-1,sorted=False).indices],0)*self.k(Mvar)
+        
     
 class getThresScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
