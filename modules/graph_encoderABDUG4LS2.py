@@ -867,7 +867,7 @@ class Encoder(nn.Module):
             # print(V11.shape,V12.shape,V13.shape)
             # TV1 = torch.cat([V11,V12,V13],-1)
             # TV2 = torch.cat([V21,V22,V23],-1)
-            
+
             TV1 = torch.cat([V11,V12],-1)
             TV2 = torch.cat([V21,V22],-1)
             
