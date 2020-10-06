@@ -457,8 +457,8 @@ def main():
                 logging.info("Data ready {} ".format(len(train_features)))
 
                 for step, batch in enumerate(train_dataloader):
-                    loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
-                                 (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
+                    loss = model(batch.input_ids.cuda(non_blocking=False), batch.input_mask.cuda(non_blocking=False), batch.segment_ids.cuda(non_blocking=False), batch.st_mask.cuda(non_blocking=False),
+                                 (batch.edges_src.cuda(non_blocking=False), batch.edges_tgt.cuda(non_blocking=False), batch.edges_type.cuda(non_blocking=False), batch.edges_pos.cuda(non_blocking=False)),batch.label.cuda(non_blocking=False),batch.all_sen.cuda(non_blocking=False))
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
@@ -522,8 +522,8 @@ def main():
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
-                    loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
-                                 (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
+                    loss = model(batch.input_ids.cuda(non_blocking=False), batch.input_mask.cuda(non_blocking=False), batch.segment_ids.cuda(non_blocking=False), batch.st_mask.cuda(non_blocking=False),
+                                 (batch.edges_src.cuda(non_blocking=False), batch.edges_tgt.cuda(non_blocking=False), batch.edges_type.cuda(non_blocking=False), batch.edges_pos.cuda(non_blocking=False)),batch.label.cuda(non_blocking=False),batch.all_sen.cuda(non_blocking=False))
                     ttr_loss+=loss.item()
                     optimizer.zero_grad()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
