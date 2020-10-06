@@ -28,7 +28,7 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        self.bert_config = RobertaConfig.from_pretrained("albert-large-v2")
+        self.bert_config = AlbertConfig.from_pretrained("albert-large-v2")
         # self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
         
         # self.bert_config.hidden_dropout_prob = 0.1
@@ -37,7 +37,7 @@ class NqModel(nn.Module):
         self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
-        self.bert =  RobertaModel.from_pretrained("albert-large-v2",config = self.bert_config)
+        self.bert =  AlbertModel.from_pretrained("albert-large-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
 
