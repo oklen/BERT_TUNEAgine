@@ -874,7 +874,7 @@ class Encoder(nn.Module):
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
 
-            TVF = self.dropout(self.gelu(torch.cat([TV1,TV2],-1)))
+            TVF = self.dropout(self.relu(torch.cat([TV1,TV2],-1)))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
