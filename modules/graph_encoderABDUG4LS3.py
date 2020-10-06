@@ -798,7 +798,9 @@ class Encoder(nn.Module):
                         if i==0:
                             hidden_states2[i][all_sen_now[i][0]:all_sen_now[i][1]] = hidden_statesT2[i][all_sen_now[i][0]:all_sen_now[i][1]]
                             continue
-                        NS = self.NeV(hidden_statesT2[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]],hidden_statesT2[i][all_sen_now[i][0]:all_sen_now[i][1]],hidden_states2[i][all_sen_now[i][0]:all_sen_now[i][1]])
+                        tq = hidden_statesT2[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]]
+                        tk = hidden_statesT2[i][all_sen_now[i][0]:all_sen_now[i][1]]
+                        NS = self.NeV(tk,tq,tq)
                         hidden_states2[i][all_sen_now[i][0]:all_sen_now[i][1]] = NS
                 else:
                     hq2q12 = hq2q12.squeeze(0)
@@ -810,7 +812,9 @@ class Encoder(nn.Module):
                         if i==0:
                             hidden_states22[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]] = hidden_statesT22[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]]
                             continue
-                        NS = self.NeV(hidden_statesT22[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]],hidden_statesT22[i][all_sen_now[i][0]:all_sen_now[i][1]],hidden_statesT22[i][all_sen_now[i][0]:all_sen_now[i][1]])
+                        tq = hidden_statesT22[i][all_sen_now[i-1][0]:all_sen_now[i-1][1]]
+                        tk = hidden_statesT22[i][all_sen_now[i][0]:all_sen_now[i][1]]
+                        NS = self.NeV(tk,tq,tq)
                         hidden_states22[i][all_sen_now[i][0]:all_sen_now[i][1]] = NS
 
                     
