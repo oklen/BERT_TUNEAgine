@@ -710,7 +710,6 @@ class Encoder(nn.Module):
         # hidden_statesT2 = torch.zeros_like(hidden_states)
         # hidden_statesT22 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
-        from time import sleep
 
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -923,7 +922,6 @@ class Encoder(nn.Module):
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
             hidden_statesOut.append(TVF)
-            sleep(3)
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)

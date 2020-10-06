@@ -27,6 +27,7 @@ import random
 import sys
 from io import open
 import gc
+from time import sleep
 
 sys.path.append(os.getcwd())
 import numpy as np
@@ -459,6 +460,8 @@ def main():
                 for step, batch in enumerate(train_dataloader):
                     loss = model(batch.input_ids.cuda(non_blocking=False), batch.input_mask.cuda(non_blocking=False), batch.segment_ids.cuda(non_blocking=False), batch.st_mask.cuda(non_blocking=False),
                                  (batch.edges_src.cuda(non_blocking=False), batch.edges_tgt.cuda(non_blocking=False), batch.edges_type.cuda(non_blocking=False), batch.edges_pos.cuda(non_blocking=False)),batch.label.cuda(non_blocking=False),batch.all_sen.cuda(non_blocking=False))
+                    print("Out!")
+                    sleep(3)
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
