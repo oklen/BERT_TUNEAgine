@@ -707,8 +707,8 @@ class Encoder(nn.Module):
         hidden_states22 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
         
-        hidden_statesT2 = torch.zeros_like(hidden_states)
-        hidden_statesT22 = torch.zeros_like(hidden_states)
+        # hidden_statesT2 = torch.zeros_like(hidden_states)
+        # hidden_statesT22 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(hidden_states.size(0)):
@@ -889,7 +889,7 @@ class Encoder(nn.Module):
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = torch.mean(hidden_states3[i][1:sen_ss[i][-1][0]],0)
+            V11 = torch.mean(hidden_states3[i][1:(sen_ss[i][-1][0]-1)],0)
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
