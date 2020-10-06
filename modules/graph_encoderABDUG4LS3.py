@@ -822,9 +822,9 @@ class Encoder(nn.Module):
                     #     hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
 
                     
-                
+
 #            
-            
+            sleep(3)
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             sen_ss.append(now_all_sen)
             qa = now_all_sen[-1][0]
