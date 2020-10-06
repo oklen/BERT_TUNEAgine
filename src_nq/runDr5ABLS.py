@@ -525,6 +525,7 @@ def main():
                     loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     ttr_loss+=loss.item()
+                    optimizer.zero_grad()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
             optimizer.zero_grad()

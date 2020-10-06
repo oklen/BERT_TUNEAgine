@@ -482,12 +482,12 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.15):
+    def __init__(self, h, d_model, dropout=0.1):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model*2
+        self.hidden_size = d_model
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
@@ -600,7 +600,7 @@ class Encoder(nn.Module):
 #        self.conv = FastRGCNConv(config.hidden_size,config.hidden_size)
 #        self.conv3 = FastRGCNConv(config.hidden_size,config.hidden_size,25,num_bases=128)
         
-        self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
@@ -608,19 +608,19 @@ class Encoder(nn.Module):
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(4):
+        for i in range(2):
             self.conv2.append(
                     DNAConv(config.hidden_size,self.att_heads,1,0.4))
         self.conv3 = torch.nn.ModuleList()
-        for i in range(4):
+        for i in range(2):
             self.conv3.append(
                 DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
             
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
-        self.lineSubQ = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
-        self.lineSubC = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        # self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        #self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         
         self.hidden_size = config.hidden_size
         self.config = config
@@ -819,7 +819,8 @@ class Encoder(nn.Module):
         # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
-        for i,conv in enumerate(self.conv2):
+        for i in range(4):
+            conv = self.conv2[i%2]
             if i%2==0:
                 x = self.dnaAct(conv(x_all,ex_edge2))
             elif i%2==1:
@@ -870,18 +871,18 @@ class Encoder(nn.Module):
             TV1 = torch.cat([V11,V12],-1)
             TV2 = torch.cat([V21,V22],-1)
             
-            TV1 = self.dropout(TV1)
-            TV2 = self.dropout(TV2)
+            # TV1 = self.dropout(TV1)
+            # TV2 = self.dropout(TV2)
 
-            
-            V1 = self.lineSubC(TV1)
-            V2 = self.lineSubQ(TV2)
+            TVF = self.dropout(self.gelu(torch.cat([TV1,TV2])))
+            # V1 = self.lineSub(TV1)
+            # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            hidden_statesOut.append(TVF)
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
         return torch.stack(hidden_statesOut)
