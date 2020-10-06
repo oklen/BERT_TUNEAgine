@@ -791,7 +791,9 @@ class Encoder(nn.Module):
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
-                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q2,hq1q2,hq1q2)
+                    # hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q2,hq1q2,hq1q2)
+                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
+
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                     #hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                     # for k in range(len(all_sen_now)-1):
