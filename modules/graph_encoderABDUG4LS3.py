@@ -812,8 +812,8 @@ class Encoder(nn.Module):
                         if k+1==len(all_sen_now)-1:
                             hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
                             continue
-                        tq = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                        tk = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
+                        tq = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
+                        tk = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
                         NS = self.NeV(tk,tq,tq)
                         hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
 
