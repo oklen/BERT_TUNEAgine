@@ -791,31 +791,31 @@ class Encoder(nn.Module):
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
-                    hidden_statesT2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
-                    hidden_statesT2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.Nev(hq1q2,hq1q2,hq1q2)
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
-                    for k in range(len(all_sen_now)-1):
-                        if k+1==len(all_sen_now)-1:
-                            hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                            continue
-                        tq = hidden_statesT2[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
-                        tk = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                        NS = self.NeV(tk,tq,tq)
-                        hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
+                    #hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                    # for k in range(len(all_sen_now)-1):
+                    #     if k+1==len(all_sen_now)-1:
+                    #         hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                    #         continue
+                    #     tq = hidden_statesT2[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
+                    #     tk = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                    #     NS = self.NeV(tk,tq,tq)
+                    #     hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
-
-                    hidden_statesT22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
+                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q22,hq1q22,hq1q22)
                     hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
-                    for k in range(len(all_sen_now)-1):
-                        if k+1==len(all_sen_now)-1:
-                            hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                            continue
-                        tq = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
-                        tk = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
-                        NS = self.NeV(tk,tq,tq)
-                        hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
+                    
+                    # for k in range(len(all_sen_now)-1):
+                    #     if k+1==len(all_sen_now)-1:
+                    #         hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                    #         continue
+                    #     tq = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
+                    #     tk = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                    #     NS = self.NeV(tk,tq,tq)
+                    #     hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
 
                     
                 
