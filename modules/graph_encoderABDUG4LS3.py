@@ -602,17 +602,17 @@ class Encoder(nn.Module):
         
         # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
-        self.NeV = MultiHeadedAttention(self.att_heads, config.hidden_size)
+        # self.NeV = MultiHeadedAttention(self.att_heads, config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
-        self.conv2 = torch.nn.ModuleList()
-        for i in range(2):
-            self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        self.conv3 = torch.nn.ModuleList()
+        # self.conv2 = torch.nn.ModuleList()
+        # for i in range(2):
+        #     self.conv2.append(
+        #             DNAConv(config.hidden_size,self.att_heads,1,0.4))
+        # self.conv3 = torch.nn.ModuleList()
         # for i in range(2):
         #     self.conv3.append(
         #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
@@ -629,9 +629,9 @@ class Encoder(nn.Module):
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
-        self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
-        self.TopNet[0].ql = self.qtoc.linears[0]
-        self.TopNet[0].kl = self.qtoc.linears[1]
+        # self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
+        # self.TopNet[0].ql = self.qtoc.linears[0]
+        # self.TopNet[0].kl = self.qtoc.linears[1]
         
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
