@@ -128,6 +128,7 @@ class NqModel(nn.Module):
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
                     # x = self.dropout(graph_output)
                     # x = self.dropout(graph_output)
+                    print(graph_output.shape)
                 
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
