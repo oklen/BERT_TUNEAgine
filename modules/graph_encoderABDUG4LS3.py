@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
+from gpu_memory_log import gpu_memory_log
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -710,6 +711,7 @@ class Encoder(nn.Module):
         # hidden_statesT2 = torch.zeros_like(hidden_states)
         # hidden_statesT22 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
+        gpu_memory_log()
 
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -823,7 +825,7 @@ class Encoder(nn.Module):
                     
                 
 #            
-            
+            gpu_memory_log()
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             sen_ss.append(now_all_sen)
             qa = now_all_sen[-1][0]
@@ -912,7 +914,7 @@ class Encoder(nn.Module):
             
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
-
+            gpu_memory_log()
             TVF = self.dropout(self.dnaAct(torch.cat([V21,V11],-1)))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
