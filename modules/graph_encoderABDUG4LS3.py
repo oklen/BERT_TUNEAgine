@@ -791,8 +791,8 @@ class Encoder(nn.Module):
                 if j==0:
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
-                    # hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q2,hq1q2,hq1q2)
-                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
+                    hidden_states2[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q2,hq1q2,hq1q2)
+                    # hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
 
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                     #hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
@@ -807,8 +807,8 @@ class Encoder(nn.Module):
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
-                    # hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q22,hq1q22,hq1q22)
-                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
+                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.NeV(hq1q22,hq1q22,hq1q22)
+                    # hidden_states22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
                     hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
                     
                     # for k in range(len(all_sen_now)-1):
@@ -882,7 +882,17 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
  #           V21 = hidden_states3[i][qas[i]]
-            V21 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
+            if getattr(self.config, "Extgradient_checkpointing", False):
+                def create_custom_forward(module):
+                    def custom_forward(*inputs):
+                        return module(*inputs)
+                    
+                    return custom_forward
+                V21 = torch.utils.checkpoint.checkpoint(
+                        create_custom_forward(torch.mean),
+                        hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],
+                        0,)
+            else: V21 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
