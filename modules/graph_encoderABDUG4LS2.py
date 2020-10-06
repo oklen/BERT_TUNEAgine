@@ -612,9 +612,9 @@ class Encoder(nn.Module):
             self.conv2.append(
                     DNAConv(config.hidden_size,self.att_heads,1,0.4))
         self.conv3 = torch.nn.ModuleList()
-        for i in range(2):
-            self.conv3.append(
-                DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
+        # for i in range(2):
+        #     self.conv3.append(
+        #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
             
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
