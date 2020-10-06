@@ -795,10 +795,10 @@ class Encoder(nn.Module):
                     hidden_statesT2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                     for k in range(len(all_sen_now)-1):
-                        if k==0:
+                        if k+1==len(all_sen_now)-1:
                             hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
                             continue
-                        tq = hidden_statesT2[i][all_sen_now[k-1][0]:all_sen_now[k-1][1]]
+                        tq = hidden_statesT2[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
                         tk = hidden_statesT2[i][all_sen_now[k][0]:all_sen_now[k][1]]
                         NS = self.NeV(tk,tq,tq)
                         hidden_states2[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
@@ -809,11 +809,11 @@ class Encoder(nn.Module):
                     hidden_statesT22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
                     hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
                     for k in range(len(all_sen_now)-1):
-                        if k==0:
+                        if k+1==len(all_sen_now)-1:
                             hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
                             continue
-                        tq = hidden_statesT22[i][all_sen_now[k-1][0]:all_sen_now[k-1][1]]
-                        tk = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                        tq = hidden_statesT22[i][all_sen_now[k][0]:all_sen_now[k][1]]
+                        tk = hidden_statesT22[i][all_sen_now[k+1][0]:all_sen_now[k+1][1]]
                         NS = self.NeV(tk,tq,tq)
                         hidden_states22[i][all_sen_now[k][0]:all_sen_now[k][1]] = NS
 
@@ -879,7 +879,7 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
  #           V21 = hidden_states3[i][qas[i]]
-            V11 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
+            V21 = torch.mean(hidden_states3[i][sen_ss[i][-1][0]:sen_ss[i][-1][1]],0)
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
