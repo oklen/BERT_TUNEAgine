@@ -649,7 +649,7 @@ class Encoder(nn.Module):
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
-        # self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
+        self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
         # self.TopNet[0].ql = self.qtoc.linears[0]
         # self.TopNet[0].kl = self.qtoc.linears[1]
         
