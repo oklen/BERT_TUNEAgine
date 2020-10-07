@@ -534,7 +534,8 @@ class getMaxScore(nn.Module):
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
         self.k = 64
-        self.sub = 32
+        self.content = 6
+        self.hidden_Num= 32
     
     def forward(self,query,key):
         okey = key.clone()
@@ -542,8 +543,11 @@ class getMaxScore(nn.Module):
         scores = torch.matmul(query, key.transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     def improveit(self):
-        self.k = max(self.k -self.sub,6)
-        self.sub*=2
+        if self.k !=self.content:
+            self.k = self.content
+        else:
+            self.k = self.hidden_Num
+            self.hidden_Num/=2
 
 class getMaxScore2(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
