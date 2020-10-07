@@ -476,10 +476,9 @@ def attention(query, key, value, mask=None, dropout=None):
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     #Use More aggresive stargy to caluate possible
-    # p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
-    # p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
-    p_attn = torch.softmax(scores, dim = -1)
-    
+    p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
+    p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
+    #p_attn = torch.softmax(scores,dim=-1)    
     
     if dropout is not None:
         p_attn = dropout(p_attn)
