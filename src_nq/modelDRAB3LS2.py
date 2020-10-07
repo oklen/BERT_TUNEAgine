@@ -133,7 +133,10 @@ class NqModel(nn.Module):
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
+                    Output = graph_output.view(graph_output.size(0),self.my_config.max_position_embeddings,-1)
+                    output_scores = torch.bmm(Output,_.transpose(-1,-2))
+                    tok_logits.append(self.tok_outputs((output_scores*Output).view(graph_output)).squeeze(-1))
+                    # tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
                     # tok_logits.append(graph_output.squeeze(-1))
 
             else:
