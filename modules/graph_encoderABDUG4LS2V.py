@@ -844,7 +844,7 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-        x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size)))
+        x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size))))
         # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
