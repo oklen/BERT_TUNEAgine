@@ -226,7 +226,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         
         for choice in example.choice:
 
-            toPut=tokenizer.tokenize(example.question) + '[SEP]' +tokenizer.tokenize(choice)
+            toPut=tokenizer.tokenize(example.question) + ['[SEP]'] +tokenizer.tokenize(choice)
             toPut.append('[SEP]')
             #Delect from end
             mtokens = copy.deepcopy(tokens)
