@@ -432,7 +432,7 @@ def attention(query, key, value, mask=None, dropout=None):
 
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
-    print("scores shape:",scores.shape)
+    # print("scores shape:",scores.shape)
     if mask is not None:
         print("mask shape:",mask.shape)
     if mask is not None:

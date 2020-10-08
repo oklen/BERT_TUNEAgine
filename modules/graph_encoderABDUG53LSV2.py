@@ -363,8 +363,8 @@ class Encoder(nn.Module):
         #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        self.lineSubC = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
-        self.lineSubQ = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        # self.lineSubC = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        # self.lineSubQ = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
@@ -621,8 +621,8 @@ class Encoder(nn.Module):
             # TV1 = torch.cat([V11,V12,V13],-1)
             # TV2 = torch.cat([V21,V22,V23],-1)
             
-            V1 = self.lineSubC(V12)
-            V2 = self.lineSubC(V21)
+            # V1 = self.lineSubC(V12)
+            # V2 = self.lineSubC(V21)
             
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
@@ -635,7 +635,7 @@ class Encoder(nn.Module):
             # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
             # hidden_statesOut.append(torch.cat([TV1,TV2]))
 
-            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            hidden_statesOut.append(self.gelu(torch.cat([V12,V21])))
             
         return torch.stack(hidden_statesOut)
 
