@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
-from apex.normalization import fused_layer_norm
+from apex.normalization import FusedLayerNorm
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -658,7 +658,7 @@ class Encoder(nn.Module):
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
-        self.fuseLayerNorm = fused_layer_norm(config.hidden_size)
+        self.fuseLayerNorm = FusedLayerNorm(config.hidden_size)
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
