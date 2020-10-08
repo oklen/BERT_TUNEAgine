@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
-from apex.normalization import fused_layer_norm
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -109,6 +108,12 @@ class Graph(object):
         self.edges_pos.append(edge_pos)
 
 
+def gelu_new(x):
+    """Implementation of the gelu activation function currently in Google Bert repo (identical to OpenAI GPT).
+    Also see https://arxiv.org/abs/1606.08415
+    """
+    return 0.5 * x * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * torch.pow(x, 3.0))))
+
 def gelu(x):
     """Implementation of the gelu activation function.
         For information: OpenAI GPT's gelu is slightly different (and gives slightly different results):
@@ -160,268 +165,6 @@ class LayerNorm(nn.Module):
         s = (x - u).pow(2).mean(-1, keepdim=True)
         x = (x - u) / torch.sqrt(s + self.variance_epsilon)
         return self.weight * x + self.bias
-
-
-class GraphAttention(nn.Module):
-    def __init__(self, config, max_seq_len, max_relative_position):
-        super(GraphAttention, self).__init__()
-        if config.hidden_size % config.num_attention_heads != 0:
-            raise ValueError(
-                "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads))
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
-        self.all_head_size = self.num_attention_heads * self.attention_head_size
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
-        self.max_seq_len = max_seq_len
-        self.max_relative_position = max_relative_position
-        self.use_relative_embeddings = config.use_relative_embeddings
-
-        self.relative_key_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
-
-        self.relative_value_embeddings = nn.Embedding(max_relative_position * 2 + 1, self.attention_head_size)
-
-        self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
-
-        self.indices = []
-        for i in range(self.max_seq_len):
-            self.indices.append([])
-            for j in range(self.max_seq_len):
-                position = min(max(0, j - i + max_relative_position), max_relative_position * 2)
-                self.indices[-1].append(position)
-
-        self.indices = nn.Parameter(torch.LongTensor(self.indices), requires_grad=False)
-
-    def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(*new_x_shape)
-        return x.permute(0, 2, 1, 3)
-
-    def forward(self, hidden_states, st_mask):
-        batch_size = hidden_states.size(0)
-
-        attention_mask = st_mask.unsqueeze(1).unsqueeze(2)
-
-        attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
-        attention_mask = (1.0 - attention_mask) * -10000.0
-
-        mixed_query_layer = self.query(hidden_states)
-        mixed_key_layer = self.key(hidden_states)
-        mixed_value_layer = self.value(hidden_states)
-
-        # (batch_size, num_attention_heads, seq_len, attention_head_size)
-        query_layer = self.transpose_for_scores(mixed_query_layer)
-        key_layer = self.transpose_for_scores(mixed_key_layer)
-        value_layer = self.transpose_for_scores(mixed_value_layer)
-
-        # Take the dot product between "query" and "key" to get the raw attention scores.
-        # (batch_size, num_attention_heads, seq_len, seq_len)
-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
-
-        if self.use_relative_embeddings:
-            # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
-            relative_attention_scores = torch.matmul(query_layer, self.relative_key_embeddings.weight.transpose(-1, -2))
-
-            # fill the attention score matrix
-            batch_indices = self.indices.unsqueeze(0).unsqueeze(1).expand(batch_size, self.num_attention_heads, -1, -1)
-            attention_scores = attention_scores + torch.gather(input=relative_attention_scores, dim=3,
-                                                               index=batch_indices)
-
-            # new_scores_shape = (batch_size * self.num_attention_heads, self.max_seq_len, -1)
-            # print(temp_tensor)
-            # print("query", query_layer)
-            # print("key_embeddings", self.relative_key_embeddings)
-            # print("relative_scores", relative_attention_scores)
-            # attention_scores = attention_scores.view(*new_scores_shape)  # + temp_tensor
-            # print("attention_scores", attention_scores)
-            # attention_scores = attention_scores.view(batch_size, self.num_attention_heads, -1, self.max_seq_len)
-            # TODO is masking necessary?
-
-        # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
-        attention_scores = attention_scores + attention_mask
-
-        # Normalize the attention scores to probabilities.
-        attention_probs = nn.Softmax(dim=-1)(attention_scores)
-        # This is actually dropping out entire tokens to attend to, which might
-        # seem a bit unusual, but is taken from the original Transformer paper.
-        attention_probs = self.dropout(attention_probs)
-
-        # (batch_size, num_attention_heads, seq_len, head_size)
-        context_layer = torch.matmul(attention_probs, value_layer)
-
-        if self.use_relative_embeddings:
-            # (batch_size, num_attention_heads, seq_len, max_relative_position * 2 + 1)
-            relative_attention_probs = torch.zeros_like(relative_attention_scores)
-            relative_attention_probs.scatter_add_(dim=3, index=batch_indices, src=attention_probs)
-            relative_values = torch.matmul(relative_attention_probs, self.relative_value_embeddings.weight)
-            context_layer = context_layer + relative_values
-        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
-        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
-        context_layer = context_layer.view(*new_context_layer_shape)
-
-        return context_layer
-
-
-class IntegrationLayer(nn.Module):
-    def __init__(self, config):
-        super(IntegrationLayer, self).__init__()
-        if config.hidden_size % config.num_attention_heads != 0:
-            raise ValueError(
-                "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads))
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
-        self.all_head_size = self.num_attention_heads * self.attention_head_size
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
-        self.num_edge_types = config.num_edge_types
-
-        self.use_relative_embeddings = config.use_relative_embeddings
-        self.relative_key_embeddings = nn.Embedding(self.num_edge_types, self.attention_head_size)
-        self.relative_value_embeddings = nn.Embedding(self.num_edge_types, self.attention_head_size)
-
-    def forward(self, hidden_states, edges):
-        edges_src, edges_tgt, edges_type, edges_pos = edges
-        edges_src = torch.unique(edges_src)
-        edges_tgt = torch.unique(edges_tgt)
-        
-        batch_size, seq_len = hidden_states.size(0), hidden_states.size(1)
-#        print(hidden_states.shape,self.query)
-        query_layer = self.query(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
-        key_layer = self.key(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                 self.attention_head_size)
-        value_layer = self.value(hidden_states).view(batch_size * seq_len, self.num_attention_heads,
-                                                     self.attention_head_size)
-        # print(hidden_states)
-        # (n_edges, n_heads, head_size)
-        src_key_tensor = key_layer[edges_src]
-
-
-
-        tgt_query_tensor = query_layer[edges_tgt]
-
-        # (n_edges, n_heads)
-        attention_scores = torch.exp((tgt_query_tensor * src_key_tensor).sum(-1) / math.sqrt(self.attention_head_size))
-
-        sum_attention_scores = hidden_states.data.new(batch_size * seq_len, self.num_attention_heads).fill_(0)
-        indices = edges_tgt.view(-1, 1).expand(-1, self.num_attention_heads)
-        sum_attention_scores.scatter_add_(dim=0, index=indices, src=attention_scores)
-
-        # print("before", attention_scores)
-        attention_scores = attention_scores / sum_attention_scores[edges_tgt]
-        # print("after", attention_scores)
-
-        # (n_edges, n_heads, head_size) * (n_edges, n_heads, 1)
-
-        src_value_tensor = value_layer[edges_src]
-        if self.use_relative_embeddings:
-            src_value_tensor += self.relative_value_embeddings(edges_pos).unsqueeze(1)
-
-        src_value_tensor *= attention_scores.unsqueeze(-1)
-        
-
-#        output = hidden_states.data.new(
-#            batch_size * seq_len, self.num_attention_heads, self.attention_head_size).fill_(0)
-#        indices = edges_tgt.view(-1, 1, 1).expand(-1, self.num_attention_heads, self.attention_head_size)
-#        output.scatter_add_(dim=0, index=indices, src=src_value_tensor)
-#        output = output.view(batch_size, seq_len, -1)
-
-        # print(hidden_states.shape, output.shape)
-#        print(edges_src)
-#        print(attention_scores.shape,hidden_states[:,edges_src].shape)
-        tmp = hidden_states.view(batch_size * seq_len, self.num_attention_heads,
-                                                 self.attention_head_size)[edges_src]
-        tmp*= attention_scores.unsqueeze(-1)
-        
-#        hidden_states[:,edges_src] = src_value_tensor.view(batch_size,-1,hidden_states.size(2))
-        
-        return hidden_states
-
-
-    
-class AttentionOutputLayer(nn.Module):
-    def __init__(self, config):
-        super(AttentionOutputLayer, self).__init__()
-        self.dense = nn.Linear(config.hidden_size , config.hidden_size)
-        self.layer_norm = LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.layer_norm(hidden_states + input_tensor)
-        return hidden_states
-
-
-class GraphAttentionLayer(nn.Module):
-    def __init__(self, config):
-        super(GraphAttentionLayer, self).__init__()
-        self.token_attention = GraphAttention(config, config.max_token_len, config.max_token_relative)
-#        self.sentence_attention = GraphAttention(config, config.max_sentence_len, config.max_sentence_relative)
-#        self.paragraph_attention = GraphAttention(config, config.max_paragraph_len, config.max_paragraph_relative)
-#        self.integration = IntegrationLayer(config)
-        self.output = AttentionOutputLayer(config)
-
-    def forward(self, input_tensor, st_mask, edges):
-        # self_output = input_tensor
-        graph_output = self.token_attention(input_tensor,st_mask)
-#        graph_output = self.integration(graph_output, edges)
-        attention_output = self.output(graph_output, input_tensor)
-        # print("attention_output", attention_output)
-        return attention_output
-
-
-class IntermediateLayer(nn.Module):
-    def __init__(self, config):
-        super(IntermediateLayer, self).__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        self.intermediate_act_fn = ACT2FN[config.hidden_act]
-
-    def forward(self, hidden_states):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.intermediate_act_fn(hidden_states)
-        return hidden_states
-
-
-class OutputLayer(nn.Module):
-    def __init__(self, config):
-        super(OutputLayer, self).__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
-        self.layer_norm = LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-    def forward(self, hidden_states, input_tensor):
-        hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.layer_norm(hidden_states + input_tensor)
-        return hidden_states
-
-
-class EncoderLayer(nn.Module):  #Only Use Multi of this
-    def __init__(self, config):
-        super(EncoderLayer, self).__init__()
-        self.attention = GraphAttentionLayer(config)
-        self.intermediate = IntermediateLayer(config)
-        self.output = OutputLayer(config)
-
-    def forward(self, hidden_states, st_mask, edges):
-        attention_output = self.attention(hidden_states, st_mask, edges)
-        intermediate_output = self.intermediate(attention_output)
-#        layer_output = self.output(intermediate_output, attention_output)
-        layer_output = self.output(intermediate_output, hidden_states)
-        return layer_output
-
-from enum import Enum
-
-class MixingMatrixInit(Enum):
-    CONCATENATE = 1
-    ALL_ONES = 2
-    UNIFORM = 3
     
 
 
@@ -429,42 +172,31 @@ class MixingMatrixInit(Enum):
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
     d_k = query.size(-1)
-
+    
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
-    #Use More aggresive stargy to caluate possible
-    # p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
-    # p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
-    p_attn = torch.softmax(scores,dim=-1)    
-    
+    p_attn = torch.softmax(scores, dim = -1)
     if dropout is not None:
         p_attn = dropout(p_attn)
     return torch.matmul(p_attn, value), p_attn
 
-
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    #Old classic use dropout 0.2
+    def __init__(self, h, d_model, dropout=0.15):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
-        self.hidden_size = d_model
+        self.hidden_size = d_model*2
         self.d_k = self.hidden_size // h
         self.h = h
         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
         self.output = nn.Linear(self.hidden_size,d_model)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
-        self.num_attention_heads = h
-        self.attention_head_size = self.d_k
         
-    def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(*new_x_shape)
-        return x.permute(0, 2, 1, 3)
-    
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
         if mask is not None:
@@ -473,83 +205,75 @@ class MultiHeadedAttention(nn.Module):
         nbatches = 1
 
         # 1) Do all the linear projections in batch from d_model => h x d_k 
-        query, key, value = \
-            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-             for l, x in zip(self.linears, (query, key, value))]
+        
+        # query2, key2, value2 = \
+        #     [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+        #      for l, x in zip(self.linears, (query, key, value))]
+        
+        query2 = self.linears[0](query).view(nbatches,-1,self.h,self.d_k).transpose(1, 2)
+        key2  = self.linears[1](key).view(nbatches,-1,self.h,self.d_k).transpose(1, 2)
+        value2 = self.linears[2](value).view(nbatches,-1,self.h,self.d_k).transpose(1, 2)
 
         # 2) Apply attention on all the projected vectors in batch. 
-        x, self.attn = attention(query, key, value, mask=mask, 
+        x, attn = attention(query2, key2, value2, mask=mask, 
                                  dropout=self.dropout)
         
         # 3) "Concat" using a view and apply a final linear. 
-        x = x.transpose(1, 2).contiguous() \
+        x2 = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
-        return self.output(x)
-
-
-class MaskMultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
-        "Take in model size and number of heads."
-        super(MultiHeadedAttention, self).__init__()
-        assert d_model % h == 0
-        # We assume d_v always equals d_k
-        self.hidden_size = d_model
-        self.d_k = self.hidden_size // h
-        self.h = h
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
-        self.output = nn.Linear(self.hidden_size,d_model)
-        self.attn = None
-        self.dropout = nn.Dropout(p=dropout)
-        self.num_attention_heads = h
-        self.attention_head_size = self.d_k
-        
-    def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(*new_x_shape)
-        return x.permute(0, 2, 1, 3)
+        return self.output(x2)
     
-    def forward(self, query, key, value, mask=None):
-        "Implements Figure 2"
-            # Same mask applied to all h heads.
+# class getMaxScore(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScore, self).__init__()
+#         self.hidden_size = d_model
+#         self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+#         self.dropout = nn.Dropout(dropout)
 
-        nbatches = 1
-
-        # 1) Do all the linear projections in batch from d_model => h x d_k 
-        query, key, value = \
-            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-             for l, x in zip(self.linears, (query, key, value))]
-
-        # 2) Apply attention on all the projected vectors in batch. 
-        x, self.attn = attention(query, key, value, mask=mask, 
-                                 dropout=self.dropout)
-        
-        # 3) "Concat" using a view and apply a final linear. 
-        x = x.transpose(1, 2).contiguous() \
-             .view(nbatches, -1, self.h * self.d_k)
-        return self.output(x)
-
+#         self.k = 6
     
+#     def forward(self,query,key):
+#         okey = key
+#         query,key = self.linears[0](query),self.linears[1](key)
+#         scores = torch.matmul(query, key.transpose(-2, -1))
+#         # p_attn = torch.softmax(scores, dim = -1)
+#         topks = []
+#         for i in range(self.k):
+#             MaxInd=torch.argmax(scores)
+#             if scores[MaxInd] == -100000: break
+#             scores[MaxInd] = -100000
+#             topks.append(okey[MaxInd])
+#         return torch.mean(torch.stack(topks),0)
+
+# class getMaxScore(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScore, self).__init__()
+#         self.hidden_size = d_model
+#         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
+#         self.dropout = nn.Dropout(dropout)
+
+#         self.k = 6
+    
+#     def forward(self,query,key):
+#         scores = torch.matmul(query, key.transpose(-2,-1))
+#         p_attn = torch.sigmoid(scores).unsqueeze(-1)
+#         return torch.mean(key * p_attn,0)
+
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
         super(getMaxScore, self).__init__()
         self.hidden_size = d_model
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
-        self.k = 64
-        self.constant = 6
-        self.hidden_Num= 32
+
+        self.k = 6
     
     def forward(self,query,key):
         okey = key.clone()
         # query,key = self.linears[0](query),self.linears[1](key)
         scores = torch.matmul(query, key.transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
-    def improveit(self):
-        if self.k !=self.constant:
-            self.k = self.constant
-        else:
-            self.k = max(self.hidden_Num,self.constant)
-            self.hidden_Num//=2
+
 
 class getMaxScore2(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -568,40 +292,31 @@ class getMaxScore2(nn.Module):
         scores = torch.matmul(self.ql(query), self.kl(key).transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     def improveit(self):
+        self.k = 6
+        return
         if self.k !=self.constant:
             self.k = self.constant
         else:
             self.k = max(self.hidden_Num,self.constant)
             self.hidden_Num//=2
-    
-class getMaxScoreSimple(nn.Module):
-    def __init__(self,d_model,dropout = 0.1,att_size = 4):
-        super(getMaxScoreSimple, self).__init__()
+# class getMaxScoreSimple(nn.Module):
+#     def __init__(self,d_model,dropout = 0.1,att_size = 4):
+#         super(getMaxScoreSimple, self).__init__()
 
-        self.k = 6
+#         self.k = 6
     
-    def forward(self,query,key):
-        okey = key
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        # p_attn = torch.softmax(scores, dim = -1)
-        topks = []
-        for i in range(self.k):
-            MaxInd=torch.argmax(scores)
-            if scores[MaxInd] == -100000: break
-            scores[MaxInd] = -100000
-            topks.append(okey[MaxInd])
-        return torch.mean(torch.stack(topks),0)
-class VKnet(nn.Module):
-    def __init__(self):
-        super(VKnet,self).__init__()
-        self.k = self.nn.Linear(1,1)
-    def forward(self,query,key):
-        scores = torch.matmul(query, key.transpose(-2, -1))
-        avg = torch.mean(scores,-1)
-        var = torch.mean(torch.pow(scores-avg,2))
-        Mvar = var/torch.abs(avg)
-        return torch.mean(key[scores.topk(min(len(scores),max(int(self.k(Mvar).tolist[0]),2)),-1,sorted=False).indices],0)*self.k(Mvar)
-        
+#     def forward(self,query,key):
+#         okey = key
+#         scores = torch.matmul(query, key.transpose(-2, -1))
+#         # p_attn = torch.softmax(scores, dim = -1)
+#         topks = []
+#         for i in range(self.k):
+#             MaxInd=torch.argmax(scores)
+#             if scores[MaxInd] == -100000: break
+#             scores[MaxInd] = -100000
+#             topks.append(okey[MaxInd])
+#         return torch.mean(torch.stack(topks),0)
+
     
 class getThresScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -623,7 +338,7 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
-        self.att_heads = config.num_attention_heads
+        self.att_heads = 32
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
@@ -633,35 +348,30 @@ class Encoder(nn.Module):
         
         # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
-        self.uttAtt = MaskMultiHeadedAttention(self.att_heads,config.hidden_size)
-        
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         self.conv2 = torch.nn.ModuleList()
-        for i in range(2):
+        for i in range(4):
             self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        self.conv3 = torch.nn.ModuleList()
-        # for i in range(2):
+                    DNAConv(config.hidden_size,self.att_heads//2,1,0.4))
+        # self.conv3 = torch.nn.ModuleList()
+        # for i in range(4):
         #     self.conv3.append(
         #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
-            
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
-        # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
-        # self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
-        #self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
-        
+        self.lineSubC = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        self.lineSubQ = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
-        self.fuseLayerNorm = fused_layer_norm(config.hidden_size)
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
+        # self.TopNet = nn.ModuleList([getMaxScore(self.hidden_size) for _ in range(2)])
         self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
         self.TopNet[0].ql = self.qtoc.linears[0]
         self.TopNet[0].kl = self.qtoc.linears[1]
@@ -698,39 +408,39 @@ class Encoder(nn.Module):
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
-        
-        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
-
-        
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
-        
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
-        # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
-        
-        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
-        
-        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
-        
-        # ex_edge += ex_edge3
-        # ex_edge2 += ex_edge #Use all connect to passage message
-        
-        # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        
-        ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
-        ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-        ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
-        
-        # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
-        # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
+        if edges_src is not None:
+            ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
+            ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
+    
+            
+            # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
+            
+            ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+            ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+            
+            # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
+            
+            ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
+            ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+            
+            ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
+            
+            # ex_edge += ex_edge3
+            # ex_edge2 += ex_edge #Use all connect to passage message
+            
+            # ex_edge += edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
+            # ex_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
+            
+            ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
+            ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
+            ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
+            
+            # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
+            # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
         
         hidden_statesOut = []
         qas = []
@@ -743,19 +453,6 @@ class Encoder(nn.Module):
 
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            tmp_mask = torch.zeros((all_sen_now[-1][0]-1),(all_sen_now[-1][0]-1))
-            for i in range(len(all_sen[i])-1):
-                for j in range(all_sen[i][0],all_sen[i][1]):
-                    if i == 0:
-                        b = all_sen[i][0]
-                    else:
-                        b = all_sen[i-1][0]
-                    if j+1==len(all_sen[i]-1):
-                        e = all_sen[i][1]
-                    else:
-                        e = all_sen[i+1][1]
-                    tmp_mask[j-1][b:e]=1
-    
             for j in range(2):
                 if j==0:
                     query = hidden_states[i][1:(all_sen_now[-1][0]-1)]
@@ -835,12 +532,12 @@ class Encoder(nn.Module):
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
                     hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
-                    hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = self.fuseLayerNorm(hq2q1+self.uttAtt(hq2q1, hq2q1, hq2q1,tmp_mask))
+                    hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
                     hidden_states22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
-                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = self.fuseLayerNorm(hq2q1+self.uttAtt(hq2q12, hq2q12, hq2q12,tmp_mask))
+                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
@@ -862,22 +559,21 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-        x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size))))
-        # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
-#        print(x_all.shape)
+        # x_all = hidden_states3.clone().view(-1,1,self.hidden_size)
+        # x_all2 = hidden_states3.clone().view(-1,1,self.hidden_size)
+# #        print(x_all.shape)
         
-        for i in range(4):
-            conv = self.conv2[i%2]
-            if i%2==0:
-                x = self.dnaAct(conv(x_all,ex_edge2))
-            elif i%2==1:
-                x = self.dnaAct(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge3))
+        # for i,conv in enumerate(self.conv2):
+        #     if i%2==0:
+        #         x = self.dnaAct(conv(x_all,ex_edge2))
+        #     elif i%2==1:
+        #         x = self.dnaAct(conv(x_all,ex_edge))
+        #     # else: 
+        #     #     x = torch.tanh(conv(x_all,ex_edge3))
                 
-            x = x.view(-1,1,self.hidden_size)
-            x_all = torch.cat([x_all, x], dim=1)
-        x = x_all[:, -1]
+        #     x = x.view(-1,1,self.hidden_size)
+        #     x_all = torch.cat([x_all, x], dim=1)
+        # x = x_all[:, -1]
         
         # for i,conv in enumerate(self.conv3):
         #     if i%2==0:
@@ -888,50 +584,58 @@ class Encoder(nn.Module):
         #     x_all2 = torch.cat([x_all2,x2],dim=1)
         # x2 = x_all2[:,-1]
         
-        # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states4 = x.view(hidden_states3.shape)
+#         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
+        # hidden_states4 = x.view(hidden_states3.shape)
         # hidden_states6 = x2.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
         
         
-        for i in range(3):
+        for i in range(hidden_states3.size(0)):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
              
             V21 = hidden_states3[i][qas[i]]
-            V22 = hidden_states4[i][qas[i]]
+            # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
-            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V11 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            #V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             
-            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
-            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
-            # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
+
+            if self.training and len(sen_ss[i])>12:
+                V12 = self.TopNet[0](V21, hidden_states3[i][sen_ss[i][:-1,0]])
+            else:
+                V12 = torch.mean(hidden_states[i][sen_ss[i][:-1,0]],0)
+
             # print("shape:")
             # print(V11.shape,V12.shape,V13.shape)
+            # TV1 = torch.cat([V11,V12],-1)
+            # TV2 = torch.cat([V21,V22],-1)
+            self.dropout(V21)
+            self.dropout(V12)
+            
             # TV1 = torch.cat([V11,V12,V13],-1)
             # TV2 = torch.cat([V21,V22,V23],-1)
-
-            TV1 = torch.cat([V11,V12],-1)
-            TV2 = torch.cat([V21,V22],-1)
+            
+            V1 = self.lineSubC(V12)
+            V2 = self.lineSubC(V21)
             
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
-
-            TVF = self.dropout(self.dnaAct(torch.cat([TV1,TV2],-1)))
-            # V1 = self.lineSub(TV1)
-            # V2 = self.lineSub(TV2)
+            
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states4[i][qas[i]]
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
-            hidden_statesOut.append(TVF)
-            # hidden_statesOut.append(torch.cat([V1,V2]))
+            # hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
+            # hidden_statesOut.append(torch.cat([TV1,TV2]))
+
+            hidden_statesOut.append(self.gelu(torch.cat([V1,V2])))
             
         return torch.stack(hidden_statesOut)
 
