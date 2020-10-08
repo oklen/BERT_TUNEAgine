@@ -137,7 +137,7 @@ class NqModel(nn.Module):
                     # print("shape:",Output.shape,_.shape)
                     # print(Output.shape,sequence_output[:,0].unsqueeze(1).shape)
                     output_scores = torch.bmm(Output,_.unsqueeze(1).transpose(-1,-2))
-                    tok_logits.append(self.tok_outputs((output_scores*Output).view(graph_output)).squeeze(-1))
+                    tok_logits.append(self.tok_outputs((output_scores*Output).view(graph_output.shape)).squeeze(-1))
                     # tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
                     # tok_logits.append(graph_output.squeeze(-1))
 
