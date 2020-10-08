@@ -433,10 +433,11 @@ def attention(query, key, value, mask=None, dropout=None):
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
     # print("scores shape:",scores.shape)
-    if mask is not None:
-        print("mask shape:",mask.shape)
-    if mask is not None:
-        scores = scores.masked_fill(mask.eq(0), -1e9)
+    # if mask is not None:
+    #     print("mask shape:",mask.shape)
+    # if mask is not None:
+    
+    scores = scores.masked_fill(mask.eq(0), -1e9)
     #Use More aggresive stargy to caluate possible
     # p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
     # p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
@@ -746,8 +747,8 @@ class Encoder(nn.Module):
 
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            tmp_mask = torch.zeros((all_sen_now[-1][0]-2),(all_sen_now[-1][0]-2))
-            tmp_mask.to(hidden_states3.device)
+            tmp_mask = torch.zeros((all_sen_now[-1][0]-2),(all_sen_now[-1][0]-2),device=hidden_states3.device)
+            # tmp_mask = tmp_mask.to(hidden_states3.device)
             for k in range(len(all_sen_now)-1):
                 for j in range(all_sen_now[k][0],all_sen_now[k][1]):
                     if k == 0:
