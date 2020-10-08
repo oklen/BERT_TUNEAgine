@@ -437,7 +437,7 @@ def attention(query, key, value, mask=None, dropout=None):
     #     print("mask shape:",mask.shape)
     # if mask is not None:
     if mask is not None:
-        scores = scores.masked_fill(mask.eq(0), -1e5)
+        scores = scores.masked_fill(mask.eq(0), -1e3)
     #Use More aggresive stargy to caluate possible
     # p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
     # p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
