@@ -845,7 +845,7 @@ class Encoder(nn.Module):
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
-                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.fuseLayerNorm(hq2q1+self.uttAtt(hq1q22, hq1q22, hq1q22,tmp_mask))
+                    hidden_states22[i][1:(all_sen_now[-1][0]-1)] = self.fuseLayerNorm(hq1q22+self.uttAtt(hq1q22, hq1q22, hq1q22,tmp_mask))
                     hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
 #            
             
