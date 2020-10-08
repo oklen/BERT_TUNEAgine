@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
 from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
+from apex.normalization import fused_layer_norm
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
@@ -415,48 +416,6 @@ class EncoderLayer(nn.Module):  #Only Use Multi of this
         layer_output = self.output(intermediate_output, hidden_states)
         return layer_output
 
-
-
-class DGraphAttention(nn.Module):
-    def __init__(self, config):
-        super(DGraphAttention, self).__init__()
-        if config.hidden_size % config.num_attention_heads != 0:
-            raise ValueError(
-                "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads))
-        self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
-        self.all_head_size = self.num_attention_heads * self.attention_head_size
-        self.query = nn.Linear(config.hidden_size, self.all_head_size)
-        self.key = nn.Linear(config.hidden_size, self.all_head_size)
-        self.value = nn.Linear(config.hidden_size, self.all_head_size)
-        self.num_edge_types = config.num_edge_types
-        self.hidden_size = config.hidden_size
-
-    def forward(self, hidden_states, edges_src,edges_tgt):
-
-        batch_size, seq_len = hidden_states.size(0), hidden_states.size(1)
-        query_layer = self.query(hidden_states).view(batch_size * seq_len,self.hidden_size)
-        key_layer = self.key(hidden_states).view(batch_size * seq_len,self.hidden_size)
-        value_layer = self.value(hidden_states).view(batch_size * seq_len,self.hidden_size)
-        # print(hidden_states)
-        
-        edges_src = torch.unique(edges_src)
-        edges_tgt = torch.unique(edges_tgt)
-
-        src_key_tensor = key_layer[edges_src]
-
-        tgt_query_tensor = query_layer[edges_tgt]
-        
-#        print(src_key_tensor.shape)
-#        print(tgt_query_tensor.shape)
-        
-#        exit(0)
-        # (n_edges, n_heads)
-        attention_scores = torch.softmax((torch.matmul(tgt_query_tensor,src_key_tensor.transpose(-1,-2)))/ math.sqrt(self.attention_head_size),0)
-        value_layer[edges_tgt] = torch.matmul(attention_scores,value_layer[edges_src])
-        return hidden_states
-
 from enum import Enum
 
 class MixingMatrixInit(Enum):
@@ -526,6 +485,49 @@ class MultiHeadedAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
         return self.output(x)
+
+
+class MaskMultiHeadedAttention(nn.Module):
+    def __init__(self, h, d_model, dropout=0.1):
+        "Take in model size and number of heads."
+        super(MultiHeadedAttention, self).__init__()
+        assert d_model % h == 0
+        # We assume d_v always equals d_k
+        self.hidden_size = d_model
+        self.d_k = self.hidden_size // h
+        self.h = h
+        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(3)])
+        self.output = nn.Linear(self.hidden_size,d_model)
+        self.attn = None
+        self.dropout = nn.Dropout(p=dropout)
+        self.num_attention_heads = h
+        self.attention_head_size = self.d_k
+        
+    def transpose_for_scores(self, x):
+        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        x = x.view(*new_x_shape)
+        return x.permute(0, 2, 1, 3)
+    
+    def forward(self, query, key, value, mask=None):
+        "Implements Figure 2"
+            # Same mask applied to all h heads.
+
+        nbatches = 1
+
+        # 1) Do all the linear projections in batch from d_model => h x d_k 
+        query, key, value = \
+            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+             for l, x in zip(self.linears, (query, key, value))]
+
+        # 2) Apply attention on all the projected vectors in batch. 
+        x, self.attn = attention(query, key, value, mask=mask, 
+                                 dropout=self.dropout)
+        
+        # 3) "Concat" using a view and apply a final linear. 
+        x = x.transpose(1, 2).contiguous() \
+             .view(nbatches, -1, self.h * self.d_k)
+        return self.output(x)
+
     
 class getMaxScore(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -631,7 +633,7 @@ class Encoder(nn.Module):
         
         # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
-        self.uttAtt = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        self.uttAtt = MaskMultiHeadedAttention(self.att_heads,config.hidden_size)
         
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
@@ -656,6 +658,7 @@ class Encoder(nn.Module):
         self.hidden_size = config.hidden_size
         self.config = config
         self.dropout = nn.Dropout(0.1)
+        self.fuseLayerNorm = fused_layer_norm(config.hidden_size)
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
@@ -832,12 +835,12 @@ class Encoder(nn.Module):
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
                     hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
-                    hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
+                    hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = self.fuseLayerNorm(hq2q1+self.uttAtt(hq2q1, hq2q1, hq2q1,tmp_mask))
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
                     hidden_states22[i][1:(all_sen_now[-1][0]-1)] = hq1q22
-                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q12
+                    hidden_states22[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = self.fuseLayerNorm(hq2q1+self.uttAtt(hq2q12, hq2q12, hq2q12,tmp_mask))
 #            
             
             now_all_sen = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
