@@ -754,7 +754,7 @@ class Encoder(nn.Module):
                         e = all_sen[i][k][1]
                     else:
                         e = all_sen[i][k+1][1]
-                    tmp_mask[j-1][b:e]=1
+                    tmp_mask[j-1][(b-1):(e-1)]=1
     
             for j in range(2):
                 if j==0:
