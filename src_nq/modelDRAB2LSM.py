@@ -26,6 +26,7 @@ class NqModel(nn.Module):
 
         self.right = 0
         self.all = 0
+        
         #self.bert =  AlbertModel(albert_base_configuration)
         
         #self.bert2 = BertModel(bert_config)

@@ -566,6 +566,8 @@ class getMaxScore2(nn.Module):
         scores = torch.matmul(self.ql(query), self.kl(key).transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     def improveit(self):
+        self.k = 6
+        return
         if self.k !=self.constant:
             self.k = self.constant
         else:
