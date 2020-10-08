@@ -744,16 +744,16 @@ class Encoder(nn.Module):
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             tmp_mask = torch.zeros((all_sen_now[-1][0]-1),(all_sen_now[-1][0]-1))
-            for i in range(len(all_sen[i])-1):
-                for j in range(all_sen[i][0],all_sen[i][1]):
-                    if i == 0:
-                        b = all_sen[i][0]
+            for k in range(len(all_sen[i])-1):
+                for j in range(all_sen[i][k][0],all_sen[i][k][1]):
+                    if k == 0:
+                        b = all_sen[i][k][0]
                     else:
-                        b = all_sen[i-1][0]
-                    if j+1==len(all_sen[i]-1):
-                        e = all_sen[i][1]
+                        b = all_sen[i][k-1][0]
+                    if k+1==len(all_sen[i]-1):
+                        e = all_sen[i][k][1]
                     else:
-                        e = all_sen[i+1][1]
+                        e = all_sen[i][k+1][1]
                     tmp_mask[j-1][b:e]=1
     
             for j in range(2):
