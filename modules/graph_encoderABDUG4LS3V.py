@@ -747,6 +747,7 @@ class Encoder(nn.Module):
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
             tmp_mask = torch.zeros((all_sen_now[-1][0]-2),(all_sen_now[-1][0]-2))
+            tmp_mask.to(hidden_states3.device)
             for k in range(len(all_sen_now)-1):
                 for j in range(all_sen_now[k][0],all_sen_now[k][1]):
                     if k == 0:
