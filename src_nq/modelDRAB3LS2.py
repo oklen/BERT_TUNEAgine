@@ -40,6 +40,7 @@ class NqModel(nn.Module):
         self.bert =  AlbertModel.from_pretrained("albert-xlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
+        my_config.num_attention_heads = self.bert.config.num_attention_heads
 
         self.right = 0
         self.all = 0

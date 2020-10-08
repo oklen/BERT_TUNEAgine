@@ -475,7 +475,11 @@ def attention(query, key, value, mask=None, dropout=None):
              / math.sqrt(d_k)
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
-    p_attn = torch.softmax(scores, dim = -1)
+    #Use More aggresive stargy to caluate possible
+    # p_attn_tmp = torch.exp(torch.softmax(scores, dim = -1))
+    # p_attn = torch.softmax(p_attn_tmp*p_attn_tmp,dim = -1)
+    p_attn = torch.softmax(scores,dim=-1)    
+    
     if dropout is not None:
         p_attn = dropout(p_attn)
     return torch.matmul(p_attn, value), p_attn
@@ -530,7 +534,8 @@ class getMaxScore(nn.Module):
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
         self.k = 64
-        self.sub = 32
+        self.constant = 6
+        self.hidden_Num= 32
     
     def forward(self,query,key):
         okey = key.clone()
@@ -538,8 +543,11 @@ class getMaxScore(nn.Module):
         scores = torch.matmul(query, key.transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     def improveit(self):
-        self.k = max(self.k -self.sub,6)
-        self.sub*=2
+        if self.k !=self.constant:
+            self.k = self.constant
+        else:
+            self.k = max(self.hidden_Num,self.constant)
+            self.hidden_Num//=2
 
 class getMaxScore2(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -548,7 +556,8 @@ class getMaxScore2(nn.Module):
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
         self.k = 64
-        self.sub = 8
+        self.constant = 6
+        self.hidden_Num= 32
         self.kl = None
         self.ql = None
     
@@ -557,9 +566,11 @@ class getMaxScore2(nn.Module):
         scores = torch.matmul(self.ql(query), self.kl(key).transpose(-2, -1))
         return torch.mean(okey[scores.topk(min(len(scores),self.k),-1,sorted=False).indices],0)
     def improveit(self):
-        return 
-        self.k = max(64 -self.sub,6)
-        self.sub*=2
+        if self.k !=self.constant:
+            self.k = self.constant
+        else:
+            self.k = max(self.hidden_Num,self.constant)
+            self.hidden_Num//=2
     
 class getMaxScoreSimple(nn.Module):
     def __init__(self,d_model,dropout = 0.1,att_size = 4):
@@ -610,7 +621,7 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
-        self.att_heads = 16
+        self.att_heads = config.num_attention_heads
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
@@ -620,6 +631,8 @@ class Encoder(nn.Module):
         
         # self.ctoq = MultiHeadedAttention(self.att_heads,config.hidden_size)
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        self.uttAtt = MultiHeadedAttention(self.att_heads,config.hidden_size)
+        
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
         self.gelu = torch.nn.functional.gelu
@@ -727,6 +740,19 @@ class Encoder(nn.Module):
 
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
+            tmp_mask = torch.zeros((all_sen_now[-1][0]-1),(all_sen_now[-1][0]-1))
+            for i in range(len(all_sen[i])-1):
+                for j in range(all_sen[i][0],all_sen[i][1]):
+                    if i == 0:
+                        b = all_sen[i][0]
+                    else:
+                        b =all_sen[i-1][0]
+                    if j+1==len(all_sen[i]-1):
+                        e = all_sen[i][1]
+                    else:
+                        e = all_sen[i+1][1]
+                    tmp_mask[j-1][b:e]=1
+    
             for j in range(2):
                 if j==0:
                     query = hidden_states[i][1:(all_sen_now[-1][0]-1)]
@@ -833,7 +859,7 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-        x_all = hidden_states3.view(-1,1,self.hidden_size)
+        x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size))))
         # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
@@ -877,8 +903,9 @@ class Encoder(nn.Module):
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            if len(sen_ss[i])>=12:
-                V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            
+            V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
             # print("shape:")
