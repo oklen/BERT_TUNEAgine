@@ -494,7 +494,7 @@ class MultiHeadedAttention(nn.Module):
         self.hidden_size = d_model
         self.d_k = self.hidden_size // h
         self.h = h
-        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(1)])
+        self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size) for _ in range(2)])
         self.output = nn.Linear(self.hidden_size,d_model)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
@@ -515,7 +515,7 @@ class MultiHeadedAttention(nn.Module):
 
         # 1) Do all the linear projections in batch from d_model => h x d_k 
         query = self.linears[0](query).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-        key = self.linears[0](key).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
+        key = self.linears[1](key).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
         value = value.view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
         # query, key, value = \
         #     [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
