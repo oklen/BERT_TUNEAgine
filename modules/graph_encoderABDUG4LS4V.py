@@ -5,7 +5,7 @@ import json
 import torch
 import torch.nn as nn
 # from torch_geometric.nn import GraphConv,AGNNConv,FastRGCNConv,RGCNConv,DNAConv
-from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
+# from torch.nn.utils.rnn import pack_sequence,pad_packed_sequence
 
 class EdgeType(enum.IntEnum):
     TOKEN_TO_SENTENCE = 0
