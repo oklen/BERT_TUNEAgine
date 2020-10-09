@@ -584,7 +584,7 @@ def main():
                         for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
                             WrOut+=str(i)
                         ErrorSelect.write(WrOut)
-                        ErrorSelect.write("\n")
+                        ErrorSelect.write("\n\n")
                         
                     ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
