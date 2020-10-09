@@ -47,13 +47,13 @@ else:
     import pickle
 
 
-from spacy.lang.en import English
-from modules.graph_encoderABDUG import NodePosition, Graph, EdgeType, get_edge_position
+# from spacy.lang.en import English
+from modules.graph_encoderABDUG4LS4V import NodePosition, Graph, EdgeType, get_edge_position
 
 
-nlp = English()
-sentencizer = nlp.create_pipe("sentencizer")
-nlp.add_pipe(sentencizer)
+# nlp = English()
+# sentencizer = nlp.create_pipe("sentencizer")
+# nlp.add_pipe(sentencizer)
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
