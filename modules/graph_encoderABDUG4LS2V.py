@@ -555,7 +555,7 @@ class getMaxScore2(nn.Module):
         self.hidden_size = d_model
         # self.linears = nn.ModuleList([nn.Linear(d_model,self.hidden_size*att_size) for _ in range(2)])
         self.dropout = nn.Dropout(dropout)
-        self.k = 64
+        self.k = 6
         self.constant = 6
         self.hidden_Num= 32
         self.kl = None
@@ -846,22 +846,24 @@ class Encoder(nn.Module):
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
-        x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size))))
+        
+        # x_all = self.dropout(self.gelu((hidden_states3.view(-1,1,self.hidden_size))))
+        
         # x_all2 = hidden_states3.view(-1,1,self.hidden_size)
 #        print(x_all.shape)
         
-        for i in range(4):
-            conv = self.conv2[i%2]
-            if i%2==0:
-                x = self.dnaAct(conv(x_all,ex_edge2))
-            elif i%2==1:
-                x = self.dnaAct(conv(x_all,ex_edge))
-            # else: 
-            #     x = torch.tanh(conv(x_all,ex_edge3))
+        # for i in range(4):
+        #     conv = self.conv2[i%2]
+        #     if i%2==0:
+        #         x = self.dnaAct(conv(x_all,ex_edge2))
+        #     elif i%2==1:
+        #         x = self.dnaAct(conv(x_all,ex_edge))
+        #     # else: 
+        #     #     x = torch.tanh(conv(x_all,ex_edge3))
                 
-            x = x.view(-1,1,self.hidden_size)
-            x_all = torch.cat([x_all, x], dim=1)
-        x = x_all[:, -1]
+        #     x = x.view(-1,1,self.hidden_size)
+        #     x_all = torch.cat([x_all, x], dim=1)
+        # x = x_all[:, -1]
         
         # for i,conv in enumerate(self.conv3):
         #     if i%2==0:
@@ -873,7 +875,7 @@ class Encoder(nn.Module):
         # x2 = x_all2[:,-1]
         
         # x = self.conv3(x,torch.stack([edges_src[mid_edge],edges_tgt[mid_edge]]),edges_type[mid_edge])
-        hidden_states4 = x.view(hidden_states3.shape)
+        # hidden_states4 = x.view(hidden_states3.shape)
         # hidden_states6 = x2.view(hidden_states3.shape)
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
@@ -885,11 +887,11 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
             V21 = hidden_states3[i][qas[i]]
-            V22 = hidden_states4[i][qas[i]]
+            # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
-            V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
+            # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             if len(sen_ss[i])>=12:
                 V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             else:
@@ -903,13 +905,13 @@ class Encoder(nn.Module):
             # TV1 = torch.cat([V11,V12,V13],-1)
             # TV2 = torch.cat([V21,V22,V23],-1)
 
-            TV1 = torch.cat([V11,V12],-1)
-            TV2 = torch.cat([V21,V22],-1)
+            # TV1 = torch.cat([V11,V12],-1)
+            # TV2 = torch.cat([V21,V22],-1)
             
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
 
-            TVF = self.dropout(self.dnaAct(torch.cat([TV1,TV2],-1)))
+            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21],-1)))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
