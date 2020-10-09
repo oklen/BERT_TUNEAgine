@@ -671,7 +671,7 @@ class Encoder(nn.Module):
         
         self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
         self.TopNet[0].ql = self.qtoc.linears[0]
-        self.TopNet[0].kl = self.qtoc.linears[1]
+        # self.TopNet[0].kl = self.qtoc.linears[1]
         
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
