@@ -636,7 +636,10 @@ class Encoder(nn.Module):
         self.qtoc = MultiHeadedAttention(self.att_heads,config.hidden_size)
         # self.rnn = torch.nn.LSTM(config.hidden_size,config.hidden_size // 2,dropout=0.4,
         #                          bidirectional=True, num_layers=2, batch_first=True)
-        self.gelu = torch.nn.functional.gelu
+        if torch.__version__ == '1.1.0':
+            self.gelu = gelu
+        else:
+            self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
         # self.conv2 = torch.nn.ModuleList()
