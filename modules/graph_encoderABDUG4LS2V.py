@@ -623,7 +623,8 @@ class getThresScore(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, config):
         super(Encoder, self).__init__()
-        self.att_heads = 16
+        self.att_heads = config.num_attention_heads
+        
 #        self.initializer = Initializer(config)
 #        layer = EncoderLayer(config)
 #        self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
@@ -892,7 +893,7 @@ class Encoder(nn.Module):
             
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
-            if len(sen_ss[i])>=12:
+            if len(sen_ss[i])>13:
                 V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             else:
                 V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
@@ -911,7 +912,7 @@ class Encoder(nn.Module):
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
 
-            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21],-1)))
+            TVF = self.dropout(self.dnaAct(torch.cat([V21,V11],-1)))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)

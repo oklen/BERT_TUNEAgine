@@ -606,7 +606,7 @@ class Encoder(nn.Module):
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
 
-            if self.training and len(sen_ss[i])>12:
+            if len(sen_ss[i])>12:
                 V12 = self.TopNet[0](V21, hidden_states3[i][sen_ss[i][:-1,0]])
             else:
                 V12 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
