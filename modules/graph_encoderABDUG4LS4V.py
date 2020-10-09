@@ -822,12 +822,14 @@ class Encoder(nn.Module):
                     else:
                         hq2q12 = self.qtoc(query2,torch.cat([key2,LsQ],-2),torch.cat([value2,LsQ],-2))
                 if j==0:
+                    LsQ = hq1q2.clone()
+                    LsK = hq2q1.clone()
                     hq2q1 = hq2q1.squeeze(0)
                     hq1q2 = hq1q2.squeeze(0)
                     hidden_states2[i][1:(all_sen_now[-1][0]-1)] = hq1q2
-                    LsQ = hq1q2.clone()
+                    
                     hidden_states2[i][all_sen_now[-1][0]:all_sen_now[-1][1]] = hq2q1
-                    LsK = hq2q1.clone()
+                    
                 else:
                     hq2q12 = hq2q12.squeeze(0)
                     hq1q22 = hq1q22.squeeze(0)
