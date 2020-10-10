@@ -639,11 +639,11 @@ class Encoder(nn.Module):
         self.gelu = torch.nn.functional.gelu
         
         # self.conv3 = RGCNConv(config.hidden_size, config.hidden_size, 35, num_bases=30)
-        self.conv2 = torch.nn.ModuleList()
-        for i in range(2):
-            self.conv2.append(
-                    DNAConv(config.hidden_size,self.att_heads,1,0.4))
-        self.conv3 = torch.nn.ModuleList()
+        # self.conv2 = torch.nn.ModuleList()
+        # for i in range(2):
+        #     self.conv2.append(
+        #             DNAConv(config.hidden_size,self.att_heads,1,0.4))
+        # self.conv3 = torch.nn.ModuleList()
         # for i in range(2):
         #     self.conv3.append(
         #         DNAConv(config.hidden_size,self.att_heads,1,0,0.4))
