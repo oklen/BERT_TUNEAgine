@@ -905,7 +905,7 @@ class Encoder(nn.Module):
             VQ[:,:] = V21
             
             VQO = self.lineSub(torch.cat([VQ,VP],-1))
-            V11  = self.mean(VQO,0)
+            V11  = torch.mean(VQO,0)
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
