@@ -403,7 +403,8 @@ def main():
     ]
 
     if args.fp16:
-        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        # optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate)
         model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
         
     else:
