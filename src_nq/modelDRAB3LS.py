@@ -3,11 +3,21 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG4LS2 import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG4LS3V import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
+import math
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
 #
+
+def gelu(x):
+    """Implementation of the gelu activation function.
+        For information: OpenAI GPT's gelu is slightly different (and gives slightly different results):
+        0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+        Also see https://arxiv.org/abs/1606.08415
+    """
+    return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
+
 class BertOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -28,18 +38,19 @@ class NqModel(nn.Module):
         #                                        attention_probs_dropout_prob=0)
         self.my_mask = None
         self.args = args
-        self.bert_config = RobertaConfig.from_pretrained("roberta-large-mnli")
+        self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
         # self.bert_config = AlbertConfig.from_pretrained("albert-base-v2")
         
         # self.bert_config.hidden_dropout_prob = 0.1
         # self.bert_config.attention_probs_dropout_prob = 0.1
         
-        self.bert_config.gradient_checkpointing = True
+        # self.bert_config.gradient_checkpointing = True
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
-        self.bert =  RobertaModel.from_pretrained("roberta-large-mnli",config = self.bert_config)
+        self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
+        my_config.num_attention_heads = self.bert.config.num_attention_heads
 
         self.right = 0
         self.all = 0
@@ -54,7 +65,7 @@ class NqModel(nn.Module):
 
         #print(my_config,bert_config)
         # self.tok_dense = nn.Linear(my_config.hidden_size*6, my_config.hidden_size*6)
-        self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
+        # self.tok_dense = nn.Linear(my_config.hidden_size*2, my_config.hidden_size*2)
 
 #        self.tok_dense2 = nn.Linear(my_config.hidden_size, my_config.hidden_size)
 #        self.para_dense = nn.Linear(self.config.hidden_size, self.config.hidden_size)
@@ -73,11 +84,18 @@ class NqModel(nn.Module):
 #        self.par_to_label = nn.Linear(my_config.max_paragraph_len,2)
 
         #self.encoder = Encoder(my_config)
+        self.cls_to_space = nn.Linear(my_config.hidden_size,my_config.hidden_size)
+        self.Dres_to_space = nn.Linear(my_config.hidden_size,my_config.hidden_size)
+        
         self.encoder = Encoder(my_config)
 #        self.encoder2 = Encoder(my_config)
         
         self.my_config = my_config
-        self.output_act = torch.nn.functional.gelu
+        if torch.__version__ == '1.1.0':
+            self.output_act = gelu
+        else:
+            self.output_act = torch.nn.functional.gelu
+        # self.output_act = torch.nn.functional.gelu
         
 #        self.my_mask = 
 
@@ -128,12 +146,20 @@ class NqModel(nn.Module):
                     graph_output = self.encoder(sequence_output, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False)
                     # x = self.dropout(graph_output)
                     # x = self.dropout(graph_output)
+                    # print(graph_output.shape)
                 
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    # tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
-                    tok_logits.append(self.tok_outputs(self.dropout(torch.tanh(self.tok_dense(graph_output)))).squeeze(-1))
+                    Output = graph_output.view(graph_output.size(0),-1,self.bert_config.hidden_size)
+                    # print("shape:",Output.shape,_.shape)
+                    # print(Output.shape,sequence_output[:,0].unsqueeze(1).shape)
+                    # output_scores_t = torch.bmm(Output,_.unsqueeze(1).transpose(-1,-2))
+                    # output_scores_t = torch.bmm(self.Dres_to_space(Output),self.cls_to_space(_).unsqueeze(1).transpose(-1,-2))
+                    # output_scores =  torch.softmax(output_scores_t.transpose(-1,-2), -1).transpose(-1,-2)
+                    # tok_logits.append(self.tok_outputs((output_scores*Output).view(graph_output.shape)).squeeze(-1))
+                    tok_logits.append(self.tok_outputs(graph_output).squeeze(-1))
+                    # tok_logits.append(graph_output.squeeze(-1))
 
             else:
                 input_ids = input_ids.to('cuda:0')

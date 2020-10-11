@@ -412,6 +412,7 @@ def main():
 #                             lr=args.learning_rate,
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
+
         optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
 
