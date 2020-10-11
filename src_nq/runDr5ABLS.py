@@ -42,7 +42,7 @@ from tqdm import tqdm, trange
 from glob import glob
 
 
-from modules.graph_encoderABDUG4LS2VOU import Config, EdgeType, NodeType, EdgePosition
+from modules.graph_encoderABDUG4LS3V import Config, EdgeType, NodeType, EdgePosition
 from generate_exampleDreamAB import InputFeatures
 
 from src_nq.modelDRAB3LS2 import NqModel
