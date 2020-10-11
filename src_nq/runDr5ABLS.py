@@ -530,6 +530,8 @@ def main():
             ttr_loss = 0
             optimizer.zero_grad()
             logging.info("***** Running evalating *****")
+            Err_cnt = 0
+            Len_cnt =0
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
@@ -538,19 +540,24 @@ def main():
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     ttr_loss+=loss.item()
                     if model.ACC == tmp_acc and _ != 0:
-                        WrOut = "Model Select:"
+                        WrOut = "Model Select:\n"
                         for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.we_choice]):
                             if i !='<pad>':
                                 WrOut+=str(i)
                             else: break
+                        Len_cnt+=len(WrOut)-14
+                        
                         ErrorSelect.write(WrOut)
-                        WrOut = "\nTrue answer:"
+                        WrOut = "\nTrue answer:\n"
                         for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.ground_answer]):
                             if i !='<pad>':
                                 WrOut+=str(i)
                             else: break
                         ErrorSelect.write("\n")
+                        Err_cnt+=1
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
+            logging.info("Error count:{} Average Wrong QA lengths:{}".format(Err_cnt,Len_cnt/Err_cnt))
+            
             model.zero_grad()
             optimizer.zero_grad()
             model.encoder.TopNet[0].improveit() #Use scheludar K
