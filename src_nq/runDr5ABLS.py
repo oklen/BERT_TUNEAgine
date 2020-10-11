@@ -51,6 +51,9 @@ from src_nq.optimization import WarmupLinearSchedule,WarmupConstantSchedule,Adam
 from apex import amp
 from apex import optimizers as apex_optim
 
+
+from transformers import AlbertTokenizer
+
 WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
 
@@ -430,7 +433,8 @@ def main():
 
     global_step = 0
     last_acc = 87.0
-    
+    albert_toker = AlbertTokenizer.from_pretrained('albert-xxlarge-v2')
+
     if args.do_train:
         logger.info("***** Running training *****")
         logger.info("  Num split examples = %d", num_train_features)
@@ -441,7 +445,7 @@ def main():
         nb_tr_examples = 0
         model.zero_grad()
         optimizer.zero_grad()
-        
+        ErrorSelect = open("./Err_for_5ABLS.txt",'w+');
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
@@ -529,10 +533,23 @@ def main():
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
+                    tmp_acc = model.ACC
                     loss = model(batch.input_ids.cuda(non_blocking=True), batch.input_mask.cuda(non_blocking=True), batch.segment_ids.cuda(non_blocking=True), batch.st_mask.cuda(non_blocking=True),
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     ttr_loss+=loss.item()
-                    optimizer.zero_grad()
+                    if model.ACC == tmp_acc and _ != 0:
+                        WrOut = "Model Select:"
+                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.we_choice]):
+                            if i !='<pad>':
+                                WrOut+=str(i)
+                            else: break
+                        ErrorSelect.write(WrOut)
+                        WrOut = "\nTrue answer:"
+                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.ground_answer]):
+                            if i !='<pad>':
+                                WrOut+=str(i)
+                            else: break
+                        ErrorSelect.write("\n")
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             model.zero_grad()
             optimizer.zero_grad()

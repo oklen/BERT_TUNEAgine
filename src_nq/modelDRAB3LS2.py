@@ -102,6 +102,9 @@ class NqModel(nn.Module):
         self.ACC = 0
         self.ALL = 0
         
+        self.model_choice = None
+        self.ground_answer = None
+        
         self.ErrId = []
         
         #self.apply(self.init_bert_weights)
@@ -235,6 +238,8 @@ class NqModel(nn.Module):
         
         for index,score in enumerate(tok_logits):
             self.ALL+=1
+            self.model_choice = torch.argmax(score)
+            self.ground_answer = res_labels
             if torch.argmax(score) == res_labels:
                 self.ACC+=1
 
