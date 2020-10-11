@@ -535,14 +535,14 @@ def main():
             optimizer.zero_grad()
             model.encoder.TopNet[0].improveit() #Use scheludar K
             logging.info("Next K use:{}".format(model.encoder.TopNet[0].k))
-            if model.ACC/model.ALL*100>last_acc:
-                logging.info("Save Model")
-                last_acc = model.ACC/model.ALL*100
-                model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+            # if model.ACC/model.ALL*100>last_acc:
+            #     logging.info("Save Model")
+            #     last_acc = model.ACC/model.ALL*100
+            #     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 
-                # If we save using the predefined names, we can load using `from_pretrained`
-                output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-                torch.save(model_to_save.state_dict(), output_model_file)
+            #     # If we save using the predefined names, we can load using `from_pretrained`
+            #     output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
+            #     torch.save(model_to_save.state_dict(), output_model_file)
                     
                 
 
