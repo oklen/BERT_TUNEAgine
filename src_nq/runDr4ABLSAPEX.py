@@ -580,11 +580,18 @@ def main():
                     loss = model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask,
                                  (batch.edges_src, batch.edges_tgt, batch.edges_type, batch.edges_pos),batch.label,batch.all_sen)
                     if model.ACC == tmp_acc and _ != 0:
-                        WrOut = ""
-                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][0]):
-                            WrOut+=str(i)
+                        WrOut = "Model Select:"
+                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.we_choice]):
+                            if i !='<pad>':
+                                WrOut+=str(i)
+                            else: break
                         ErrorSelect.write(WrOut)
-                        ErrorSelect.write("\n\n")
+                        WrOut = "\nTrue answer:"
+                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.ground_answer]):
+                            if i !='<pad>':
+                                WrOut+=str(i)
+                            else: break
+                        ErrorSelect.write("\n")
                         
                     ttr_loss+=loss.item()
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))

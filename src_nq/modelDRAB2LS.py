@@ -61,7 +61,8 @@ class NqModel(nn.Module):
         
         self.my_config = my_config
         
-#        self.my_mask = 
+        self.model_choice = None
+        self.ground_answer = None
 
         self.ACC = 0
         self.ALL = 0
@@ -172,6 +173,8 @@ class NqModel(nn.Module):
         
         for index,score in enumerate(tok_logits):
             self.ALL+=1
+            self.model_choice = torch.argmax(score)
+            self.ground_answer = res_labels
             if torch.argmax(score) == res_labels:
                 self.ACC+=1
 
