@@ -556,7 +556,8 @@ def main():
                         ErrorSelect.write("\n")
                         Err_cnt+=1
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
-            logging.info("Error count:{} Average Wrong QA lengths:{}".format(Err_cnt,Len_cnt/Err_cnt))
+            if _ != 0:
+                logging.info("Error count:{} Average Wrong QA lengths:{}".format(Err_cnt,Len_cnt/Err_cnt))
             
             model.zero_grad()
             optimizer.zero_grad()
