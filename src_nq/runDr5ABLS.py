@@ -468,6 +468,8 @@ def main():
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     # print("Out!")
                     # sleep(3)
+                    model.report_scores(batch.input_ids)
+                    
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
                     if args.gradient_accumulation_steps > 1:
@@ -532,6 +534,7 @@ def main():
             logging.info("***** Running evalating *****")
             Err_cnt = 0
             Len_cnt =0
+            
             with torch.no_grad():
                 for step, batch in enumerate(train_dataloader):
                     tgobal_step+=1
@@ -540,22 +543,23 @@ def main():
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     ttr_loss+=loss.item()
                     if model.ACC == tmp_acc and _ != 0:
-                        WrOut = "Model Select:\n"
-                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.model_choice]):
-                            if i !='<pad>':
-                                WrOut+=str(i)
-                            else: break
-                        Len_cnt+=len(WrOut)-14
+                        # WrOut = "Model Select:\n"
+                        # for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.model_choice]):
+                        #     if i !='<pad>':
+                        #         WrOut+=str(i)
+                        #     else: break
+                        # Len_cnt+=len(WrOut)-14
                         
-                        ErrorSelect.write(WrOut)
-                        WrOut = "\nTrue answer:\n"
-                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.ground_answer]):
-                            if i !='<pad>':
-                                WrOut+=str(i)
-                            else: break
-                        ErrorSelect.write(WrOut)
-                        ErrorSelect.write("\n")
+                        # ErrorSelect.write(WrOut)
+                        # WrOut = "\nTrue answer:\n"
+                        # for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.ground_answer]):
+                        #     if i !='<pad>':
+                        #         WrOut+=str(i)
+                        #     else: break
+                        ErrorSelect.write(model.report_scores(batch.input_ids))
+                        # ErrorSelect.write("\n")
                         Err_cnt+=1
+            model.do_report = False
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
             if _ != 0:
                 logging.info("Error count:{} Average Wrong QA lengths:{}".format(Err_cnt,Len_cnt/Err_cnt))

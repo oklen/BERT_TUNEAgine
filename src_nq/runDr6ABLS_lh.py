@@ -446,6 +446,7 @@ def main():
             for data_path in glob(args.train_pattern):
                 #logging.info("Reading data from {}.".format(data_path))
                 model.train()
+                model.epoch = _
                 train_dataset = NqDataset(args, data_path, is_training=True)
                 train_features = train_dataset.features
                 #logging.info("Data Load Done!")

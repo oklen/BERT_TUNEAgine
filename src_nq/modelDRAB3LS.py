@@ -4,7 +4,7 @@ import torch.nn as nn
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
 from modules.graph_encoderABDUG4LS2VOUADJ import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
-from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
+from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig,AlbertTokenizer
 import math
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
@@ -48,12 +48,16 @@ class NqModel(nn.Module):
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
         self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
+        self.albert_toker = AlbertTokenizer.from_pretrained("albert-xxlarge-v2")
+        
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
         my_config.num_attention_heads = self.bert.config.num_attention_heads
 
         self.right = 0
         self.all = 0
+        self.epoch = 0
+        
         #self.bert =  AlbertModel(albert_base_configuration)
         
         #self.bert2 = BertModel(bert_config)
@@ -89,6 +93,9 @@ class NqModel(nn.Module):
         
         self.encoder = Encoder(my_config)
 #        self.encoder2 = Encoder(my_config)
+        self.Error_Report = None
+        self.do_report = False
+        self.f_scores = None
         
         self.my_config = my_config
         if torch.__version__ == '1.1.0':
@@ -103,8 +110,14 @@ class NqModel(nn.Module):
         self.ALL = 0
         
         self.ErrId = []
-        
-        #self.apply(self.init_bert_weights)
+
+    def report_scores(self,input_idss):
+        to_write = ""
+        for i in len(self.f_scores):
+            to_write+="Model calculate scores:"+str(self.f_scores[i])+"\n"
+            to_write+=str(self.albert_toker.convert_ids_to_tokens(input_idss[0][i]))
+            to_write+="\n"
+        return to_write
 
     def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens,input_embs=None):
 
@@ -227,6 +240,8 @@ class NqModel(nn.Module):
 
         # token
 #        print(tok_logits)
+
+        self.f_scores = tok_logits
         tok_logits = torch.stack(tok_logits)
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
@@ -243,6 +258,9 @@ class NqModel(nn.Module):
 #        print(tok_logits.shape,res_labels.shape)
 #        print(tok_logits)
 #        print(res_labels)
+        # if self.do_report:
+        #     self.Error_Report=self.report_scores(tok_logits,input_idss)
+        
         tok_label_loss = loss_fct(tok_logits, res_labels)
         loss.append(tok_label_loss)
 

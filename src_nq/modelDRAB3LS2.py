@@ -4,7 +4,7 @@ import torch.nn as nn
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
 from modules.graph_encoderABDUG4LS2VOUADJ import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
-from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig
+from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig,AlbertTokenizer
 import math
 #  elgeish/cs224n-squad2.0-albert-large-v2
 #  albert-large-v2
@@ -49,6 +49,7 @@ class NqModel(nn.Module):
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
         self.bert =  AlbertModel.from_pretrained("albert-xxlarge-v2",config = self.bert_config)
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
+        self.albert_toker = AlbertTokenizer.from_pretrained("albert-xxlarge-v2")
         my_config.hidden_size = self.bert.config.hidden_size
         my_config.num_attention_heads = self.bert.config.num_attention_heads
 
@@ -109,6 +110,15 @@ class NqModel(nn.Module):
         
         #self.apply(self.init_bert_weights)
 
+    def report_scores(self,scores,input_idss):
+        to_write = ""
+        myscores = torch.softmax(scores, 0)
+        for i in len(myscores):
+            to_write+="Model calculate scores:"+str(scores[i])+"\n"
+            to_write+=str(self.albert_toker.convert_ids_to_tokens(input_idss[0][i]))
+            to_write+="\n"
+        return to_write
+    
     def forward(self, input_idss, attention_masks, token_type_idss, st_masks, edgess, labels,all_sens,input_embs=None):
 
 #model(batch.input_ids, batch.input_mask, batch.segment_ids, batch.st_mask, batch.st_index,
