@@ -651,7 +651,7 @@ class Encoder(nn.Module):
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
-        self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
+        self.lineSub = torch.nn.Linear(config.hidden_size*4,config.hidden_size*2)
         #self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         
         self.hidden_size = config.hidden_size
@@ -663,9 +663,8 @@ class Encoder(nn.Module):
         self.TopNet = nn.ModuleList([getMaxScore2(self.hidden_size) for _ in range(1)])
         self.TopNet[0].ql = self.qtoc.linears[0]
         self.TopNet[0].kl = self.qtoc.linears[1]
-        
+        self.Mean_transformers = self.Linear(config.hidden_size,config.hidden_size*2)
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
-
         self.dnaAct = torch.relu
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
@@ -698,25 +697,25 @@ class Encoder(nn.Module):
         # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
         
-        ex_edge2  = edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
+        ex_edge2  = edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
+        # ex_edge2 += edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.B_TO_CHOICE).nonzero().view(-1).tolist()
 
         
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_A).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.CHOICE_TO_B).nonzero().view(-1).tolist()
         
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
+        # ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
+        # ex_edge2 += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
         
         # ex_edge = edges_type.eq(EdgeType.A_TO_NA).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_BA).nonzero().view(-1).tolist()
         
-        ex_edge = edges_type.eq(EdgeType.A_TO_NB).nonzero().view(-1).tolist()
-        ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
+        ex_edge = edges_type.eq(EdgeType.CHOICE_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
+        # ex_edge += edges_type.eq(EdgeType.A_TO_BB).nonzero().view(-1).tolist()
         
-        ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
+        # ex_edge3 = edges_type.eq(EdgeType.A_TO_A).nonzero().view(-1).tolist()
         
         # ex_edge += ex_edge3
         # ex_edge2 += ex_edge #Use all connect to passage message
@@ -726,7 +725,9 @@ class Encoder(nn.Module):
         
         ex_edge = torch.stack([edges_src[ex_edge],edges_tgt[ex_edge]])
         ex_edge2 = torch.stack([edges_src[ex_edge2],edges_tgt[ex_edge2]])
-        ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
+        # ex_edge3 = torch.stack([edges_src[ex_edge3],edges_tgt[ex_edge3]])
+        # graph.add_edge(tok_is_question_begin,tok_is_question_end,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
+        # graph.add_edge(tok_is_choice_begin,tok_is_choice_end,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
         
         # q1 = torch.unique(edges_src[edges_type.eq(EdgeType.C_TO_QA).nonzero().view(-1).tolist()])
         # q2 = torch.unique(edges_src[edges_type.eq(EdgeType.QA_TO_C).nonzero().view(-1).tolist()])
@@ -737,7 +738,8 @@ class Encoder(nn.Module):
         
         hidden_states2 = torch.zeros_like(hidden_states)
         hidden_states22 = torch.zeros_like(hidden_states)
-        hidden_states3 = torch.zeros_like(hidden_states)
+        hidden_states3 = torch.zeros(hidden_states.size(0),hidden_states.size(1),2*hidden_states.size(2))
+        
         # hidden_states4 = torch.zeros_like(hidden_states)
 
         for i in range(hidden_states.size(0)):
@@ -833,18 +835,18 @@ class Encoder(nn.Module):
             sen_ss.append(now_all_sen)
             qa = now_all_sen[-1][0]
             qas.append(qa)
-
+            
+            
+            # for j in range(len(now_all_sen)-1):
+            #     hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
+            # hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
+            
             for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
+                hidden_states3[i][b] = torch.mean(self.Mean_transformers(hidden_states22[i][b:e],0))
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
             # sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            
-#            hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-#            hidden_states3[i][now_all_sen[:,0]] = sen[0]
-            
-            # hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
@@ -887,11 +889,12 @@ class Encoder(nn.Module):
         for i in range(3):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
-
+             
             V21 = hidden_states3[i][qas[i]]
+            # V21 = hidden_states
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
-
+            
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V12 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
             # if len(sen_ss[i])>13:
@@ -922,8 +925,9 @@ class Encoder(nn.Module):
             
             # TV1 = self.dropout(TV1)
             # TV2 = self.dropout(TV2)
-
-            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21])))
+            V21_V2 = torch.mean(self.Mean_transformers(hidden_states22[i][ex_edge[0][i]%512:ex_edge[1][i]%512]),0)
+            
+            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21_V2])))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
