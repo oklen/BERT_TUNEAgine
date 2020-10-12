@@ -926,7 +926,7 @@ class Encoder(nn.Module):
             # TV2 = self.dropout(TV2)
             V21_V2 = torch.mean(hidden_states22[i][ex_edge[0][i]%512:ex_edge[1][i]%512],0)
             
-            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21_V2])))
+            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21])))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
