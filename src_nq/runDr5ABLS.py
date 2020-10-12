@@ -553,6 +553,7 @@ def main():
                             if i !='<pad>':
                                 WrOut+=str(i)
                             else: break
+                        ErrorSelect.write(WrOut)
                         ErrorSelect.write("\n")
                         Err_cnt+=1
             logging.info("ACC:{}% LOSS:{}".format(model.ACC/model.ALL*100,ttr_loss/tgobal_step))
