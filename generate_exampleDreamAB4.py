@@ -249,7 +249,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             if choice == example.answer: 
                 label = 1
 
-            tok_is_choice_end = len(mtokens) - 1
+            # tok_is_choice_end = len(mtokens) - 1
 
 
             input_ids = tokenizer.convert_tokens_to_ids(mtokens)
@@ -267,13 +267,14 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 logging.info("MAX LEN EXCEEED:{}".format(len(input_ids)))
 #                print(example.talk)
             graph = Graph()
-            graph.add_edge(tok_is_question_begin,tok_is_question_end,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
-            graph.add_edge(tok_is_choice_begin,tok_is_choice_end,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
+
             
 #            edge_index_now = -1
 
             for node_i in range(len(mtokens)):
                 graph.add_node(node_i)
+            graph.add_edge(tok_is_question_begin,tok_is_question_end,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
+            graph.add_edge(tok_is_choice_begin,tok_is_choice_end,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
             ALL_SEN = []
             AB = [[],[]]
 #            if len(names) > 2: print(name)
