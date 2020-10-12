@@ -541,7 +541,7 @@ def main():
                     ttr_loss+=loss.item()
                     if model.ACC == tmp_acc and _ != 0:
                         WrOut = "Model Select:\n"
-                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.we_choice]):
+                        for i in albert_toker.convert_ids_to_tokens(batch.input_ids[0][model.model_choice]):
                             if i !='<pad>':
                                 WrOut+=str(i)
                             else: break
