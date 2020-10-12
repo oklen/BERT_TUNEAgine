@@ -48,7 +48,7 @@ else:
 
 
 #from spacy.lang.en import English
-from modules.graph_encoderABDUG2LS import NodePosition, Graph, EdgeType, get_edge_position
+from modules.graph_encoderABDUG4LS4V import NodePosition, Graph, EdgeType, get_edge_position
 
 
 # nlp = English()
@@ -123,8 +123,6 @@ class InputFeatures(object):
         self.segment_ids = segment_ids
         self.graph = graph
         self.label = label
-        self.label_id = None
-
         #self.show()
 
         #exit(0)
@@ -269,7 +267,9 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 logging.info("MAX LEN EXCEEED:{}".format(len(input_ids)))
 #                print(example.talk)
             graph = Graph()
-
+            graph.add_edge(tok_is_question_begin,tok_is_question_end,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
+            graph.add_edge(tok_is_choice_begin,tok_is_choice_end,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
+            
 #            edge_index_now = -1
 
             for node_i in range(len(mtokens)):
@@ -297,14 +297,14 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
 #                graph.add_edge(tok_is_question_begin,tok_begin,EdgeType.QA_TO_SENTENCE)
 #                graph.add_edge(tok_begin,0,EdgeType.SENTENCE_TO_CLS)
                 
-            for tok_index in range(tok_is_question_begin,tok_is_question_end):
-                graph.add_edge(tok_index,tok_is_question_begin,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
+            # for tok_index in range(tok_is_question_begin,tok_is_question_end):
+            #     graph.add_edge(tok_index,tok_is_question_begin,EdgeType.QUESTION_TOKEN_TO_SENTENCE)
                 # for tindex in range(tok_is_question_begin-1):
                 #     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
                 #     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
                     
-            for tok_index in range(tok_is_choice_begin,tok_is_choice_end):
-                graph.add_edge(tok_index,tok_is_choice_begin,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
+            # for tok_index in range(tok_is_choice_begin,tok_is_choice_end):
+            #     graph.add_edge(tok_index,tok_is_choice_begin,EdgeType.CHOICE_TOKEN_TO_SENTENCE)
                 # for tindex in range(tok_is_question_begin-1):
                 #     graph.add_edge(tindex,tok_index,EdgeType.C_TO_QA)
                 #     graph.add_edge(tok_index,tindex,EdgeType.QA_TO_C)
@@ -444,7 +444,6 @@ def run_convert_examples_to_features(args, examples, tokenizer, is_training, cac
 
 def main():
     parser = argparse.ArgumentParser()
-
 
     parser.add_argument("--input_pattern", default=None, type=str, required=True)
     parser.add_argument("--output_dir", default=None, type=str, required=True)
