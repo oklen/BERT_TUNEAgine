@@ -839,7 +839,6 @@ class Encoder(nn.Module):
             for j in range(len(now_all_sen)-1):
                 hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
             hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
-            
             # for b,e in now_all_sen:
             #     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
@@ -926,7 +925,7 @@ class Encoder(nn.Module):
             # TV2 = self.dropout(TV2)
             V21_V2 = torch.mean(hidden_states22[i][ex_edge[0][i]%512:ex_edge[1][i]%512],0)
             
-            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21])))
+            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21_V2])))
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
             # V1 = torch.mean(hidden_states4[i][sen_ss[i][:-1,0]],0)
