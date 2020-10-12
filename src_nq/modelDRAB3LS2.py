@@ -239,7 +239,7 @@ class NqModel(nn.Module):
         for index,score in enumerate(tok_logits):
             self.ALL+=1
             self.model_choice = torch.argmax(score)
-            self.ground_answer = res_labels
+            self.ground_answer = res_labels[0]
             if torch.argmax(score) == res_labels:
                 self.ACC+=1
 
