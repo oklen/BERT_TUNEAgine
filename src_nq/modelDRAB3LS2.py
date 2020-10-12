@@ -114,7 +114,7 @@ class NqModel(nn.Module):
     def report_scores(self,input_idss):
         to_write = ""
         myscores = torch.softmax(self.m_scores, 0)
-        for i in len(self.m_scores):
+        for i in range(len(self.m_scores)):
             to_write+="Model calculate scores:"+str(myscores[i])+"\n"
             to_write+=str(self.albert_toker.convert_ids_to_tokens(input_idss[0][i]))
             to_write+="\n"
