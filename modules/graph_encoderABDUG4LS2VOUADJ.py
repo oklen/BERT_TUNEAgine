@@ -836,20 +836,16 @@ class Encoder(nn.Module):
             qas.append(qa)
             
             
-            for j in range(len(now_all_sen)-1):
-                hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
-            hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
-            # for b,e in now_all_sen:
-            #     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
+            # for j in range(len(now_all_sen)-1):
+            #     hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
+            # hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
+            
+            for b,e in now_all_sen:
+                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
             # sen,_ =  pad_packed_sequence(sen, batch_first=True)
-            
-#            hidden_states3[i][now_all_sen[:-1,0]] = sen[0]
-#            hidden_states3[i][now_all_sen[:,0]] = sen[0]
-            
-            # hidden_states4[i][now_all_sen[:,0]] = torch.cat([hidden_states3[i][now_all_sen[:,0]],sen[0]],-1)
             
 #            hidden_statesOut.append(torch.cat([hq1q2,hq2q1]))
         # x = hidden_states3.view(-1,self.config.hidden_size)
