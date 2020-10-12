@@ -836,12 +836,12 @@ class Encoder(nn.Module):
             qas.append(qa)
             
             
-            # for j in range(len(now_all_sen)-1):
-            #     hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
-            # hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
+            for j in range(len(now_all_sen)-1):
+                hidden_states3[i][now_all_sen[j][0]] = torch.mean(hidden_states22[i][now_all_sen[j][0]:now_all_sen[j][1]],0)
+            hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
             
-            for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
+            # for b,e in now_all_sen:
+            #     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
