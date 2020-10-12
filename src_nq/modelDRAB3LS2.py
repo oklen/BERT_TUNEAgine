@@ -52,6 +52,7 @@ class NqModel(nn.Module):
         self.albert_toker = AlbertTokenizer.from_pretrained("albert-xxlarge-v2")
         my_config.hidden_size = self.bert.config.hidden_size
         my_config.num_attention_heads = self.bert.config.num_attention_heads
+        self.m_scores = None
 
         self.right = 0
         self.all = 0
@@ -110,11 +111,11 @@ class NqModel(nn.Module):
         
         #self.apply(self.init_bert_weights)
 
-    def report_scores(self,scores,input_idss):
+    def report_scores(self,input_idss):
         to_write = ""
-        myscores = torch.softmax(scores, 0)
-        for i in len(myscores):
-            to_write+="Model calculate scores:"+str(scores[i])+"\n"
+        myscores = torch.softmax(self.m_scores, 0)
+        for i in len(self.m_scores):
+            to_write+="Model calculate scores:"+str(myscores[i])+"\n"
             to_write+=str(self.albert_toker.convert_ids_to_tokens(input_idss[0][i]))
             to_write+="\n"
         return to_write
@@ -228,6 +229,7 @@ class NqModel(nn.Module):
 
         # token
 #        print(tok_logits)
+        self.m_scores = tok_logits
         tok_logits = torch.stack(tok_logits)
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
