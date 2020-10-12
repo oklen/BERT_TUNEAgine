@@ -468,7 +468,7 @@ def main():
                                  (batch.edges_src.cuda(non_blocking=True), batch.edges_tgt.cuda(non_blocking=True), batch.edges_type.cuda(non_blocking=True), batch.edges_pos.cuda(non_blocking=True)),batch.label.cuda(non_blocking=True),batch.all_sen.cuda(non_blocking=True))
                     # print("Out!")
                     # sleep(3)
-                    model.report_scores(batch.input_ids)
+                    # model.report_scores(batch.input_ids)
                     
                     if n_gpu > 1:
                         loss = loss.mean()  # mean() to average on multi-gpu.
