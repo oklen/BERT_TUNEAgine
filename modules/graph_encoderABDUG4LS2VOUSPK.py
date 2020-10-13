@@ -838,7 +838,7 @@ class Encoder(nn.Module):
             
             
             for j in range(len(now_all_sen)-1):
-                hidden_states3[i][now_all_sen[j][0]+2] = torch.mean(hidden_states22[i][now_all_sen[j][0]+2:now_all_sen[j][1]],0)
+                hidden_states3[i][min(now_all_sen[j][0]+2,now_all_sen[j][1])] = torch.mean(hidden_states22[i][min(now_all_sen[j][0]+2,now_all_sen[j][1]):now_all_sen[j][1]],0)
             hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][now_all_sen[-1][0]:now_all_sen[-1][1]],0)
             
             # for b,e in now_all_sen:
@@ -908,7 +908,7 @@ class Encoder(nn.Module):
             VQ = torch.zeros_like(VP)
             VQ[:,:] = V21
             
-            VQO = self.LineTrs((torch.cat([hidden_states3[i][sen_ss[i][:-1,0]],VP,VQ],-1)))
+            VQO = self.LineTrs((torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)))
             V11  = torch.mean(self.lineSub(VQO),0)
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
