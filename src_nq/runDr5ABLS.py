@@ -408,7 +408,7 @@ def main():
     
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and 'bert'  in n ], 'weight_decay': args.weight_decay},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00}
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert'  in n ], 'weight_decay': 0.00}
     ]
 
     if args.fp16:
