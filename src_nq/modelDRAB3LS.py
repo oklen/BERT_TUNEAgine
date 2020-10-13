@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG4LS2VOUADJ import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG4LS2VOUSPK import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig,AlbertTokenizer
 import math
 #  elgeish/cs224n-squad2.0-albert-large-v2
@@ -48,7 +48,7 @@ class NqModel(nn.Module):
         # self.bert_config.Extgradient_checkpointing = True
         # self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
         self.bert =  AlbertModel.from_pretrained("albert-base-v2",config = self.bert_config)
-        self.albert_toker = AlbertTokenizer.from_pretrained("albert-xxlarge-v2")
+        self.albert_toker = AlbertTokenizer.from_pretrained("albert-base-v2")
         
 #        self.bert = AlbertModel.from_pretrained("albert-base-v2")
         my_config.hidden_size = self.bert.config.hidden_size
@@ -164,7 +164,8 @@ class NqModel(nn.Module):
 #                    x = self.dropout(sequence_output[:,0])
 #                    print(x)
 #                    x = self.dropout(graph_output)
-                    Output = graph_output.view(graph_output.size(0),-1,self.bert_config.hidden_size)
+                    # Output = graph_output.view(graph_output.size(0),-1,self.bert_config.hidden_size)
+                    
                     # print("shape:",Output.shape,_.shape)
                     # print(Output.shape,sequence_output[:,0].unsqueeze(1).shape)
                     # output_scores_t = torch.bmm(Output,_.unsqueeze(1).transpose(-1,-2))
