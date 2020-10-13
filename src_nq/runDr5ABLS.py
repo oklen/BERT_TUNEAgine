@@ -401,8 +401,8 @@ def main():
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
     encoder_parmeters = [
-        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00}
+        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
         
     ]
     
@@ -414,8 +414,8 @@ def main():
     if args.fp16:
         # optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
         optimizer = apex_optim.FusedAdam([
-            {'params:':optimizer_grouped_parameters},
-            {'params:':encoder_parmeters,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
+            optimizer_grouped_parameters,
+            encoder_parmeters
             ], lr=args.learning_rate)
         model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
         
