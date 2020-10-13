@@ -242,7 +242,10 @@ class NqModel(nn.Module):
         # token
 #        print(tok_logits)
 
-        self.f_scores = tok_logits
+        self.f_scores = tok_logits[0]
+        
+        print("scores:",self.f_scores)
+        
         tok_logits = torch.stack(tok_logits)
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
