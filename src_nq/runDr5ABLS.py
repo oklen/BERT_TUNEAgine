@@ -515,10 +515,10 @@ def main():
                     if (step + 1) % args.gradient_accumulation_steps == 0 and (
                         global_step + 1) % args.report_steps == 0 and (
                         args.local_rank == -1 or torch.distributed.get_rank() == 0):
-                        lr_this_step = get_lr(optimizer)
-                        logging.info("Epoch={} iter={} lr={:.12f} train_ave_loss={:.6f} .".format(
+                        # lr_this_step = get_lr(optimizer)
+                        logging.info("Epoch={} iter={} lr1={:.12f} lr2={:.12f} train_ave_loss={:.6f} .".format(
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
-                            _, global_step, lr_this_step, (tr_loss - report_loss) / args.report_steps))
+                            _, global_step, get_lr(optimizer[0]),get_lr(optimizer[1]), (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
                         
             model.eval()
