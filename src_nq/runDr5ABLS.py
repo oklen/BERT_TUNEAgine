@@ -220,6 +220,7 @@ def main():
     parser.add_argument("--train_batch_size", default=4, type=int, help="Total batch size for training.")
     parser.add_argument("--predict_batch_size", default=8, type=int, help="Total batch size for predictions.")
     parser.add_argument("--learning_rate", default=2e-5, type=float, help="The initial learning rate for Adam.")
+    parser.add_argument("--learning_rate2", default=-1, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs", default=3.0, type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--warmup_steps", default=100, type=int)
@@ -392,17 +393,22 @@ def main():
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
-#    print(param_optimizer)
-    #print([i for i,j in model.named_parameters()])
-
+    
     # hack to remove pooler, which is not used
     # thus it produce None grad that break apex
     param_optimizer = [n for n in param_optimizer ]
+    
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    encoder_parmeters = [
+        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00}
+        
+    ]
+    
     optimizer_grouped_parameters = [
-        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.00}
+        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and 'bert'  in n ], 'weight_decay': args.weight_decay},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00}
     ]
 
     if args.fp16:
@@ -417,7 +423,11 @@ def main():
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
 
-        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = AdamW([
+            {'params:':optimizer_grouped_parameters},
+            {'params:':encoder_parmeters,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
+            ], lr=args.learning_rate, eps=args.adam_epsilon)
+        
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
 
 
