@@ -985,8 +985,10 @@ class Initializer(nn.Module):
 
         n_edges = graph_hidden.data.new(batch_size * n_nodes).fill_(0)
         n_edges.scatter_add_(dim=0, index=edges_tgt, src=torch.ones_like(edges_tgt).float())
+        
         # print(edges_src)
         # print(edges_tgt)
+        
         indices = n_edges.nonzero().view(-1)
         graph_hidden[indices] += sum_hidden[indices] / n_edges[indices].unsqueeze(-1)
 
