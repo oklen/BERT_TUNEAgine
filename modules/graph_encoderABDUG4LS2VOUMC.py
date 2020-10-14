@@ -681,24 +681,7 @@ class Encoder(nn.Module):
     
     
     
-    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False):
-#        hidden_states = self.initializer(hidden_states, st_mask, edges)
-        
-#        edges_src, edges_tgt, edges_type, edges_pos = edges
-#       QA_TO_CLS = 4
-#       SENTENCE_TO_CLS = 5
-#       SENTENCE_TO_NEXT = 6
-#       SENTENCE_TO_BEFORE = 7
-            
-#        up_edge+=edges_type.eq(EdgeType.SENTENCE_TO_TOKEN).nonzero().view(-1).tolist() 
-
-        # mid_edge = edges_type.eq(EdgeType.A_TO_B).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.B_TO_A).nonzero().view(-1).tolist()
-        # mid_edge = edges_type.eq(EdgeType.A_TO_QUESTION).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.B_TO_QUESTION).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_A).nonzero().view(-1).tolist()
-        # mid_edge += edges_type.eq(EdgeType.QUESTION_TO_B).nonzero().view(-1).tolist()
-        
+    def forward(self, hidden_states, st_mask, edges_src, edges_tgt, edges_type, edges_pos, all_sen,output_all_encoded_layers=False):        
         
         ex_edge2  = edges_type.eq(EdgeType.QUESTION_TOKEN_TO_SENTENCE).nonzero().view(-1).tolist()
         # ex_edge += edges_type.eq(EdgeType.A_TO_CHOICE).nonzero().view(-1).tolist()
@@ -815,7 +798,7 @@ class Encoder(nn.Module):
                         create_custom_forward(self.qtoc),
                         query2,
                         key2,
-                        value2,)
+                         value2,)
                 else:
                     if j==0:
                         hq2q1 = self.qtoc(query2,key2,value2)
@@ -886,14 +869,17 @@ class Encoder(nn.Module):
         # x = x.view(hidden_states3.shape)
         # hidden_states4 = self.conv(x,ex_edge3).view(hidden_states3.shape)
         # hidden_states5  = self.lineSub(torch.cat([hidden_states3,hidden_states4],-1))
-        
+        all_que = []
+        for i in range(3):
+            all_que.append(hidden_states3[i][qas[i]])
         
         for i in range(3):
             # V1 = torch.mean(hidden_states5[i][sen_ss[i][:-1,0]],0)
             # V2 = hidden_states5[i][qas[i]]
-             
+
             V21 = hidden_states3[i][qas[i]]
-            sc3 = self.mcs(V21).unsqueeze(0).transpose(-1,-2)
+            #Below add a dropout
+            sc3 = self.mcs(torch.mean(torch.dropout(torch.stack(all_que)),0)).unsqueeze(0).transpose(-1,-2)
             
             # V21 = hidden_states
             # V22 = hidden_states4[i][qas[i]]
@@ -906,6 +892,7 @@ class Encoder(nn.Module):
             # else:
                 
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            
             TopV11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             MV11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             
@@ -934,7 +921,8 @@ class Encoder(nn.Module):
             
             # V21_V2 = torch.mean(hidden_states22[i][ex_edge[0][i]%512:ex_edge[1][i]%512],0)
             
-            TVF = self.dropout(self.dnaAct(torch.cat([torch.mean(V11,0),V21])))
+            #Add dropout
+            TVF = self.dropout(self.dnaAct(torch.cat([torch.mean(torch.dropout(V11),0),V21])))
             
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
@@ -943,6 +931,7 @@ class Encoder(nn.Module):
 #            V2 = torch.mean(hidden_states3[i][sen_ss[i][-1,0]],0)
 #            print(hq1q2.shape,hq2q1.shape)
             # hidden_statesOut.append(torch.cat([self.lineSub(V1),self.lineSub(V2)]))
+            
             hidden_statesOut.append(TVF)
             # hidden_statesOut.append(torch.cat([V1,V2]))
             
