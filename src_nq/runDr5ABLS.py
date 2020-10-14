@@ -435,8 +435,8 @@ def main():
         #                              warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
     #print(get_lr(optimizer))
-    logger.info("Get lr:{} {}".format(get_lr(optimizer,0),get_lr(optimizer,-1)))
-    exit(0)
+    # logger.info("Get lr:{} {}".format(get_lr(optimizer,0),get_lr(optimizer,-1)))
+    # exit(0)
     
     global_step = 0
     last_acc = 87.0
