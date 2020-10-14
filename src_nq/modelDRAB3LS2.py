@@ -112,7 +112,7 @@ class NqModel(nn.Module):
         #self.apply(self.init_bert_weights)
 
     def report_scores(self,input_idss):
-        to_write = "Follow are three choice for a question\n"
+        to_write = "Following are three choice for a question\n"
         myscores = torch.softmax(self.m_scores, 0)
         for i in range(len(self.m_scores)):
             to_write+="Model calculate scores:"+str(myscores[i])+"\n"

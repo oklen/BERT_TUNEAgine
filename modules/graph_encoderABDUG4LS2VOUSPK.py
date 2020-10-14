@@ -651,7 +651,7 @@ class Encoder(nn.Module):
         # self.conv = GraphConv(config.hidden_size, config.hidden_size,'max')
             
         # self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
-        self.LineTrs = torch.nn.Linear(config.hidden_size*3,config.hidden_size*3)
+        # self.LineTrs = torch.nn.Linear(config.hidden_size*3,config.hidden_size*3)
         self.lineSub = torch.nn.Linear(config.hidden_size*3,config.hidden_size)
         #self.lineSub = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
         
@@ -909,7 +909,9 @@ class Encoder(nn.Module):
             VQ = torch.zeros_like(VP)
             VQ[:,:] = V21
             
-            VQO = self.LineTrs((torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)))
+            # VQO = self.LineTrs((torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)))
+            VQO = torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)
+
             V11  = torch.mean(self.lineSub(VQO),0)
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
