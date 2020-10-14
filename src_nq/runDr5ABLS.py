@@ -65,9 +65,8 @@ logger = logging.getLogger(__name__)
 #        return x/warmup
 #    return max((x-1.)/(warmup-1.), 0)
 
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
+def get_lr(optimizer,ind):
+    return optimizer.param_groups[ind]['lr']
     
 NqBatch = collections.namedtuple('NqBatch',
                                  ['input_ids', 'input_mask', 'segment_ids', 'st_mask',
@@ -436,7 +435,7 @@ def main():
         #                              warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
     #print(get_lr(optimizer))
-    logger.info("Get lr:{}".format(get_lr(optimizer)))
+    logger.info("Get lr:{} {}".format(get_lr(optimizer,0),get_lr(optimizer,-1)))
     exit(0)
     
     global_step = 0
@@ -513,7 +512,7 @@ def main():
                         # lr_this_step = get_lr(optimizer)
                         logging.info("Epoch={} iter={} lr1={:.12f} lr2={:.12f} train_ave_loss={:.6f} .".format(
                             # _, global_step, lr_this_step, tr_loss / nb_tr_examples))
-                            _, global_step, get_lr(optimizer,0),get_lr(optimizer,1), (tr_loss - report_loss) / args.report_steps))
+                            _, global_step, get_lr(optimizer,0),get_lr(optimizer,-1), (tr_loss - report_loss) / args.report_steps))
                         report_loss = tr_loss
                         
             model.eval()
