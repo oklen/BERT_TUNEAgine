@@ -436,8 +436,9 @@ def main():
         #                              warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
     #print(get_lr(optimizer))
-    logger.info("Get lr:",get_lr(optimizer))
-
+    logger.info("Get lr:{}".format(get_lr(optimizer)))
+    exit(0)
+    
     global_step = 0
     last_acc = 87.0
     albert_toker = AlbertTokenizer.from_pretrained('albert-xxlarge-v2')
