@@ -400,22 +400,17 @@ def main():
     
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-    encoder_parmeters = [
-        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
-        
-    ]
     
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and 'bert'  in n ], 'weight_decay': args.weight_decay},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert'  in n ], 'weight_decay': 0.00}
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert'  in n ], 'weight_decay': 0.00},
+        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
     ]
 
     if args.fp16:
         # optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-        optimizer = apex_optim.FusedAdam(
-            optimizer_grouped_parameters
-            +encoder_parmeters
+        optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters
             , lr=args.learning_rate)
         model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
         
@@ -445,7 +440,7 @@ def main():
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
     #print(get_lr(optimizer))
     logger.info("Get lr:",get_lr(optimizer))
-    exit(0)
+
     global_step = 0
     last_acc = 87.0
     albert_toker = AlbertTokenizer.from_pretrained('albert-xxlarge-v2')
