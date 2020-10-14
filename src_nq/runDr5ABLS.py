@@ -220,7 +220,7 @@ def main():
     parser.add_argument("--train_batch_size", default=4, type=int, help="Total batch size for training.")
     parser.add_argument("--predict_batch_size", default=8, type=int, help="Total batch size for predictions.")
     parser.add_argument("--learning_rate", default=2e-5, type=float, help="The initial learning rate for Adam.")
-    parser.add_argument("--learning_rate2", default=-1, type=float, help="The initial learning rate for Adam.")
+    parser.add_argument("--learning_rate2", default=0, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs", default=3.0, type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--warmup_steps", default=100, type=int)
@@ -404,8 +404,8 @@ def main():
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and 'bert'  in n ], 'weight_decay': args.weight_decay},
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert'  in n ], 'weight_decay': 0.00},
-        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
+        {'params': [p for n, p in param_optimizer if (not any(nd in n for nd in no_decay)) and  'bert' not in n], 'weight_decay': args.weight_decay,'lr': args.learning_rate2 if args.learning_rate2!=0 else args.learning_rate},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.00,'lr': args.learning_rate2 if args.learning_rate2!=0 else args.learning_rate}
     ]
 
     if args.fp16:
@@ -421,10 +421,7 @@ def main():
 #                             warmup=args.warmup_proportion,
 #                             t_total=num_train_optimization_steps)
 
-        optimizer = AdamW([
-            {'params:':optimizer_grouped_parameters},
-            {'params:':encoder_parmeters,'lr': args.learning_rate2 if args.learning_rate2!=-1 else args.learning_rate}
-            ], lr=args.learning_rate, eps=args.adam_epsilon)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
         
 #        optimizer = SGD(optimizer_grouped_parameters, lr=args.learning_rate,momentum=0.9)
 
