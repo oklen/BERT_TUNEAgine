@@ -65,9 +65,9 @@ logger = logging.getLogger(__name__)
 #        return x/warmup
 #    return max((x-1.)/(warmup-1.), 0)
 
-def get_lr(optimizer,ind):
+def get_lr(optimizer):
     for param_group in optimizer.param_groups:
-        return param_group[ind]['lr']
+        return param_group['lr']
     
 NqBatch = collections.namedtuple('NqBatch',
                                  ['input_ids', 'input_mask', 'segment_ids', 'st_mask',
@@ -443,7 +443,7 @@ def main():
         # scheduler = WarmupConstantSchedule(optimizer,
         #                              warmup_steps=int(args.warmup_proportion * num_train_optimization_steps)
         #                              if args.warmup_proportion > 0 else args.warmup_steps)
-
+    print(get_lr(optimizer))
     global_step = 0
     last_acc = 87.0
     albert_toker = AlbertTokenizer.from_pretrained('albert-xxlarge-v2')
