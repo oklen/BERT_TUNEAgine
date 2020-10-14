@@ -112,11 +112,15 @@ class NqModel(nn.Module):
         #self.apply(self.init_bert_weights)
 
     def report_scores(self,input_idss):
-        to_write = ""
+        to_write = "Follow are three choice for a question\n"
         myscores = torch.softmax(self.m_scores, 0)
         for i in range(len(self.m_scores)):
             to_write+="Model calculate scores:"+str(myscores[i])+"\n"
-            to_write+=str(self.albert_toker.convert_ids_to_tokens(input_idss[0][i]))
+            for word in self.albert_toker.convert_ids_to_tokens(input_idss[0][i]):
+                if word == '<pad>':
+                    continue
+                else:
+                    to_write += str(word)
             to_write+="\n"
         return to_write
     
