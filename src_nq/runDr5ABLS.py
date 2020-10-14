@@ -24,6 +24,7 @@ import logging
 import math
 import os
 import random
+import time
 import sys
 from io import open
 import gc
@@ -452,7 +453,7 @@ def main():
         nb_tr_examples = 0
         model.zero_grad()
         optimizer.zero_grad()
-        ErrorSelect = open("./Err_for_5ABLS.txt",'w+');
+        ErrorSelect = open("./Err_for_5ABLS_" + time.ctime()+ ".txt",'w+');
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
             logging.info("Loggin TEST!")
             for data_path in glob(args.train_pattern):
