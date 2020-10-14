@@ -667,6 +667,8 @@ class Encoder(nn.Module):
 
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
         self.dnaAct = torch.relu
+        self.mcs = torch.nn.Linear(config.hidden_size, 3)
+        
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
 
@@ -837,12 +839,12 @@ class Encoder(nn.Module):
             qas.append(qa)
             
             
-            for j in range(len(now_all_sen)-1):
-                hidden_states3[i][min(now_all_sen[j][0]+2,now_all_sen[j][1])] = torch.mean(hidden_states22[i][min(now_all_sen[j][0]+2,now_all_sen[j][1]):now_all_sen[j][1]],0)
-            hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][now_all_sen[-1][0]:now_all_sen[-1][1]],0)
+            # for j in range(len(now_all_sen)-1):
+            #     hidden_states3[i][min(now_all_sen[j][0]+2,now_all_sen[j][1])] = torch.mean(hidden_states22[i][min(now_all_sen[j][0]+2,now_all_sen[j][1]):now_all_sen[j][1]],0)
+            # hidden_states3[i][now_all_sen[-1][0]] = torch.mean(hidden_states22[i][now_all_sen[-1][0]:now_all_sen[-1][1]],0)
             
-            # for b,e in now_all_sen:
-            #     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
+            for b,e in now_all_sen:
+                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
@@ -891,6 +893,7 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
             V21 = hidden_states3[i][qas[i]]
+            sc3 = self.mcs(V21).unsqueeze(0).transpose(-1,-2)
             
             # V21 = hidden_states
             # V22 = hidden_states4[i][qas[i]]
@@ -903,16 +906,17 @@ class Encoder(nn.Module):
             # else:
                 
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
+            TopV11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
+            MV11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             
-            
-            VP = hidden_states3[i][sen_ss[i][:-1,0]+2]
+            VP = hidden_states3[i][sen_ss[i][:-1,0]]
             VQ = torch.zeros_like(VP)
             VQ[:,:] = V21
             
             # VQO = self.LineTrs((torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)))
             VQO = torch.cat([hidden_states22[i][sen_ss[i][:-1,0]],VP,VQ],-1)
 
-            V11  = torch.mean(self.lineSub(VQO),0)
+            V11  = torch.stack([torch.mean(self.lineSub(VQO),0),TopV11,MV11])*sc3
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
@@ -930,7 +934,7 @@ class Encoder(nn.Module):
             
             # V21_V2 = torch.mean(hidden_states22[i][ex_edge[0][i]%512:ex_edge[1][i]%512],0)
             
-            TVF = self.dropout(self.dnaAct(torch.cat([V11,V21])))
+            TVF = self.dropout(self.dnaAct(torch.cat([torch.mean(V11,0),V21])))
             
             # V1 = self.lineSub(TV1)
             # V2 = self.lineSub(TV2)
