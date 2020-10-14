@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG4LS2VOU import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG4LS2VOUSPK import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig,AlbertTokenizer
 import math
 #  elgeish/cs224n-squad2.0-albert-large-v2
@@ -230,7 +230,7 @@ class NqModel(nn.Module):
         # token
 #        print(tok_logits)
         tok_logits = torch.stack(tok_logits)
-        self.m_scores = tok_logits
+        self.m_scores = tok_logits[0]
         res_labels = torch.tensor(res_labels,dtype=torch.long).to(tok_logits.device)
 #        print(label)
 #        print(tok_logits,res_labels)

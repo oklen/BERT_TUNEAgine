@@ -891,6 +891,7 @@ class Encoder(nn.Module):
             # V2 = hidden_states5[i][qas[i]]
              
             V21 = hidden_states3[i][qas[i]]
+            
             # V21 = hidden_states
             # V22 = hidden_states4[i][qas[i]]
             # V23 = hidden_states6[i][qas[i]]
