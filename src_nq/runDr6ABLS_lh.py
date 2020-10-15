@@ -55,6 +55,7 @@ WEIGHTS_NAME = "pytorch_modelAB.bin"
 CONFIG_NAME = "config.json"
 
 logger = logging.getLogger(__name__)
+
 #def warmup_linear(x, warmup=0.002):
 #    """ Specifies a triangular learning rate schedule where peak is reached at `warmup`*`t_total`-th (as provided to BertAdam) training step.
 #        After `t_total`-th training step, learning rate is zero. """
@@ -319,10 +320,8 @@ def main():
 #    my_config.forward_edges = [EdgeType.TOKEN_TO_SENTENCE,
 #                               EdgeType.SENTENCE_TO_PARAGRAPH,
 #                               EdgeType.PARAGRAPH_TO_DOCUMENT]
-    #print(my_config)
+
     if args.do_train:
-
-
         model = NqModel( my_config=my_config,args=args)
         #model_dict = model.state_dict()
         #pretrained_model_dict = torch.load(pretrained_model_file, map_location=lambda storage, loc: storage)
@@ -406,7 +405,6 @@ def main():
         # optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
         optimizer = apex_optim.FusedAdam(optimizer_grouped_parameters, lr=args.learning_rate)
         model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
-        
     else:
         
 #        optimizer = BertAdam(optimizer_grouped_parameters,
