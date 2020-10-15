@@ -875,9 +875,11 @@ class Encoder(nn.Module):
             # VQ[:,:] = self.VQT(V21)
             
             VQ = self.VQT(V21)
-            VQO = torch.tanh(VQ@VP.transpose(-1,-2))
+            VS = VQ@VP.transpose(-1,-2)
+            VQO = torch.tanh(VS/math.sqrt(self.config.hidden_size))
+            
             #print(VQO.shape,VP.shape)
-            V11  = torch.mean(VQO.unsqueeze(-1)*VP,0)
+            V11  = torch.mean(VQO.unsqueeze(-1)*VP*len(VQO)/torch.abs(torch.sum(VQO,0)),0)
             
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
