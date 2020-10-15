@@ -872,7 +872,7 @@ class Encoder(nn.Module):
             VP = hidden_states3[i][sen_ss[i][:-1,0]]
             VQ = torch.zeros_like(VP)
             VQ[:,:] = self.VQT(V21)
-            VQO = torch.tanh(VQ@VP)
+            VQO = torch.tanh(VQ@VP.transpose(-1,-2))
             
             V11  = torch.mean(VQO.unsqueeze(-1)*VP,0)
             
