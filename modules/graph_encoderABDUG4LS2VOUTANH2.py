@@ -670,6 +670,7 @@ class Encoder(nn.Module):
         # self.BoudSelect = nn.ModlueList([getThresScore(self.hidden_size) for _ in range(3)])
 
         self.dnaAct = torch.relu
+        self.Vout = torch.nn.Linear(config.hidden_size,config.hidden_size)
 #        self.conv2 = DNAConv(config.hidden_size,32,16,0.1)
 #        self.conv2 = AGNNConv(config.hidden_size,config.hidden_size)
 
@@ -858,13 +859,15 @@ class Encoder(nn.Module):
             
             #print(VQO.shape,VP.shape)
             #V11  = torch.mean(VQO.unsqueeze(-1)*VP*len(VQO)/torch.abs(torch.sum(VQO,0)),0)
-            V11  = torch.mean(VQO.unsqueeze(-1)*VP,0)
-            
+            #Use type transforme to project it to VP 
+            # V11  = torch.mean(self.Vout(VQO.unsqueeze(-1)*VP),0)
+            V11  = torch.mean(self.Vout(VQO.unsqueeze(-1)*VP)*len(VQO),0)/(torch.sum(VQO,0)+(len(VQO)-torch.sum(VQO,0))/2)
+
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             # V13 = torch.mean(hidden_states6[i][sen_ss[i][:-1,0]],0)
             # V12 = self.TopNet[1](V22, hidden_states4[i][sen_ss[i][:-1,0s]])
-            # print("shape:")
+
             # print(V11.shape,V12.shape,V13.shape)
             # TV1 = torch.cat([V11,V12,V13],-1)
             # TV2 = torch.cat([V21,V22,V23],-1)
