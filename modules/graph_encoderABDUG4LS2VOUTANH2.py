@@ -850,10 +850,10 @@ class Encoder(nn.Module):
             # VQ = torch.zeros_like(VP)
             # VQ[:,:] = self.VQT(V21)
             
-            # VQ = self.VQT(V21)
-            VQ = self.VQT(hidden_states3[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
+            VQ = self.VQT(V21)
+            # VQ = self.VQT(hidden_states3[i][ex_edge2[0][i]%512:ex_edge2[1][i]%512],0)
 
-            VS = VQ@VP.transpose(-1,-2)
+            VS = VQ@self.VPT(VP).transpose(-1,-2)
             VQO = torch.tanh(VS/math.sqrt(self.config.hidden_size))
             
             #print(VQO.shape,VP.shape)
