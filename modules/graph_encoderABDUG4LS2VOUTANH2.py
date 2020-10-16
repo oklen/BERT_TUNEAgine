@@ -861,7 +861,8 @@ class Encoder(nn.Module):
             #V11  = torch.mean(VQO.unsqueeze(-1)*VP*len(VQO)/torch.abs(torch.sum(VQO,0)),0)
             #Use type transforme to project it to VP 
             # V11  = torch.mean(self.Vout(VQO.unsqueeze(-1)*VP),0)
-            V11  = torch.mean(self.Vout(VQO.unsqueeze(-1)*VP)*len(VQO),0)/(torch.sum(VQO,0)+(len(VQO)-torch.sum(VQO,0))/2)
+            abv = torch.abs(torch.sum(VQO,0))
+            V11  = torch.mean(self.Vout(VQO.unsqueeze(-1)*VP)*len(VQO),0)/(abv+(len(VQO)-abv)/2)
 
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
