@@ -205,18 +205,19 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         doc = ""
         #Use conference resoluation
         for sentence in example.talk:
-            doc +=(sentence+"|")
+            doc +=(sentence+" | ")
         doc = nlp(doc)._.coref_resolved
         index = 0
         tmp_sen = ""
         for i in doc:
-            if i !='|':
+            if i !=' | ':
                 tmp_sen += i
             else:
                 if tmp_sen != example.talk[index]:
                     print(example.talk[index])
                     print(tmp_sen)
-
+                if tmp_sen[0] == ' ':tmp_sen=tmp_sen[1:]
+                if tmp_sen[-1] == ' ':tmp_sen=tmp_sen[:-1]
                 example.talk[index] = tmp_sen
                 tmp_sen = ""
                 index+=1
