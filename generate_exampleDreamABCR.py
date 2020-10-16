@@ -210,10 +210,11 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         index = 0
         tmp_sen = ""
         for i in doc:
-            print(len(example.talk),index)
+            #print(len(example.talk),index)
             if i !='_':
                 tmp_sen += i
             else:
+                if index==len(example.talk):
                 if tmp_sen !=  example.talk[index]:
                     print(example.talk[index])
                     print(tmp_sen)
