@@ -721,10 +721,10 @@ class Encoder(nn.Module):
         hidden_states22 = torch.zeros_like(hidden_states)
         hidden_states3 = torch.zeros_like(hidden_states)
         # hidden_states4 = torch.zeros_like(hidden_states)
-
+        r_time = 1
         for i in range(hidden_states.size(0)):
             all_sen_now = all_sen[i][all_sen[i].ne(-1)].view(-1,2)
-            for j in range(2):
+            for j in range(r_time):
                 if j==0:
                     query = hidden_states[i][1:(all_sen_now[-1][0]-1)]
                     key = hidden_states[i][all_sen_now[-1][0]:all_sen_now[-1][1]]
@@ -814,9 +814,12 @@ class Encoder(nn.Module):
             sen_ss.append(now_all_sen)
             qa = now_all_sen[-1][0]
             qas.append(qa)
-
-            for b,e in now_all_sen:
-                hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
+            
+            if r_time == 1:
+                hidden_states22[i] = hidden_states2[i]
+            else:
+                for b,e in now_all_sen:
+                    hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
             
             # sen = pack_sequence([sen])
             # sen,(_,_) = self.rnn(sen,None)
