@@ -213,7 +213,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             if i !='|':
                 tmp_sen += i
             else:
-                if tmp_sen != example.talk[index]:
+                if tmp_sen != example.talk[index]+' ':
                     print(example.talk[index])
                     print(tmp_sen)
                 if tmp_sen[0] == ' ':tmp_sen=tmp_sen[1:]
