@@ -868,7 +868,6 @@ class Encoder(nn.Module):
                 
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
             
-            
             VP = hidden_states3[i][sen_ss[i][:-1,0]]
             
             # VQ = torch.zeros_like(VP)
@@ -881,7 +880,6 @@ class Encoder(nn.Module):
             #print(VQO.shape,VP.shape)
             #V11  = torch.mean(VQO.unsqueeze(-1)*VP*len(VQO)/torch.abs(torch.sum(VQO,0)),0)
             V11  = torch.mean(VQO.unsqueeze(-1)*VP,0)
-
             
             # V11 = self.TopNet[0](V21,hidden_states3[i][sen_ss[i][:-1,0]])
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
