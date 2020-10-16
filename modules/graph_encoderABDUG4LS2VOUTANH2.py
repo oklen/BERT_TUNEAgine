@@ -816,7 +816,8 @@ class Encoder(nn.Module):
             qas.append(qa)
             
             if r_time == 1:
-                hidden_states22[i] = hidden_states2[i]
+                for b,e in now_all_sen:
+                    hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
             else:
                 for b,e in now_all_sen:
                     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
