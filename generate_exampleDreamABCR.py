@@ -53,7 +53,12 @@ else:
 from modules.graph_encoderABDUG4LS4V import NodePosition, Graph, EdgeType, get_edge_position
 
 import spacy
-nlp = spacy.load('en_coref_sm')
+nlp = spacy.load('en_core_web_sm')
+
+import neuralcoref
+coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.25)
+nlp.add_pipe(coref, name='neuralcoref')
+
 
 # nlp = English()
 # sentencizer = nlp.create_pipe("sentencizer")
