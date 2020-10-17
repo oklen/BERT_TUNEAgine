@@ -213,6 +213,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         #     example.talk[i] = example.talk[i].lower()
             
         MtP = []
+        print(example.talk)
         for i in range(len(example.talk)):
             Tname = ""
             print(example.talk[i])
