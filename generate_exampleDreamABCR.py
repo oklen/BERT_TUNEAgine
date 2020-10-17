@@ -216,11 +216,11 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         # print(example.talk)
         for i in range(len(example.talk)):
             Tname = ""
-            print(example.talk[i])
+            # print(example.talk[i])
             for j in example.talk[i]:
                 Tname += j
                 if j == ':':break
-            print(example.talk[i])
+            # print(example.talk[i])
             Lword = example.talk[i][len(Tname):]
             st = ""
             
