@@ -56,7 +56,7 @@ import spacy
 nlp = spacy.load('en_core_web_sm')
 
 import neuralcoref
-coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.35)
+coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.34)
 nlp.add_pipe(coref, name='neuralcoref')
 
 
@@ -530,7 +530,7 @@ def main():
             texts= json.loads(texts)
             for text in texts:
 #                print(text)
-                talk = text[0]
+                talk = text[0].lower()
                 for flo in text[1]:
                     question = flo['question']
                     choice =  flo['choice']
