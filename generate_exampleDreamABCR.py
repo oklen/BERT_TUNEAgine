@@ -214,20 +214,20 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             
         MtP = []
         for i in range(len(example.talk)):
-            name = ""
+            Tname = ""
             for j in example.talk[i]:
-                name += j
+                Tname += j
                 if j == ':':break
-            example.talk[i] = example.talk[i][:len(name)]
+            example.talk[i] = example.talk[i][:len(Tname)]
             st = ""
             for j in example.talk[i]:
                 st+=j
                 if j == '!' or j=='.' or j=='?':
-                    MtP.append(name+st)
+                    MtP.append(Tname+st)
                     st=""
 
         example.talk = MtP
-        
+        print(MtP)
         for sentence in example.talk:
             doc +=(sentence+"§")
         doc = nlp(doc)._.coref_resolved
