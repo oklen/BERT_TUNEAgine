@@ -842,7 +842,7 @@ class Encoder(nn.Module):
 
             # V21 = hidden_states3[i][qas[i]]
             # V21 = self.down_space(self.gelu(torch.mean(self.Up_space(hidden_states2[i][ex_edge[i][0]%512:ex_edge[i][1]%512],0))))
-            V21 = torch.mean(hidden_states2[i][ex_edge[i][0]%512:ex_edge[i][1]%512],0)
+            V21 = torch.mean(hidden_states2[i][ex_edge[0][i]%512:ex_edge[1][i]%512],0)
             # V23 = hidden_states6[i][qas[i]]
 
             # V11 = torch.mean(hidden_states3[i][sen_ss[i][:-1,0]],0)
