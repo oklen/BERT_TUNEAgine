@@ -16,7 +16,7 @@
 """Run BERT on SQuAD."""
 
 from __future__ import absolute_import, division, print_function
-from transformers import AutoTokenizer, AutoModelWithLMHead,AlbertTokenizer,RobertaTokenizer
+from transformers import AutoTokenizer,AlbertTokenizer,RobertaTokenizer
 import warnings
 warnings.filterwarnings("ignore")
 
