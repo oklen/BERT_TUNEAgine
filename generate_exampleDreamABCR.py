@@ -209,6 +209,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         tokens = ['[CLS]']
         doc = ""
         #Use conference resoluation
+        for i in range(len(example.talk)):
+            example.talk[i] = example.talk[i].lower()
         for sentence in example.talk:
             doc +=(sentence+"§")
         doc = nlp(doc)._.coref_resolved
@@ -530,7 +532,7 @@ def main():
             texts= json.loads(texts)
             for text in texts:
 #                print(text)
-                talk = text[0].lower()
+                talk = text[0]
                 for flo in text[1]:
                     question = flo['question']
                     choice =  flo['choice']
