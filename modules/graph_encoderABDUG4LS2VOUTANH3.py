@@ -659,7 +659,8 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.VPT = torch.nn.Linear(config.hidden_size,config.hidden_size)
         self.VQT = torch.nn.Linear(config.hidden_size,config.hidden_size)
-        self.Up_space = torch.nn.Linear(config.hidden)
+        self.Up_space = torch.nn.Linear(config.hidden_size,config.hidden_size*2)
+        self.down_space = torch.nn.Linear(config.hidden_size*2,config.hidden_size)
 
         # self.dropout = nn.Dropout(0.3) seems to high
         
@@ -817,7 +818,7 @@ class Encoder(nn.Module):
             
             if r_time == 1:
                 for b,e in now_all_sen:
-                    hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
+                    hidden_states3[i][b] = self.down_space(self.gelu(torch.mean(self.Up_space(hidden_states2[i][b:e]),0)))
             else:
                 for b,e in now_all_sen:
                     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)

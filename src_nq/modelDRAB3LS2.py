@@ -3,7 +3,7 @@ import torch.nn as nn
 
 #from pytorch_pretrained_bert.modeling import BertPreTrainedModel, BertModel
 
-from modules.graph_encoderABDUG4LS2VOUTANH2 import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
+from modules.graph_encoderABDUG4LS2VOUTANH3 import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 # from modules.graph_encoderABDUG4LS2VOUSPK import NodeType, NodePosition, EdgeType, Encoder,GraphEncoder
 
 from transformers import AutoTokenizer, AutoModelWithLMHead,AutoModel,AlbertModel,AlbertConfig,RobertaModel,RobertaConfig,AlbertTokenizer
