@@ -56,7 +56,7 @@ import spacy
 nlp = spacy.load('en_core_web_lg')
 
 import neuralcoref
-coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.34)
+coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.4)
 nlp.add_pipe(coref, name='neuralcoref')
 
 
@@ -209,8 +209,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         tokens = ['[CLS]']
         doc = ""
         #Use conference resoluation
-        # for i in range(len(example.talk)):
-        #     example.talk[i] = example.talk[i].lower()
+        for i in range(len(example.talk)):
+            example.talk[i] = example.talk[i].lower()
             
         MtP = []
         # print(example.talk)
@@ -236,13 +236,13 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         example.talk = MtP
         
         for sentence in example.talk:
-            doc +=(sentence+"§")
+            doc +=(sentence+"   §   ")
         doc = nlp(doc)._.coref_resolved
         index = 0
         tmp_sen = ""
         for i in doc:
             #print(len(example.talk),index)
-            if i !='§':
+            if i !='   §  ':
                 tmp_sen += i
             else:
                 # if index==len(example.talk):
