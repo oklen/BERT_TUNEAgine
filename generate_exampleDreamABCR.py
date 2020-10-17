@@ -209,8 +209,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         tokens = ['[CLS]']
         doc = ""
         #Use conference resoluation
-        for i in range(len(example.talk)):
-            example.talk[i] = example.talk[i].lower()
+        # for i in range(len(example.talk)):
+        #     example.talk[i] = example.talk[i].lower()
             
         MtP = []
         for i in range(len(example.talk)):
