@@ -56,7 +56,7 @@ import spacy
 nlp = spacy.load('en_core_web_lg')
 
 import neuralcoref
-coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.4)
+coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.5)
 nlp.add_pipe(coref, name='neuralcoref')
 
 
@@ -246,9 +246,9 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 tmp_sen += i
             else:
                 # if index==len(example.talk):
-                if tmp_sen !=  example.talk[index]:
-                    print(example.talk[index])
-                    print(tmp_sen)
+                # if tmp_sen !=  example.talk[index]+"   ":
+                #     print(example.talk[index])
+                #     print(tmp_sen)
                 # if tmp_sen[0] == ' ':tmp_sen=tmp_sen[1:]
                 # if tmp_sen[-1] == ' ':tmp_sen=tmp_sen[:-1]
                 example.talk[index] = tmp_sen
