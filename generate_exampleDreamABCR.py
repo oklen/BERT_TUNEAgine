@@ -218,6 +218,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             for j in example.talk[i]:
                 Tname += j
                 if j == ':':break
+            print(example.talk[i])
             example.talk[i] = example.talk[i][len(Tname):]
             st = ""
             if example.talk[i][-1] != '!' and example.talk[i][-1] != '.' and example.talk[i][-1] != '?':
@@ -228,8 +229,8 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 if j == '!' or j=='.' or j=='?':
                     MtP.append(Tname+st)
                     st=""
-        print(MtP)
-        print(example.talk)
+        # print(MtP)
+        # print(example.talk)
             
         example.talk = MtP
         
