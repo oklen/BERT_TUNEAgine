@@ -218,7 +218,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
             for j in example.talk[i]:
                 Tname += j
                 if j == ':':break
-            example.talk[i] = example.talk[i][:len(Tname)]
+            example.talk[i] = example.talk[i][len(Tname):]
             st = ""
             for j in example.talk[i]:
                 st+=j
