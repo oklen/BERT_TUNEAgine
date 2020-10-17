@@ -53,7 +53,7 @@ else:
 from modules.graph_encoderABDUG4LS4V import NodePosition, Graph, EdgeType, get_edge_position
 
 import spacy
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en_core_web_lg')
 
 import neuralcoref
 coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.34)
