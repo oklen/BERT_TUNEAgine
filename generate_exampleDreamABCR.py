@@ -56,7 +56,7 @@ import spacy
 nlp = spacy.load('en_core_web_sm')
 
 import neuralcoref
-coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.4)
+coref = neuralcoref.NeuralCoref(nlp.vocab,greedyness=0.35)
 nlp.add_pipe(coref, name='neuralcoref')
 
 
