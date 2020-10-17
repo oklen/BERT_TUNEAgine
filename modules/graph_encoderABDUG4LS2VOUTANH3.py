@@ -819,7 +819,7 @@ class Encoder(nn.Module):
             if r_time == 1:
                 for b,e in now_all_sen:
                     # hidden_states3[i][b] = self.down_space(self.gelu(torch.mean(self.Up_space(hidden_states2[i][b:e]),0)))
-                    hidden_states3[i][b] = torch.mean(self.Up_space(hidden_states2[i][b:e]),0)
+                    hidden_states3[i][b] = torch.mean(hidden_states2[i][b:e],0)
             else:
                 for b,e in now_all_sen:
                     hidden_states3[i][b] = torch.mean(hidden_states22[i][b:e],0)
