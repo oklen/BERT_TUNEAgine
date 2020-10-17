@@ -213,7 +213,7 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         #     example.talk[i] = example.talk[i].lower()
             
         MtP = []
-        print(example.talk)
+        # print(example.talk)
         for i in range(len(example.talk)):
             Tname = ""
             print(example.talk[i])
@@ -221,12 +221,10 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
                 Tname += j
                 if j == ':':break
             print(example.talk[i])
-            example.talk[i] = example.talk[i][len(Tname):]
+            Lword = example.talk[i][len(Tname):]
             st = ""
-            if example.talk[i][-1] != '!' and example.talk[i][-1] != '.' and example.talk[i][-1] != '?':
-                print(example.talk[i][-1])
-                exit(0)
-            for j in example.talk[i]:
+            
+            for j in Lword:
                 st+=j
                 if j == '!' or j=='.' or j=='?':
                     MtP.append(Tname+st)
@@ -565,7 +563,7 @@ def main():
                     answer = flo['answer']
         
                     unique_id = text[2]
-                    examples.append(DrExample(talk,question,choice,answer,unique_id))
+                    examples.append(DrExample(copy.deepcopy(talk),question,choice,answer,unique_id))
             run_convert_examples_to_features(args=args,
                                              examples=examples,
                                              tokenizer=tokenizer,
