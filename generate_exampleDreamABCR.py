@@ -211,6 +211,23 @@ def convert_examples_to_features(args, examples, tokenizer, is_training, cached_
         #Use conference resoluation
         for i in range(len(example.talk)):
             example.talk[i] = example.talk[i].lower()
+            
+        MtP = []
+        for i in range(len(example.talk)):
+            name = ""
+            for j in example.talk[i]:
+                name += j
+                if j == ':':break
+            example.talk[i] = example.talk[i][:len(name)]
+            st = ""
+            for j in example.talk[i]:
+                st+=j
+                if j == '!' or j=='.' or j=='?':
+                    MtP.append(name+st)
+                    st=""
+
+        example.talk = MtP
+        
         for sentence in example.talk:
             doc +=(sentence+"§")
         doc = nlp(doc)._.coref_resolved
